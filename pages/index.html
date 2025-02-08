@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Discord Bot Creator</title>
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script defer type="module" src="./script.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <i class="fab fa-discord"></i>
+          <h2>Bot Creator</h2>
+        </div>
+        <nav class="sidebar-nav">
+          <button class="nav-item active">
+            <i class="fas fa-robot"></i>
+            <span>My Bots</span>
+          </button>
+          <button class="nav-item">
+            <i class="fas fa-plus"></i>
+            <span>Create New</span>
+          </button>
+          <button class="nav-item">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+          </button>
+        </nav>
+      </aside>
+
+      <main class="main-content">
+        <header class="main-header">
+          <div class="search-container">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search bots..." />
+          </div>
+          <button class="create-btn">
+            <i class="fas fa-plus"></i>
+            Create Bot
+          </button>
+        </header>
+
+        <div class="bot-grid" id="botGrid"></div>
+      </main>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "localbotify",
+  "productName": "LocalBotify",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "electron": "^34.1.1",
+    "electron-builder": "^25.1.8"
+  }
+}
