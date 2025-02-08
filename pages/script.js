@@ -7,7 +7,7 @@ class DiscordBotCreator {
     }
     this.renderContent();
     this.setupEventListeners();
-  }
+  };
 
   initializeDemoData() {
     this.bots = [
@@ -42,11 +42,11 @@ class DiscordBotCreator {
       }
     ];
     this.saveBots();
-  }
+  };
 
   saveBots() {
     localStorage.setItem("bots", JSON.stringify(this.bots));
-  }
+  };
 
   renderContent() {
     const mainContent = document.querySelector(".main-content");
@@ -68,10 +68,10 @@ class DiscordBotCreator {
       case "terminal":
         content.appendChild(this.createTerminalView());
         break;
-    }
+    };
 
     mainContent.appendChild(content);
-  }
+  };
 
   createHeader() {
     const header = document.createElement("header");
@@ -92,10 +92,10 @@ class DiscordBotCreator {
       header.innerHTML = `
         <h2 class="view-title">${this.currentView.charAt(0).toUpperCase() + this.currentView.slice(1)}</h2>
       `;
-    }
+    };
 
     return header;
-  }
+  };
 
   createBotGrid() {
     const grid = document.createElement("div");
@@ -172,7 +172,7 @@ class DiscordBotCreator {
     });
 
     return grid;
-  }
+  };
 
   createSettingsPanel() {
     const settings = document.createElement("div");
@@ -235,7 +235,7 @@ class DiscordBotCreator {
     `;
 
     return settings;
-  }
+  };
 
   createTerminalView() {
     const terminal = document.createElement("div");
@@ -282,7 +282,7 @@ class DiscordBotCreator {
             <span class="message">${this.escapeHtml(log.message)}</span>
           </div>
         `).join("");
-      }
+      };
     });
 
     input.addEventListener("keypress", (e) => {
@@ -304,8 +304,8 @@ class DiscordBotCreator {
           `;
           e.target.value = "";
           terminalContent.scrollTop = terminalContent.scrollHeight;
-        }
-      }
+        };
+      };
     });
 
     clearBtn.addEventListener("click", () => {
@@ -320,7 +320,7 @@ class DiscordBotCreator {
     });
 
     return terminal;
-  }
+  };
 
   showBotEditor(bot = null) {
     const modal = document.createElement("div");
@@ -401,13 +401,13 @@ class DiscordBotCreator {
         this.bots[index] = newBot;
       } else {
         this.bots.push(newBot);
-      }
+      };
 
       this.saveBots();
       this.renderContent();
       closeModal();
     });
-  }
+  };
 
   showBotTerminal(bot) {
     this.currentView = "terminal";
@@ -416,16 +416,16 @@ class DiscordBotCreator {
     if (botSelect) {
       botSelect.value = bot.id;
       botSelect.dispatchEvent(new Event("change"));
-    }
-  }
+    };
+  };
 
   deleteBot(bot) {
     if (confirm(`Are you sure you want to delete ${bot.name}?`)) {
       this.bots = this.bots.filter(b => b.id !== bot.id);
       this.saveBots();
       this.renderContent();
-    }
-  }
+    };
+  };
 
   setupEventListeners() {
     document.querySelectorAll(".nav-item").forEach(item => {
@@ -439,7 +439,7 @@ class DiscordBotCreator {
           this.currentView = "bots";
         } else if (item.querySelector("span").textContent === "Settings") {
           this.currentView = "settings";
-        }
+        };
         
         this.renderContent();
       });
@@ -469,24 +469,24 @@ class DiscordBotCreator {
               const card = document.createElement("div");
               card.className = "bot-card";
             });
-          }
-        }
-      }
+          };
+        };
+      };
     });
 
     document.addEventListener("click", (e) => {
       if (e.target.matches(".create-btn") || e.target.closest(".create-btn")) {
         this.showBotEditor();
-      }
+      };
     });
-  }
+  };
 
   formatNumber(num) {
     if (num >= 1000) {
       return `${(num / 1000).toFixed(1)}k`;
-    }
+    };
     return num.toString();
-  }
+  };
 
   escapeHtml(unsafe) {
     return unsafe
@@ -495,7 +495,7 @@ class DiscordBotCreator {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/"/g, "&#039;");
-  }
-}
+  };
+};
 
 new DiscordBotCreator();
