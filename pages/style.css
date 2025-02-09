@@ -42,7 +42,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  overflow-x: scroll;
+  overflow-x: auto;
 }
 
 .sidebar-header {
@@ -78,7 +78,7 @@ body {
 }
 
 .sidebar-resizer {
-  width: 5px;
+  width: 3.5px;
   background: #55555554;
   cursor: ew-resize;
   height: 100%;
