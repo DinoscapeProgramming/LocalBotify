@@ -79,9 +79,13 @@ body {
 
 .sidebar-resizer {
   width: 3.5px;
-  background: #55555554;
+  background: transparent;
   cursor: ew-resize;
   height: 100%;
+}
+
+.sidebar-resizer:hover {
+  background: #55555554;
 }
 
 .nav-item {
@@ -450,95 +454,6 @@ body {
 
 .cancel-btn:hover {
   background-color: #5d6269;
-}
-
-.terminal-view {
-  background-color: var(--discord-darker);
-  border-radius: var(--radius-md);
-  margin: 1rem;
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - var(--header-height) - 2rem);
-}
-
-.terminal-header {
-  padding: 0.75rem;
-  border-bottom: 1px solid var(--discord-dark);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.bot-select {
-  background-color: var(--discord-dark);
-  color: var(--discord-text);
-  border: none;
-  padding: 0.5rem;
-  border-radius: var(--radius-sm);
-}
-
-.terminal-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.terminal-actions button {
-  padding: 0.5rem 0.75rem;
-  background-color: var(--discord-dark);
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--discord-text);
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.terminal-actions button:hover {
-  background-color: var(--discord-hover);
-}
-
-.terminal-content {
-  flex: 1;
-  padding: 1rem;
-  overflow-y: auto;
-  font-family: 'Courier New', monospace;
-  font-size: 0.9rem;
-}
-
-.log-entry {
-  margin-bottom: 0.5rem;
-  display: flex;
-  gap: 1rem;
-}
-
-.timestamp {
-  color: var(--discord-muted);
-  white-space: nowrap;
-}
-
-.terminal-input {
-  padding: 0.75rem;
-  border-top: 1px solid var(--discord-dark);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.prompt {
-  color: var(--discord-primary);
-  font-weight: bold;
-}
-
-.terminal-input input {
-  flex: 1;
-  background: none;
-  border: none;
-  color: var(--discord-text);
-  font-family: 'Courier New', monospace;
-  font-size: 0.9rem;
-}
-
-.terminal-input input:focus {
-  outline: none;
 }
 
 .settings-panel {
@@ -932,4 +847,265 @@ body {
   font-weight: 600;
   font-family: system-ui;
   color: var(--discord-text);
+}
+
+.code-editor-view {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--discord-darker);
+  z-index: 1000;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-rows: 1fr 200px;
+  opacity: 0;
+  transform: scale(0.98);
+  transition: all 0.3s ease;
+}
+
+.code-editor-view.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.file-explorer {
+  background-color: var(--discord-dark);
+  border-right: 1px solid var(--discord-darker);
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.file-explorer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--discord-darker);
+}
+
+.file-explorer-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--discord-text);
+}
+
+.file-explorer-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.file-explorer-btn {
+  background: none;
+  border: none;
+  color: var(--discord-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.file-explorer-btn:hover {
+  color: var(--discord-text);
+  background-color: var(--discord-hover);
+}
+
+.file-tree {
+  font-size: 0.9rem;
+}
+
+.file-tree-item {
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.file-tree-item:hover {
+  background-color: var(--discord-hover);
+}
+
+.file-tree-item.active {
+  background-color: var(--discord-primary);
+  color: white;
+}
+
+.file-tree-item i {
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
+}
+
+.editor-container {
+  position: relative;
+  background-color: var(--discord-darker);
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.editor-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background-color: var(--discord-dark);
+  border-bottom: 1px solid var(--discord-darker);
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  gap: 1rem;
+}
+
+.editor-tab {
+  padding: 0.35rem 1rem;
+  background-color: var(--discord-darker);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.editor-tab.active {
+  background-color: var(--discord-primary);
+  color: white;
+}
+
+.editor-tab i {
+  font-size: 0.9rem;
+}
+
+.editor-close-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  color: var(--discord-text);
+  cursor: pointer;
+  margin-top: 5px;
+  margin-right: 2.5px;
+  padding: 4.5px 6.5px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.editor-close-btn:hover {
+  background-color: var(--discord-hover);
+}
+
+.editor-content {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1rem;
+}
+
+.editor-content textarea {
+  width: 100%;
+  height: 100%;
+  background-color: var(--discord-darker);
+  border: none;
+  color: var(--discord-text);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  padding: 1rem;
+  resize: none;
+}
+
+.editor-content textarea:focus {
+  outline: none;
+}
+
+.editor-terminal {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  background-color: var(--discord-dark);
+  border-top: 1px solid var(--discord-darker);
+  display: flex;
+  flex-direction: column;
+}
+
+.terminal-header {
+  padding: 0.35rem 1rem;
+  background-color: var(--discord-darker);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 0.25px solid #00000038;
+}
+
+.terminal-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--discord-text);
+}
+
+.terminal-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.terminal-btn {
+  background: none;
+  border: none;
+  color: var(--discord-muted);
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.terminal-btn:hover {
+  color: var(--discord-text);
+  background-color: var(--discord-hover);
+}
+
+.terminal-content {
+  flex: 1;
+  padding: 1rem;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  overflow-y: auto;
+  color: var(--discord-text);
+}
+
+.terminal-input-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0rem 0.5rem 1rem;
+  background-color: var(--discord-darker);
+}
+
+.terminal-prompt {
+  color: var(--discord-primary);
+  font-weight: bold;
+}
+
+.terminal-input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--discord-text);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9rem;
+  height: 165%;
+}
+
+.terminal-input:focus {
+  outline: none;
 }

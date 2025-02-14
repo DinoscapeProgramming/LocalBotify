@@ -120,11 +120,11 @@ class DiscordBotCreator {
             <p>${this.escapeHtml(bot.description)}</p>
           </div>
           <div class="bot-actions">
+            <button class="action-btn code-btn" title="Open Code Editor">
+              <i class="fas fa-code"></i>
+            </button>
             <button class="action-btn edit-btn" title="Edit Bot">
               <i class="fas fa-edit"></i>
-            </button>
-            <button class="action-btn terminal-btn" title="View Terminal">
-              <i class="fas fa-terminal"></i>
             </button>
             <button class="action-btn delete-btn" title="Delete Bot">
               <i class="fas fa-trash"></i>
@@ -150,18 +150,18 @@ class DiscordBotCreator {
         </div>
       `;
 
+      const codeBtn = card.querySelector(".code-btn");
       const editBtn = card.querySelector(".edit-btn");
-      const terminalBtn = card.querySelector(".terminal-btn");
       const deleteBtn = card.querySelector(".delete-btn");
+
+      codeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.showCodeEditor(bot);
+      });
 
       editBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         this.showBotEditor(bot);
-      });
-
-      terminalBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        this.showBotTerminal(bot);
       });
 
       deleteBtn.addEventListener("click", (e) => {
@@ -309,11 +309,11 @@ class DiscordBotCreator {
       }));
       this.updateSettings();
 
-      saveBtn.innerHTML = "<i class='fas fa-check'></i>Saved!";
+      saveBtn.innerHTML = `<i class="fas fa-check"></i>Saved!`;
       saveBtn.style.backgroundColor = "var(--discord-green)";
       
       setTimeout(() => {
-        saveBtn.innerHTML = "<i class='fas fa-save'></i>Save Changes";
+        saveBtn.innerHTML = `<i class="fas fa-save"></i>Save Changes`;
         saveBtn.style.backgroundColor = "var(--discord-primary)";
       }, 2000);
 
@@ -453,6 +453,266 @@ class DiscordBotCreator {
     return terminal;
   };
 
+  showCodeEditor(bot) {
+    if (!bot.files) {
+      bot.files = [
+        { name: "index.js", type: "file", content: `const Discord = require("discord.js");
+const client = new Discord.Client();
+
+client.on("ready", () => {
+  console.log("Bot is ready!");
+});
+
+client.on("message", message => {
+  if (message.content === "!ping") {
+    message.reply("pong");
+  }
+});
+
+client.login("${bot.token}");` },
+        { name: "commands.js", type: "file", content: `// Bot commands
+const commands = {
+  ping: (message) => {
+    message.reply("pong");
+  },
+  help: (message) => {
+    message.channel.send("Available commands: ${bot.commands.join(", ")}");
+  }
+};
+
+module.exports = commands;` },
+        { name: "config.json", type: "file", content: JSON.stringify({
+          token: bot.token,
+          prefix: bot.prefix,
+          name: bot.name,
+          commands: bot.commands
+        }, null, 2) }
+      ];
+    };
+
+    const editorView = document.createElement("div");
+    editorView.className = "code-editor-view";
+    
+    editorView.innerHTML = `
+      <div class="file-explorer">
+        <div class="file-explorer-header">
+          <span class="file-explorer-title">Files</span>
+          <div class="file-explorer-actions">
+            <button class="file-explorer-btn" title="New File">
+              <i class="fas fa-plus"></i>
+            </button>
+            <button class="file-explorer-btn" title="New Folder">
+              <i class="fas fa-folder-plus"></i>
+            </button>
+          </div>
+        </div>
+        <div class="file-tree">
+          ${this.renderFileTree(bot.files)}
+        </div>
+      </div>
+      
+      <div class="editor-container">
+        <div class="editor-header">
+          <div class="editor-tab active">
+            <i class="fas fa-file-code"></i>
+            <span>index.js</span>
+          </div>
+        </div>
+        <button class="editor-close-btn">
+          <i class="fas fa-times"></i>
+        </button>
+        <div class="editor-content">
+          <textarea spellcheck="false">${bot.files[0].content}</textarea>
+        </div>
+      </div>
+      
+      <div class="editor-terminal">
+        <div class="terminal-header">
+          <span class="terminal-title">Terminal</span>
+          <div class="terminal-actions">
+            <button class="terminal-btn" title="Clear">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+            <button class="terminal-btn" title="Copy">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+        </div>
+        <div class="terminal-content">
+          <div class="terminal-output">
+            > Starting bot...
+            > Bot connected successfully!
+            > Logged in as ${bot.name}
+          </div>
+        </div>
+        <div class="terminal-input-line">
+          <span class="terminal-prompt">></span>
+          <input type="text" class="terminal-input" placeholder="Enter command..." />
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(editorView);
+    setTimeout(() => editorView.classList.add("show"), 10);
+
+    const closeBtn = editorView.querySelector(".editor-close-btn");
+    closeBtn.addEventListener("click", () => {
+      editorView.classList.remove("show");
+      setTimeout(() => editorView.remove(), 300);
+    });
+
+    const addFileBtn = editorView.querySelector(`.file-explorer-btn[title="New File"]`);
+    addFileBtn.addEventListener("click", () => {
+      const fileName = prompt("Enter file name:");
+      if (fileName) {
+        const newFile = {
+          name: fileName.endsWith(".js") || fileName.endsWith(".json") ? fileName : `${fileName}.js`,
+          type: "file",
+          content: ""
+        };
+        bot.files.push(newFile);
+        this.saveBots();
+        
+        const fileTree = editorView.querySelector(".file-tree");
+        fileTree.innerHTML = this.renderFileTree(bot.files);
+        this.setupFileTreeListeners(editorView, bot);
+      };
+    });
+
+    const addFolderBtn = editorView.querySelector(`.file-explorer-btn[title="New Folder"]`);
+    addFolderBtn.addEventListener("click", () => {
+      const folderName = prompt("Enter folder name:");
+      if (folderName) {
+        const newFolder = {
+          name: folderName,
+          type: "folder",
+          files: [
+            { name: "index.js", type: "file", content: `const Discord = require("discord.js");
+const client = new Discord.Client();
+
+client.on("ready", () => {
+  console.log("Bot is ready!");
+});
+
+client.on("message", message => {
+  if (message.content === "!ping") {
+    message.reply("pong");
+  }
+});
+
+client.login("${bot.token}");` }
+          ]
+        };
+        bot.files.push(newFolder);
+        this.saveBots();
+        
+        const fileTree = editorView.querySelector(".file-tree");
+        fileTree.innerHTML = this.renderFileTree(bot.files);
+        this.setupFileTreeListeners(editorView, bot);
+      };
+    });
+
+    this.setupFileTreeListeners(editorView, bot);
+    this.setupTerminal(editorView);
+  };
+
+  renderFileTree(files) {
+    return files.map(file => {
+      if (file.type === "folder") {
+        return `
+          <div class="file-tree-item folder">
+            <i class="fas fa-folder"></i>
+            <span>${this.escapeHtml(file.name)}</span>
+          </div>
+          <div class="folder-content" style="padding-left: 1rem;">
+            ${this.renderFileTree(file.files)}
+          </div>
+        `;
+      } else {
+        const icon = file.name.endsWith(".json") ? "fa-file" : "fa-file-code";
+        return `
+          <div class="file-tree-item" data-filename="${this.escapeHtml(file.name)}">
+            <i class="fas ${icon}"></i>
+            <span>${this.escapeHtml(file.name)}</span>
+          </div>
+        `;
+      };
+    }).join("");
+  };
+
+  setupFileTreeListeners(editorView, bot) {
+    const fileItems = editorView.querySelectorAll(".file-tree-item");
+    const editor = editorView.querySelector("textarea");
+    const editorTab = editorView.querySelector(".editor-tab span");
+    const editorTabIcon = editorView.querySelector(".editor-tab i");
+
+    fileItems.forEach(item => {
+      if (!item.classList.contains("folder")) {
+        item.addEventListener("click", () => {
+          fileItems.forEach(i => i.classList.remove("active"));
+          item.classList.add("active");
+          
+          const fileName = item.dataset.filename;
+          const file = bot.files.find(f => f.name === fileName);
+          
+          if (file) {
+            editor.value = file.content;
+            editorTab.textContent = fileName;
+            editorTabIcon.className = `fas ${fileName.endsWith(".json") ? "fa-file" : "fa-file-code"}`;
+          };
+        });
+      };
+    });
+
+    editor.addEventListener("input", () => {
+      const activeFile = editorView.querySelector(".file-tree-item.active");
+      if (activeFile) {
+        const fileName = activeFile.dataset.filename;
+        const file = bot.files.find(f => f.name === fileName);
+        if (file) {
+          file.content = editor.value;
+          this.saveBots();
+        };
+      };
+    });
+  };
+
+  setupTerminal(editorView) {
+    const terminalInput = editorView.querySelector(".terminal-input");
+    const terminalContent = editorView.querySelector(".terminal-content");
+    
+    terminalInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        const command = terminalInput.value;
+        if (command) {
+          terminalContent.innerHTML += `\n> ${command}`;
+          terminalInput.value = "";
+          
+          if (command === "npm start") {
+            terminalContent.innerHTML += "\n Starting bot...\n Bot is now online!";
+          } else if (command === "help") {
+            terminalContent.innerHTML += "\n Available commands: help, npm start, clear";
+          } else if (command === "clear") {
+            terminalContent.innerHTML = "";
+          };
+          
+          terminalContent.scrollTop = terminalContent.scrollHeight;
+        };
+      };
+    });
+
+    const clearBtn = editorView.querySelector(`.terminal-btn[title="Clear"]`);
+    clearBtn.addEventListener("click", () => {
+      terminalContent.innerHTML = "";
+    });
+
+    const copyBtn = editorView.querySelector(`.terminal-btn[title="Copy"]`);
+    copyBtn.addEventListener("click", () => {
+      const text = terminalContent.textContent;
+      navigator.clipboard.writeText(text);
+    });
+  };
+
   showBotEditor(bot = null) {
     const modal = document.createElement("div");
     modal.className = "modal";
@@ -539,6 +799,8 @@ class DiscordBotCreator {
       closeModal();
     });
   };
+
+
 
   showBotTerminal(bot) {
     this.currentView = "terminal";
