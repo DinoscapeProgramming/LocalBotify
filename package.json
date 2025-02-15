@@ -1,7 +1,7 @@
 {
   "name": "localbotify",
   "productName": "LocalBotify",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@xterm/xterm": "^5.5.0",
     "electron": "^34.1.1",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "node-pty": "^1.0.0"
   }
 }

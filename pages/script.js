@@ -1,3 +1,6 @@
+const { ipcRenderer } = require("electron");
+const os = require("os");
+
 class DiscordBotCreator {
   constructor() {
     this.bots = JSON.parse(localStorage.getItem("bots")) || [];
@@ -332,125 +335,82 @@ class DiscordBotCreator {
     };
   };
 
-  createTerminalView() {
-    const childProcess = require("child_process");
-    const terminal = document.createElement("div");
-    terminal.className = "terminal-view";
-    
-    terminal.innerHTML = `
-      <div class="terminal-header">
-        <select class="bot-select">
-          ${this.bots.map(bot => `
-            <option value="${bot.id}">${this.escapeHtml(bot.name)}</option>
-          `).join("")}
-        </select>
-        <div class="terminal-actions">
-          <button class="clear-btn">Clear</button>
-          <button class="copy-btn">Copy</button>
-        </div>
-      </div>
-      <div class="terminal-content">
-        ${this.bots[0]?.logs.map(log => `
-          <div class="log-entry">
-            <span class="timestamp">${log.timestamp}</span>
-            <span class="message">${this.escapeHtml(log.message)}</span>
-          </div>
-        `).join("") || ""}
-      </div>
-      <div class="terminal-input">
-        <span class="prompt">></span>
-        <input type="text" placeholder="Enter command..." />
-      </div>
-    `;
-
-    const botSelect = terminal.querySelector(".bot-select");
-    const terminalContent = terminal.querySelector(".terminal-content");
-    const input = terminal.querySelector(".terminal-input input");
-    const clearBtn = terminal.querySelector(".clear-btn");
-    const copyBtn = terminal.querySelector(".copy-btn");
-
-    botSelect.addEventListener("change", (e) => {
-      const bot = this.bots.find(b => b.id === parseInt(e.target.value));
-      if (bot) {
-        terminalContent.innerHTML = bot.logs.map(log => `
-          <div class="log-entry">
-            <span class="timestamp">${log.timestamp}</span>
-            <span class="message">${this.escapeHtml(log.message)}</span>
-          </div>
-        `).join("");
-      };
+  loadCodeEditor() {
+    [
+      "codemirror.css",
+      "theme/monokai.css"
+    ].forEach((codeEditorStylesheetSource) => {
+      let codeEditorStylesheet = document.createElement("link");
+      codeEditorStylesheet.rel = "stylesheet";
+      codeEditorStylesheet.href = "../packages/codemirror/" + codeEditorStylesheetSource;
+      document.head.appendChild(codeEditorStylesheet);
     });
+    let codeEditorScript = document.createElement("script");
+    codeEditorScript.defer = true;
+    codeEditorScript.src = "../packages/codemirror/codemirror.js";
+    codeEditorScript.addEventListener("load", () => {
+      let codeEditorModeScript = document.createElement("script");
+      codeEditorModeScript.defer = true;
+      codeEditorModeScript.src = "../packages/codemirror/mode/javascript/javascript.js";
+      codeEditorModeScript.addEventListener("load", () => {
+        CodeMirror.fromTextArea(document.querySelector(".code-editor-view textarea"), {
+          mode: "javascript",
+          theme: "monokai",
+          styleActiveLine: true,
+          lineNumbers: true,
+          matchBrackets: true,
+          autoCloseBrackets: true,
+          autoCloseTags: true
+        });
+      });
+      document.head.appendChild(codeEditorModeScript);
+    });
+    document.head.appendChild(codeEditorScript);
+  };
 
-    input.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
-        const command = e.target.value;
-        const bot = this.bots.find(b => b.id === parseInt(botSelect.value));
-        if (bot && command) {
-          const timestamp = new Date().toISOString().replace("T", " ").slice(0, 19);
-          bot.logs.push({
-            timestamp,
-            message: `$ ${command}`
-          });
-          this.saveBots();
-          terminalContent.innerHTML += `
-            <div class="log-entry">
-              <span class="timestamp">${timestamp}</span>
-              <span class="message">$ ${this.escapeHtml(command)}</span>
-            </div>
-          `;
-          e.target.value = "";
-          terminalContent.scrollTop = terminalContent.scrollHeight;
+  createTerminal() {
+    ipcRenderer.send("terminal-open");
 
-          let commandProcess = childProcess.spawn(command, [], {
-            shell: true
-          });
-          let commandStdoutText;
-          let commandStderrText;
-          commandProcess.stdout.on("data", (data) => {
-            if (!commandStdoutText) {
-              commandStdoutText = document.createElement("div");
-              commandStdoutText.className = "log-entry";
-              commandStdoutText.innerHTML = `
-                <span class="timestamp">${new Date().toISOString().replace("T", " ").slice(0, 19)}</span>
-                <span class="message">${this.escapeHtml(data.toString())}</span>
-              `;
-              terminalContent.appendChild(commandStdoutText);
-            } else {
-              commandStdoutText.querySelector(".message").innerText += data.toString();
-            };
-            terminalContent.scrollTop = terminalContent.scrollHeight;
-          });
-          commandProcess.stderr.on("data", (data) => {
-            if (!commandStderrText) {
-              commandStderrText = document.createElement("div");
-              commandStderrText.className = "log-entry";
-              commandStderrText.style.color = "red";
-              commandStderrText.innerHTML = `
-                <span class="timestamp">${new Date().toISOString().replace("T", " ").slice(0, 19)}</span>
-                <span class="message">${this.escapeHtml(data.toString())}</span>
-              `;
-              terminalContent.appendChild(commandStderrText);
-            } else {
-              commandStderrText.querySelector(".message").innerText += data.toString();
-            };
-            terminalContent.scrollTop = terminalContent.scrollHeight;
-          });
+    let stylesheet = document.createElement("link");
+    stylesheet.rel = "stylesheet";
+    stylesheet.href = "../node_modules/@xterm/xterm/css/xterm.css";
+
+    let script = document.createElement("script");
+    script.defer = true;
+    script.src = "../node_modules/@xterm/xterm/lib/xterm.js";
+    script.addEventListener("load", () => {
+      let terminal = new Terminal();
+      let currentLine = "";
+      let entries = [];
+
+      terminal.open(document.querySelector(".editor-terminal"));
+      terminal.onKey((data) => {
+        if (data.domEvent.key == "Enter") {
+          if (currentLine) {
+            entries.push(currentLine);
+            terminal.write("\r\n");
+            ipcRenderer.send("terminal-data", "\r\n");
+          };
+        } else if (data.domEvent.key == "Backspace") {
+          if (currentLine) {
+            currentLine = currentLine.slice(0, currentLine.length - 1);
+            terminal.write("\b \b");
+            ipcRenderer.send("terminal-data", "\b \b");
+          };
+        } else {
+          currentLine += data.key;
+          terminal.write(data.key);
+          ipcRenderer.send("terminal-data", data.key);
         };
-      };
+      });
+
+      ipcRenderer.on("terminal-data", (data) => {
+        terminal.write(data);
+      });
     });
 
-    clearBtn.addEventListener("click", () => {
-      terminalContent.innerHTML = "";
-    });
-
-    copyBtn.addEventListener("click", () => {
-      const text = Array.from(terminalContent.querySelectorAll(".log-entry"))
-        .map(entry => `${entry.querySelector(".timestamp").textContent} ${entry.querySelector(".message").textContent}`)
-        .join("\n");
-      navigator.clipboard.writeText(text);
-    });
-
-    return terminal;
+    document.head.appendChild(stylesheet);
+    document.head.appendChild(script);
   };
 
   showCodeEditor(bot) {
@@ -526,31 +486,11 @@ module.exports = commands;` },
         </div>
       </div>
       
-      <div class="editor-terminal">
-        <div class="terminal-header">
-          <span class="terminal-title">Terminal</span>
-          <div class="terminal-actions">
-            <button class="terminal-btn" title="Clear">
-              <i class="fas fa-trash-alt"></i>
-            </button>
-            <button class="terminal-btn" title="Copy">
-              <i class="fas fa-copy"></i>
-            </button>
-          </div>
-        </div>
-        <div class="terminal-content">
-          <div class="terminal-output">
-            > Starting bot...
-            > Bot connected successfully!
-            > Logged in as ${bot.name}
-          </div>
-        </div>
-        <div class="terminal-input-line">
-          <span class="terminal-prompt">></span>
-          <input type="text" class="terminal-input" placeholder="Enter command..." />
-        </div>
-      </div>
+      <div class="editor-terminal"></div>
     `;
+
+    this.loadCodeEditor();
+    this.createTerminal();
 
     document.body.appendChild(editorView);
     setTimeout(() => editorView.classList.add("show"), 10);
@@ -611,6 +551,8 @@ client.login("${bot.token}");` }
         this.setupFileTreeListeners(editorView, bot);
       };
     });
+
+    
 
     this.setupFileTreeListeners(editorView, bot);
     this.setupTerminal(editorView);
@@ -678,6 +620,7 @@ client.login("${bot.token}");` }
   };
 
   setupTerminal(editorView) {
+    return;
     const terminalInput = editorView.querySelector(".terminal-input");
     const terminalContent = editorView.querySelector(".terminal-content");
     

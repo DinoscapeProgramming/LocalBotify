@@ -18,6 +18,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 let tray;
+let ptyProcess;
 
 const createWindow = () => {
   const window = new BrowserWindow({
@@ -88,6 +89,25 @@ const createWindow = () => {
         if (returnValue.response) return;
         autoUpdater.quitAndInstall();
       });
+    });
+
+    ipcMain.on("terminal-open", () => {
+      if (ptyProcess) return;
+      ptyProcess = require("node-pty").spawn((require("os").platform() === "win32") ? "powershell.exe" : "bash", [], {
+        name: "xterm-color",
+        cols: 80,
+        rows: 24,
+        cwd: process.env.HOME,
+        env: process.env
+      });
+
+      ptyProcess.on("data", (data) => {
+        window.webContents.send("terminal-data", data);
+      });
+    });
+
+    ipcMain.on("terminal-data", (_, data) => {
+      ptyProcess.write(data);
     });
   });
 };
