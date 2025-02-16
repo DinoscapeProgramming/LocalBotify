@@ -397,8 +397,7 @@ body {
   font-size: 0.9rem;
 }
 
-.form-group input,
-.form-group textarea {
+.form-group input, .form-group textarea {
   width: 100%;
   padding: 0.5rem;
   background-color: var(--discord-darker);
@@ -409,8 +408,7 @@ body {
   transition: border-color 0.2s ease;
 }
 
-.form-group input:focus,
-.form-group textarea:focus {
+.form-group input:focus, .form-group textarea:focus {
   outline: none;
   border-color: var(--discord-primary);
 }
@@ -428,8 +426,7 @@ body {
   margin-top: 1.5rem;
 }
 
-.submit-btn,
-.cancel-btn {
+.submit-btn, .cancel-btn {
   padding: 0.5rem 1rem;
   border: none;
   border-radius: var(--radius-sm);
@@ -454,6 +451,26 @@ body {
 
 .cancel-btn:hover {
   background-color: #5d6269;
+}
+
+.feedback-star {
+  cursor: pointer;
+  font: 37.5px/1 FontAwesome;
+  margin: 10px 3.75px;
+  color: var(--discord-primary);
+}
+
+.feedback-star::before {
+  content: "\f006";
+}
+
+.hovered-feedback-star::before, .selected-feedback-star::before {
+  content: "\f005" !important;
+}
+
+.selected-feedback-star:hover::before {
+  color: var(--discord-primary);
+  opacity: 0.875;
 }
 
 .settings-panel {

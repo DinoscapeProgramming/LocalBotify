@@ -178,6 +178,100 @@ class DiscordBotCreator {
     return grid;
   };
 
+  showFeedbackModal() {
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Send Feedback</h2>
+          <button class="close-btn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <form id="botForm">
+            <div class="form-group" style="
+              display: flex;
+              flex-direction: row;
+              justify-content: center;
+            ">
+              <i class="feedback-star"></i>
+              <i class="feedback-star"></i>
+              <i class="feedback-star"></i>
+              <i class="feedback-star"></i>
+              <i class="feedback-star"></i>
+            </div>
+            <div class="form-group">
+              <label for="feedbackEmail">E-Mail / Discord Username</label>
+              <input type="text" id="feedbackEmail" placeholder="@JohnDoe123" required>
+            </div>
+            <div class="form-group">
+              <label for="feedbackComment">Comment</label>
+              <textarea id="feedbackComment"></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="submit-btn">
+                Send Feedback
+              </button>
+              <button type="button" class="cancel-btn">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    Array.from(modal.querySelectorAll(".feedback-star")).forEach((feedbackStar, index) => {
+      feedbackStar.addEventListener("mouseenter", () => {
+        Array.from(modal.querySelectorAll(".feedback-star")).slice(0, index + 1).forEach((hoveredFeedbackStar) => {
+          hoveredFeedbackStar.classList.add("hovered-feedback-star");
+        });
+      });
+
+      feedbackStar.addEventListener("mouseleave", () => {
+        Array.from(modal.querySelectorAll(".feedback-star")).slice(0, index + 1).forEach((hoveredFeedbackStar) => {
+          hoveredFeedbackStar.classList.remove("hovered-feedback-star");
+        });
+      });
+
+      feedbackStar.addEventListener("click", () => {
+        Array.from(modal.querySelectorAll(".selected-feedback-star")).forEach((selectedFeedbackStar) => {
+          selectedFeedbackStar.classList.remove("selected-feedback-star");
+        });
+
+        Array.from(modal.querySelectorAll(".feedback-star")).slice(0, index + 1).forEach((selectedFeedbackStar) => {
+          selectedFeedbackStar.classList.add("selected-feedback-star");
+        });
+      });
+    });
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add("show"), 10);
+
+    const closeModal = () => {
+      modal.classList.remove("show");
+      setTimeout(() => modal.remove(), 300);
+    };
+
+    modal.querySelector(".close-btn").addEventListener("click", closeModal);
+    modal.querySelector(".cancel-btn").addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    const form = modal.querySelector("#botForm");
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      
+      this.bots = this.bots.filter(b => b.id !== bot.id);
+      this.saveBots();
+      this.renderContent();
+
+      this.saveBots();
+      this.renderContent();
+      closeModal();
+    });
+  }
+
   createSettingsPanel() {
     const settings = document.createElement("div");
     settings.className = "settings-panel";
@@ -369,7 +463,7 @@ class DiscordBotCreator {
   };
 
   createTerminal() {
-    ipcRenderer.send("terminal-open");
+    ipcRenderer.send("openTerminal");
 
     let stylesheet = document.createElement("link");
     stylesheet.rel = "stylesheet";
@@ -389,22 +483,22 @@ class DiscordBotCreator {
           if (currentLine) {
             entries.push(currentLine);
             terminal.write("\r\n");
-            ipcRenderer.send("terminal-data", "\r\n");
+            ipcRenderer.send("terminalData", "\r\n");
           };
         } else if (data.domEvent.key == "Backspace") {
           if (currentLine) {
             currentLine = currentLine.slice(0, currentLine.length - 1);
             terminal.write("\b \b");
-            ipcRenderer.send("terminal-data", "\b \b");
+            ipcRenderer.send("terminalData", "\b \b");
           };
         } else {
           currentLine += data.key;
           terminal.write(data.key);
-          ipcRenderer.send("terminal-data", data.key);
+          ipcRenderer.send("terminalData", data.key);
         };
       });
 
-      ipcRenderer.on("terminal-data", (data) => {
+      ipcRenderer.on("terminalData", (_, data) => {
         terminal.write(data);
       });
     });
@@ -738,6 +832,7 @@ client.login("${bot.token}");` }
       };
 
       this.saveBots();
+      this.currentView = "bots";
       this.renderContent();
       closeModal();
     });
@@ -768,7 +863,7 @@ client.login("${bot.token}");` }
         <div class="modal-body">
           <form id="botForm">
             <div class="form-group">
-              Are you sure about deleting this bot?
+              Are you sure about deleting ${this.escapeHtml(bot.name)}?
             </div>
             <div class="form-actions">
               <button type="submit" class="submit-btn">
@@ -822,14 +917,21 @@ client.login("${bot.token}");` }
         });
         item.classList.add("active");
 
-        if (item.querySelector("span").textContent === "Create New") return;
         if (item.querySelector("span").textContent === "My Bots") {
           this.currentView = "bots";
+        } else if (item.querySelector("span").textContent === "Create New") {
+          this.showBotEditor();
+        } else if (item.querySelector("span").textContent === "Bot Store") {
+          this.currentView = "settings";
+        } else if (item.querySelector("span").textContent === "Feedback") {
+          this.showFeedbackModal();
         } else if (item.querySelector("span").textContent === "Settings") {
           this.currentView = "settings";
+        } else if (item.querySelector("span").textContent === "Help") {
+          this.currentView = "help";
         };
         
-        this.renderContent();
+        if (["My Bots", "Bot Store", "Settings", "Help"].includes(item.querySelector("span").textContent)) this.renderContent();
       });
     });
 
@@ -931,7 +1033,7 @@ client.login("${bot.token}");` }
     });
 
     document.addEventListener("click", (e) => {
-      if (e.target.matches(".create-btn") || e.target.matches(".create-new-btn") || e.target.closest(".create-btn") || e.target.closest(".create-new-btn")) {
+      if (e.target.matches(".create-btn") || e.target.closest(".create-btn")) {
         this.showBotEditor();
       };
     });
