@@ -69,8 +69,8 @@ class DiscordBotCreator {
       case "settings":
         content.appendChild(this.createSettingsPanel());
         break;
-      case "terminal":
-        content.appendChild(this.createTerminalView());
+      case "help":
+        content.appendChild(this.createHelpView());
         break;
     };
 
@@ -429,6 +429,33 @@ class DiscordBotCreator {
     };
   };
 
+  createHelpView() {
+    const help = document.createElement("div");
+    help.className = "help-view show";
+    
+    help.innerHTML = `
+      <div class="help-explorer">
+        <div class="help-tree">${this.renderFileTree(this.getHelpFileTree())}</div>
+      </div>
+
+      <div class="help-container"></div>
+    `;
+    
+    this.setupHelpFileTreeListeners(help);
+
+    return help;
+  };
+  
+  getHelpFileTree() {
+    return [
+      {
+        name: "MAIN",
+        path: "main/README.md",
+        files: []
+      }
+    ];
+  };
+
   loadCodeEditor() {
     [
       "codemirror.css",
@@ -667,7 +694,7 @@ client.login("${bot.token}");` }
       } else {
         const icon = file.name.endsWith(".json") ? "fa-file" : "fa-file-code";
         return `
-          <div class="file-tree-item" data-filename="${this.escapeHtml(file.name)}">
+          <div class="file-tree-item" data-filename="${this.escapeHtml(file.path || file.name)}">
             <i class="fas ${icon}"></i>
             <span>${this.escapeHtml(file.name)}</span>
           </div>
@@ -709,6 +736,30 @@ client.login("${bot.token}");` }
           file.content = editor.value;
           this.saveBots();
         };
+      };
+    });
+  };
+
+  setupHelpFileTreeListeners(helpView) {
+    const fileItems = helpView.querySelectorAll(".file-tree-item");
+    const helpContainer = helpView.querySelector(".help-container");
+
+    fileItems.forEach(item => {
+      if (!item.classList.contains("folder")) {
+        item.addEventListener("click", () => {
+          fileItems.forEach(i => i.classList.remove("active"));
+          item.classList.add("active");
+
+          const filePath = item.dataset.filename;
+
+          fetch(`https://raw.githubusercontent.com/DinoscapeProgramming/Remote-Control/refs/heads/${filePath}`)
+          .then((response) => response.text())
+          .then((response) => {
+            ipcRenderer.invoke("parseMarkdown", response).then((parsedMarkdown) => {
+              helpContainer.innerHTML = parsedMarkdown;
+            });
+          });
+        });
       };
     });
   };

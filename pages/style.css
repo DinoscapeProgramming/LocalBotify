@@ -1132,3 +1132,191 @@ body {
 .terminal-input:focus {
   outline: none;
 }
+
+.help-view {
+  z-index: 1000;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-rows: 1fr 200px;
+  opacity: 0;
+  transform: scale(0.98);
+  transition: all 0.3s ease;
+}
+
+.help-view.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.help-explorer {
+  padding: 1rem;
+  overflow-y: auto;
+  height: calc(100vh - var(--header-height));
+}
+
+.help-explorer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--discord-darker);
+}
+
+.help-explorer-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--discord-text);
+}
+
+.help-explorer-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.help-explorer-btn {
+  background: none;
+  border: none;
+  color: var(--discord-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.help-explorer-btn:hover {
+  color: var(--discord-text);
+  background-color: var(--discord-hover);
+}
+
+.help-container {
+  padding: 15px 30px 22.5px;
+  margin-bottom: -200px;
+  font-family: system-ui;
+  border-left: 1px solid var(--discord-darker);
+  overflow-x: hidden;
+}
+
+.help-container img {
+  margin-top: 10px;
+  max-width: 100%;
+  border-radius: 7.5px;
+}
+
+.help-container a {
+  color: var(--discord-primary);
+  text-decoration: none;
+}
+
+.help-container a:hover {
+  opacity: 0.8;
+}
+
+.help-container hr {
+  margin: 10px 0;
+}
+
+.help-container ul, .help-container ol {
+  margin-left: 17.5px;
+}
+
+.help-container h2, .help-container h3, .help-container h4 {
+  margin: 15px 0 2.5px;
+}
+
+.help-container h5, .help-container h6 {
+  margin-top: 2.5px;
+}
+
+.help-container pre code {
+  margin-top: 10px;
+  font-family: Consolas;
+  border-radius: 7.5px;
+  background-color: #f7f7f7;
+  filter: invert(95%) hue-rotate(180deg);
+}
+
+.help-container table {
+  margin-top: 10px;
+  border-collapse: collapse;
+  width: max(65rem, 100%);
+  table-layout: fixed;
+  max-width: 100%;
+}
+
+.help-container th, .help-container caption {
+  text-align: start;
+}
+
+.help-container caption {
+  margin-block: 0.75rem;
+}
+
+.help-container thead th:not(:first-child), .help-container td {
+  text-align: end;
+}
+
+.help-container thead {
+  border-block-end: 2px solid;
+  background: whitesmoke;
+}
+
+.help-container tfoot {
+  border-block: 2px solid;
+  background: whitesmoke;
+}
+
+.help-container th, .help-container td {
+  border: 1px solid lightgrey;
+  padding: 0.25rem 0.75rem;
+  vertical-align: baseline;
+}
+
+.help-container th:first-child {
+  position: sticky;
+  inset-inline-start: 0;
+  border-inline-end: none;
+}
+
+.help-container tbody th {
+  background: white;
+}
+
+.help-container thead th, .help-container tfoot th {
+  background: whitesmoke;
+}
+
+.help-container thead th {
+  vertical-align: bottom;
+}
+
+.help-container td:first-of-type, .help-container :where(thead, tfoot) th:nth-child(2) {
+  border-inline-start: none;
+}
+
+.help-container th:first-of-type {
+  width: 10rem;
+}
+
+.help-container th:first-child::after {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  width: 1px;
+  height: 100%;
+  background: lightgrey;
+}
+
+.help-container div[tabindex="0"][aria-labelledby][role="region"] {
+  background:
+    linear-gradient(to right, transparent 30%, rgba(255,255,255,0)),
+    linear-gradient(to right, rgba(255,255,255,0), white 70%) 0 100%,
+    radial-gradient(farthest-side at 0% 50%, rgba(0,0,0,0.2), rgba(0,0,0,0)),
+    radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,0.2), rgba(0,0,0,0)) 0 100%;
+  background-repeat: no-repeat;
+  background-color: #fff;
+  background-size: 4em 100%, 4em 100%, 1.4em 100%, 1.4em 100%;
+  background-position: 0 0, 100%, 0 0, 100%;
+  background-attachment: local, local, scroll, scroll;
+}

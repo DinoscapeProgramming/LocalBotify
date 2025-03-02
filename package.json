@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@xterm/xterm": "^5.5.0",
+    "markdown-wasm": "^1.2.0",
     "node-pty-prebuilt-multiarch": "^0.10.1-pre.5"
   },
   "devDependencies": {

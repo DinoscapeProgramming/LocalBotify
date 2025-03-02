@@ -17,6 +17,7 @@ const { app, BrowserWindow, ipcMain, dialog, Tray, Menu, autoUpdater } = require
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const { parse } = require("markdown-wasm");
 let tray;
 let ptyProcess;
 
@@ -111,6 +112,8 @@ const createWindow = () => {
   ipcMain.on("terminalData", (_, data) => {
     ptyProcess.write(data);
   });
+
+  ipcMain.handle("parseMarkdown", (_, markdown) => parse(markdown));
 };
 
 app.whenReady().then(() => {
