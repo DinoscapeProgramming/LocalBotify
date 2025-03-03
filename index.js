@@ -94,13 +94,10 @@ const createWindow = () => {
   });
 
   ipcMain.on("openTerminal", () => {
-    if (ptyProcess) return;
-
-    ptyProcess = require("node-pty-prebuilt-multiarch").spawn((require("os").platform() === "win32") ? "powershell.exe" : "bash", [], {
+    ptyProcess = require("@lydell/node-pty").spawn((require("os").platform() === "win32") ? "powershell.exe" : "bash", [], {
       name: "xterm-color",
       cols: 80,
-      rows: 24,
-      cwd: process.env.HOME,
+      rows: Math.round(200 / 17),
       env: process.env
     });
 

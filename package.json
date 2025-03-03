@@ -11,9 +11,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@lydell/node-pty": "^1.1.0",
     "@xterm/xterm": "^5.5.0",
-    "markdown-wasm": "^1.2.0",
-    "node-pty-prebuilt-multiarch": "^0.10.1-pre.5"
+    "markdown-wasm": "^1.2.0"
   },
   "devDependencies": {
     "@electron/rebuild": "^3.7.1",

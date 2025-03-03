@@ -440,6 +440,15 @@ class DiscordBotCreator {
 
       <div class="help-container"></div>
     `;
+
+    fetch(`https://raw.githubusercontent.com/DinoscapeProgramming/Remote-Control/refs/heads/main/README.md`)
+    .then((response) => response.text())
+    .then((response) => {
+      ipcRenderer.invoke("parseMarkdown", response).then((parsedMarkdown) => {
+        help.querySelector(".help-container").innerHTML = parsedMarkdown;
+        this.loadCodeHighlighter();
+      });
+    });
     
     this.setupHelpFileTreeListeners(help);
 
@@ -500,7 +509,9 @@ class DiscordBotCreator {
     script.defer = true;
     script.src = "../node_modules/@xterm/xterm/lib/xterm.js";
     script.addEventListener("load", () => {
-      let terminal = new Terminal();
+      let terminal = new Terminal({
+        rows: Math.round(200 / 17)
+      });
       let currentLine = "";
       let entries = [];
 
@@ -509,18 +520,15 @@ class DiscordBotCreator {
         if (data.domEvent.key == "Enter") {
           if (currentLine) {
             entries.push(currentLine);
-            terminal.write("\r\n");
             ipcRenderer.send("terminalData", "\r\n");
           };
         } else if (data.domEvent.key == "Backspace") {
           if (currentLine) {
             currentLine = currentLine.slice(0, currentLine.length - 1);
-            terminal.write("\b \b");
             ipcRenderer.send("terminalData", "\b \b");
           };
         } else {
           currentLine += data.key;
-          terminal.write(data.key);
           ipcRenderer.send("terminalData", data.key);
         };
       });
@@ -593,12 +601,6 @@ module.exports = commands;` },
       </div>
       
       <div class="editor-container">
-        <div class="editor-header">
-          <div class="editor-tab active">
-            <i class="fas fa-file-code"></i>
-            <span>index.js</span>
-          </div>
-        </div>
         <button class="editor-close-btn">
           <i class="fas fa-times"></i>
         </button>
@@ -757,11 +759,36 @@ client.login("${bot.token}");` }
           .then((response) => {
             ipcRenderer.invoke("parseMarkdown", response).then((parsedMarkdown) => {
               helpContainer.innerHTML = parsedMarkdown;
+              this.loadCodeHighlighter();
             });
           });
         });
       };
     });
+  };
+
+  loadCodeHighlighter() {
+    let codeHighlighterStylesheet = document.createElement("link");
+    codeHighlighterStylesheet.rel = "stylesheet";
+    codeHighlighterStylesheet.href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css";
+    document.head.appendChild(codeHighlighterStylesheet);
+    let codeHighlighterScript = document.createElement("script");
+    codeHighlighterScript.defer = true;
+    codeHighlighterScript.src = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js";
+    codeHighlighterScript.addEventListener("load", () => {
+      [
+        "javascript"
+      ].forEach((language) => {
+        let codeHighlighterLanguageScript = document.createElement("script");
+        codeHighlighterLanguageScript.defer = true;
+        codeHighlighterLanguageScript.src = `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/${language}.min.js`;
+        codeHighlighterLanguageScript.addEventListener("load", () => {
+          hljs.highlightAll();
+        });
+        document.head.appendChild(codeHighlighterLanguageScript);
+      });
+    });
+    document.head.appendChild(codeHighlighterScript);
   };
 
   setupTerminal(editorView) {

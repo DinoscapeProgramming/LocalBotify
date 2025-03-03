@@ -892,6 +892,7 @@ body {
   border-right: 1px solid var(--discord-darker);
   padding: 1rem;
   overflow-y: auto;
+  height: calc(100% - 15px);
 }
 
 .file-explorer-header {
@@ -919,7 +920,7 @@ body {
   border: none;
   color: var(--discord-muted);
   cursor: pointer;
-  padding: 0.25rem;
+  padding: 0.325rem;
   border-radius: var(--radius-sm);
   transition: all 0.2s ease;
 }
@@ -966,20 +967,6 @@ body {
   grid-row: 1;
 }
 
-.editor-header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50px;
-  background-color: var(--discord-dark);
-  border-bottom: 1px solid var(--discord-darker);
-  display: flex;
-  align-items: center;
-  padding: 0 1rem;
-  gap: 1rem;
-}
-
 .editor-tab {
   padding: 0.35rem 1rem;
   background-color: var(--discord-darker);
@@ -1014,6 +1001,7 @@ body {
   padding: 4.5px 6.5px;
   border-radius: var(--radius-sm);
   transition: all 0.2s ease;
+  z-index: 3;
 }
 
 .editor-close-btn:hover {
@@ -1022,7 +1010,7 @@ body {
 
 .editor-content {
   position: absolute;
-  top: 50px;
+  top: 0;
   left: 0;
   right: 0;
   bottom: 0;
@@ -1048,7 +1036,8 @@ body {
 .editor-content .CodeMirror {
   width: 100%;
   height: 100%;
-  padding-top: 6.25px;
+  padding-top: 7.5px;
+  height: calc(100% - 15px)
 }
 
 .editor-terminal {
@@ -1057,6 +1046,11 @@ body {
   background-color: var(--discord-darker);
   display: flex;
   flex-direction: column;
+}
+
+.editor-terminal .xterm {
+  padding: 5px;
+  margin-top: -15px;
 }
 
 .terminal-header {
@@ -1230,6 +1224,7 @@ body {
 
 .help-container pre code {
   margin-top: 10px;
+  margin-bottom: 5px;
   font-family: Consolas;
   border-radius: 7.5px;
   background-color: #f7f7f7;
