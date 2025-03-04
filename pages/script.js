@@ -1,3 +1,9 @@
+Object.assign(process.env, require("fs").readFileSync(require("path").join("./.env"), "utf8").split("\n").filter((line) => !line.startsWith("#") && (line.split("=").length > 1)).map((line) => line.trim().split("#")[0].split("=")).reduce((data, accumulator) => ({
+  ...data,
+  ...{
+    [accumulator[0]]: JSON.parse(accumulator[1].trim().replace(/\{([^}]+)\}/g, (_, expression) => eval(expression)))
+  }
+}), {}));
 const { ipcRenderer } = require("electron");
 const os = require("os");
 
@@ -17,32 +23,14 @@ class DiscordBotCreator {
     this.bots = [
       {
         id: 1,
-        name: "Moderator Bot",
-        description: "Advanced moderation and user management",
-        status: "online",
-        servers: 128,
-        users: 25600,
-        token: "MTIzNDU2Nzg5MDEyMzQ1Njc4OQ.Ghj2k8.abc123",
+        name: "Example Bot",
+        description: "Super simple example bot",
+        status: "offline",
+        servers: 0,
+        users: 0,
+        token: "EXAMPLE TOKEN",
         prefix: "!",
-        commands: ["ban", "kick", "mute", "warn"],
-        logs: [
-          { timestamp: "2025-01-20 10:30:00", message: "Bot started successfully" },
-          { timestamp: "2025-01-20 10:30:05", message: "Connected to Discord API" }
-        ]
-      },
-      {
-        id: 2,
-        name: "Music Master",
-        description: "High-quality music streaming for your server",
-        status: "online",
-        servers: 256,
-        users: 45800,
-        token: "OTg3NjU0MzIxMDk4NzY1NDMyMQ.Xyz789.def456",
-        prefix: "-",
-        commands: ["play", "pause", "skip", "queue"],
-        logs: [
-          { timestamp: "2025-01-20 09:15:00", message: "Music service initialized" }
-        ]
+        commands: ["ping"]
       }
     ];
     this.saveBots();
@@ -202,11 +190,11 @@ class DiscordBotCreator {
               <i class="feedback-star"></i>
             </div>
             <div class="form-group">
-              <label for="feedbackEmail">E-Mail / Discord Username</label>
+              <label for="feedbackUser">E-Mail / Discord Username</label>
               <input type="text" id="feedbackEmail" placeholder="@JohnDoe123" required>
             </div>
             <div class="form-group">
-              <label for="feedbackComment">Comment</label>
+              <label for="feedbackComment">Comment (optional)</label>
               <textarea id="feedbackComment"></textarea>
             </div>
             <div class="form-actions">
@@ -262,15 +250,20 @@ class DiscordBotCreator {
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       
-      this.bots = this.bots.filter(b => b.id !== bot.id);
-      this.saveBots();
-      this.renderContent();
-
-      this.saveBots();
-      this.renderContent();
+      fetch(`${process.env.SERVER}/api/v1/feedback/send`, {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          stars: modal.querySelectorAll(".selected-feedback-star").length,
+          user: modal.querySelector("#feedbackUser").value,
+          comment: modal.querySelector("#feedbackComment").value
+        })
+      });
       closeModal();
     });
-  }
+  };
 
   createSettingsPanel() {
     const settings = document.createElement("div");
@@ -517,20 +510,8 @@ class DiscordBotCreator {
 
       terminal.open(document.querySelector(".editor-terminal"));
       terminal.onKey((data) => {
-        if (data.domEvent.key == "Enter") {
-          if (currentLine) {
-            entries.push(currentLine);
-            ipcRenderer.send("terminalData", "\r\n");
-          };
-        } else if (data.domEvent.key == "Backspace") {
-          if (currentLine) {
-            currentLine = currentLine.slice(0, currentLine.length - 1);
-            ipcRenderer.send("terminalData", "\b \b");
-          };
-        } else {
-          currentLine += data.key;
-          ipcRenderer.send("terminalData", data.key);
-        };
+        currentLine += data.key;
+        ipcRenderer.send("terminalData", data.key);
       });
 
       ipcRenderer.on("terminalData", (_, data) => {
@@ -849,11 +830,21 @@ client.login("${bot.token}");` }
               <textarea id="botDescription" required>${bot ? this.escapeHtml(bot.description) : ""}</textarea>
             </div>
             <div class="form-group">
-              <label for="botToken">Bot Token</label>
-              <input type="text" id="botToken" value="${bot ? this.escapeHtml(bot.token) : ""}" required>
+              <label for="botToken">Template</label>
+              <div>
+                <select id="botTemplate" value="${bot ? this.escapeHtml(bot.template) : "ping-pong"}">
+                  <option value="none">No Template</option>
+                  <option value="ping-pong">Simple Ping-Pong Bot</option>
+                  <option value="git">Custom GitHub Repository</option>
+                </select>
+              </div>
             </div>
             <div class="form-group">
-              <label for="botPrefix">Command Prefix</label>
+              <label for="botToken">Bot Token (optional)</label>
+              <input type="text" id="botToken" value="${bot ? this.escapeHtml(bot.token) : ""}">
+            </div>
+            <div class="form-group">
+              <label for="botPrefix">Command Prefix (optional)</label>
               <input type="text" id="botPrefix" value="${bot ? this.escapeHtml(bot.prefix) : "!"}" required>
             </div>
             <div class="form-group">
@@ -870,6 +861,43 @@ client.login("${bot.token}");` }
         </div>
       </div>
     `;
+
+    let checkDatalistMatch = (e) => {
+      const dataList = modal.querySelector("#templateDatalist");
+      const container = e.target.parentElement;
+      const options = Array.from(dataList.options).map((option) => [option.dataset.id, option.value]);
+      const value = e.target.value;
+
+      if (options.map((option) => option[1]).includes(value)) {
+        container.innerHTML = `
+          <select id="botTemplate">
+            ${options.map(([optionValue, optionName]) => `<option value="${this.escapeHtml(optionValue)}">${this.escapeHtml(optionName)}</option>`).join("\n")}
+            <option value="git">Custom GitHub Repository</option>
+          </select>
+        `;
+
+        Array.from(container.querySelector("#botTemplate").options).find((option) => option.textContent === value).selected = true;
+
+        container.querySelector("#botTemplate").addEventListener("change", toggleInput);
+      };
+    };
+
+    let toggleInput = (e) => {
+      if (e.target.value === "git") {
+        const options = Array.from(e.target.options).map((option) => [option.value, option.textContent]).filter(([option]) => option !== "git");
+
+        e.target.parentElement.innerHTML = `
+          <input list="templateDatalist" id="botTemplate" placeholder="Enter GitHub Repository">
+          <datalist id="templateDatalist">
+            ${options.map(([optionValue, optionName]) => `<option data-id="${this.escapeHtml(optionValue)}" value="${this.escapeHtml(optionName)}">`).join("\n")}
+          </datalist>
+        `;
+
+        modal.querySelector("#botTemplate").addEventListener("input", checkDatalistMatch);
+      };
+    };
+
+    modal.querySelector("#botTemplate").addEventListener("change", toggleInput);
 
     document.body.appendChild(modal);
     setTimeout(() => modal.classList.add("show"), 10);

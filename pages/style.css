@@ -397,7 +397,7 @@ body {
   font-size: 0.9rem;
 }
 
-.form-group input, .form-group textarea {
+.form-group input, .form-group textarea, .form-group select {
   width: 100%;
   padding: 0.5rem;
   background-color: var(--discord-darker);
@@ -936,6 +936,7 @@ body {
 
 .file-tree-item {
   padding: 0.25rem 0.5rem;
+  margin-bottom: 5px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -996,7 +997,7 @@ body {
   border: none;
   color: var(--discord-text);
   cursor: pointer;
-  margin-top: 5px;
+  margin-top: 2.5px;
   margin-right: 2.5px;
   padding: 4.5px 6.5px;
   border-radius: var(--radius-sm);
@@ -1232,86 +1233,41 @@ body {
 }
 
 .help-container table {
-  margin-top: 10px;
+  color: black;
+  background-color: white;
   border-collapse: collapse;
-  width: max(65rem, 100%);
-  table-layout: fixed;
-  max-width: 100%;
+  margin: 25px 0;
+  font-size: 0.9em;
+  font-family: sans-serif;
+  min-width: 400px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+  border-radius: 7.5px;
+  overflow: hidden;
 }
 
-.help-container th, .help-container caption {
-  text-align: start;
+.help-container table thead tr {
+  background-color: #009879;
+  color: #ffffff;
+  text-align: left;
 }
 
-.help-container caption {
-  margin-block: 0.75rem;
+.help-container table th, .help-container table td {
+    padding: 12px 15px;
 }
 
-.help-container thead th:not(:first-child), .help-container td {
-  text-align: end;
+.help-container table tbody tr {
+  border-bottom: 1px solid #dddddd;
 }
 
-.help-container thead {
-  border-block-end: 2px solid;
-  background: whitesmoke;
+.help-container table tbody tr:nth-of-type(even) {
+  background-color: #f3f3f3;
 }
 
-.help-container tfoot {
-  border-block: 2px solid;
-  background: whitesmoke;
+.help-container table tbody tr:last-of-type {
+  border-bottom: 2px solid #009879;
 }
 
-.help-container th, .help-container td {
-  border: 1px solid lightgrey;
-  padding: 0.25rem 0.75rem;
-  vertical-align: baseline;
-}
-
-.help-container th:first-child {
-  position: sticky;
-  inset-inline-start: 0;
-  border-inline-end: none;
-}
-
-.help-container tbody th {
-  background: white;
-}
-
-.help-container thead th, .help-container tfoot th {
-  background: whitesmoke;
-}
-
-.help-container thead th {
-  vertical-align: bottom;
-}
-
-.help-container td:first-of-type, .help-container :where(thead, tfoot) th:nth-child(2) {
-  border-inline-start: none;
-}
-
-.help-container th:first-of-type {
-  width: 10rem;
-}
-
-.help-container th:first-child::after {
-  content: '';
-  position: absolute;
-  inset-block-start: 0;
-  inset-inline-end: 0;
-  width: 1px;
-  height: 100%;
-  background: lightgrey;
-}
-
-.help-container div[tabindex="0"][aria-labelledby][role="region"] {
-  background:
-    linear-gradient(to right, transparent 30%, rgba(255,255,255,0)),
-    linear-gradient(to right, rgba(255,255,255,0), white 70%) 0 100%,
-    radial-gradient(farthest-side at 0% 50%, rgba(0,0,0,0.2), rgba(0,0,0,0)),
-    radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,0.2), rgba(0,0,0,0)) 0 100%;
-  background-repeat: no-repeat;
-  background-color: #fff;
-  background-size: 4em 100%, 4em 100%, 1.4em 100%, 1.4em 100%;
-  background-position: 0 0, 100%, 0 0, 100%;
-  background-attachment: local, local, scroll, scroll;
+.help-container table tbody tr.active-row {
+  font-weight: bold;
+  color: #009879;
 }

@@ -1,7 +1,7 @@
 Object.assign(process.env, require("fs").readFileSync(require("path").join("./.env"), "utf8").split("\n").filter((line) => !line.startsWith("#") && (line.split("=").length > 1)).map((line) => line.trim().split("#")[0].split("=")).reduce((data, accumulator) => ({
   ...data,
   ...{
-    [accumulator[0]]: JSON.parse(accumulator[1].trim())
+    [accumulator[0]]: JSON.parse(accumulator[1].trim().replaceAll(/\{([^}]+)\}/g, (_, expression) => eval(expression)))
   }
 }), {}));
 if (!require("fs").readdirSync(process.resourcesPath).includes("autoLaunchType.txt")) require("fs").writeFileSync(require("path").join(process.resourcesPath, "autoLaunchType.txt"), "foreground");
