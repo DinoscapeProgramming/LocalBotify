@@ -25,6 +25,7 @@ class DiscordBotCreator {
         id: 1,
         name: "Example Bot",
         description: "Super simple example bot",
+        template: "ping-pong-bot",
         status: "offline",
         servers: 0,
         users: 0,
@@ -829,16 +830,16 @@ client.login("${bot.token}");` }
               <label for="botDescription">Description</label>
               <textarea id="botDescription" required>${bot ? this.escapeHtml(bot.description) : ""}</textarea>
             </div>
-            <div class="form-group">
+            ${bot ? `<div class="form-group">
               <label for="botToken">Template</label>
               <div>
-                <select id="botTemplate" value="${bot ? this.escapeHtml(bot.template) : "ping-pong"}">
+                <select id="botTemplate" value="ping-pong">
                   <option value="none">No Template</option>
                   <option value="ping-pong">Simple Ping-Pong Bot</option>
                   <option value="git">Custom GitHub Repository</option>
                 </select>
               </div>
-            </div>
+            </div>` : ""}
             <div class="form-group">
               <label for="botToken">Bot Token (optional)</label>
               <input type="text" id="botToken" value="${bot ? this.escapeHtml(bot.token) : ""}">
@@ -849,7 +850,7 @@ client.login("${bot.token}");` }
             </div>
             <div class="form-group">
               <label for="botCommands">Commands (comma-separated)</label>
-              <input type="text" id="botCommands" value="${bot ? this.escapeHtml(bot.commands.join(", ")) : ""}" required>
+              <input type="text" id="botCommands" value="${bot ? this.escapeHtml(bot.commands.join(", ")) : ""}">
             </div>
             <div class="form-actions">
               <button type="submit" class="submit-btn">
@@ -931,10 +932,11 @@ client.login("${bot.token}");` }
       };
 
       if (bot) {
-        const index = this.bots.findIndex(b => b.id === bot.id);
+        const index = this.bots.findIndex((b) => b.id === bot.id);
         this.bots[index] = newBot;
       } else {
         this.bots.push(newBot);
+        this.initializeTemplate(newBot, ((modal.querySelector("#botTemplate").tagName === "INPUT") ? "git:" : ""), modal.querySelector("#botTemplate").value);
       };
 
       this.saveBots();
@@ -944,15 +946,29 @@ client.login("${bot.token}");` }
     });
   };
 
+  async initializeTemplate(newBot, template) {
+    const fs = require("fs");
+    const path = require("path");
 
+    if (!fs.readdirSync(process.cwd()).includes("tempBots")) fs.mkdirSync(path.join(process.cwd(), "tempBots"));
+    if (!fs.readdirSync(process.cwd()).includes("bots")) fs.mkdirSync(path.join(process.cwd(), "bots"));
+    if (!fs.readdirSync(path.join(process.cwd(), "bots")).includes(newBot.id)) fs.mkdirSync(path.join(process.cwd(), "bots", newBot.id.toString()));
 
-  showBotTerminal(bot) {
-    this.currentView = "terminal";
-    this.renderContent();
-    const botSelect = document.querySelector(".bot-select");
-    if (botSelect) {
-      botSelect.value = bot.id;
-      botSelect.dispatchEvent(new Event("change"));
+    if (!template.startsWith("git:")) {
+      fs.cpSync(path.join(process.cwd(), "templates", template), path.join(process.cwd(), "bots", newBot.id.toString()), { recursive: true });
+    } else {
+      const url = `${template.substring(4)}/archive/refs/heads/main.zip`;
+      try {
+        const response = await fetch(url);
+        const filePath = path.join(process.cwd(), "tempBots", newBot.id.toString() + ".zip");
+        const fileStream = fs.createWriteStream(filePath);
+
+        response.body.pipe(fileStream);
+
+        fs.createReadStream(filePath)
+        .pipe(require("unzipper").Extract({ path: path.join(process.cwd(), "bots", newBot.id.toString()) }))
+        .on('close', () => {});
+      } catch {};
     };
   };
 
