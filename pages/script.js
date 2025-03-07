@@ -417,7 +417,7 @@ class DiscordBotCreator {
     const settings = JSON.parse(localStorage.getItem("settings") || "{}");
 
     if (settings.theme === "light") {
-      document.documentElement.style.filter = "invert(95%) hue-rotate(180deg)";
+      document.documentElement.style.filter = "invert(10%) hue-rotate(180deg)";
     } else {
       document.documentElement.style.removeProperty("filter");
     };
@@ -817,20 +817,20 @@ client.login("${bot.token}");` }
     modal.innerHTML = `
       <div class="modal-content">
         <div class="modal-header">
-          <h2>${bot ? "Edit Bot" : "Create Bot"}</h2>
+          <h2>${(bot) ? "Edit Bot" : "Create Bot"}</h2>
           <button class="close-btn"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
           <form id="botForm">
             <div class="form-group">
               <label for="botName">Bot Name</label>
-              <input type="text" id="botName" value="${bot ? this.escapeHtml(bot.name) : ""}" required>
+              <input type="text" id="botName" value="${(bot) ? this.escapeHtml(bot.name) : ""}" required>
             </div>
             <div class="form-group">
               <label for="botDescription">Description</label>
-              <textarea id="botDescription" required>${bot ? this.escapeHtml(bot.description) : ""}</textarea>
+              <textarea id="botDescription" required>${(bot) ? this.escapeHtml(bot.description) : ""}</textarea>
             </div>
-            ${bot ? `<div class="form-group">
+            ${(!bot) ? `<div class="form-group">
               <label for="botToken">Template</label>
               <div>
                 <select id="botTemplate" value="ping-pong">
@@ -842,19 +842,19 @@ client.login("${bot.token}");` }
             </div>` : ""}
             <div class="form-group">
               <label for="botToken">Bot Token (optional)</label>
-              <input type="text" id="botToken" value="${bot ? this.escapeHtml(bot.token) : ""}">
+              <input type="text" id="botToken" value="${(bot) ? this.escapeHtml(bot.token) : ""}">
             </div>
             <div class="form-group">
               <label for="botPrefix">Command Prefix (optional)</label>
-              <input type="text" id="botPrefix" value="${bot ? this.escapeHtml(bot.prefix) : "!"}" required>
+              <input type="text" id="botPrefix" value="${(bot) ? this.escapeHtml(bot.prefix) : "!"}" required>
             </div>
             <div class="form-group">
               <label for="botCommands">Commands (comma-separated)</label>
-              <input type="text" id="botCommands" value="${bot ? this.escapeHtml(bot.commands.join(", ")) : ""}">
+              <input type="text" id="botCommands" value="${(bot) ? this.escapeHtml(bot.commands.join(", ")) : ""}">
             </div>
             <div class="form-actions">
               <button type="submit" class="submit-btn">
-                ${bot ? "Update Bot" : "Create Bot"}
+                ${(bot) ? "Update Bot" : "Create Bot"}
               </button>
               <button type="button" class="cancel-btn">Cancel</button>
             </div>
@@ -898,7 +898,7 @@ client.login("${bot.token}");` }
       };
     };
 
-    modal.querySelector("#botTemplate").addEventListener("change", toggleInput);
+    if (!bot) modal.querySelector("#botTemplate").addEventListener("change", toggleInput);
 
     document.body.appendChild(modal);
     setTimeout(() => modal.classList.add("show"), 10);
@@ -950,7 +950,6 @@ client.login("${bot.token}");` }
     const fs = require("fs");
     const path = require("path");
 
-    if (!fs.readdirSync(process.cwd()).includes("tempBots")) fs.mkdirSync(path.join(process.cwd(), "tempBots"));
     if (!fs.readdirSync(process.cwd()).includes("bots")) fs.mkdirSync(path.join(process.cwd(), "bots"));
     if (!fs.readdirSync(path.join(process.cwd(), "bots")).includes(newBot.id)) fs.mkdirSync(path.join(process.cwd(), "bots", newBot.id.toString()));
 
@@ -961,12 +960,8 @@ client.login("${bot.token}");` }
       try {
         const response = await fetch(url);
         const filePath = path.join(process.cwd(), "tempBots", newBot.id.toString() + ".zip");
-        const fileStream = fs.createWriteStream(filePath);
 
-        response.body.pipe(fileStream);
-
-        fs.createReadStream(filePath)
-        .pipe(require("unzipper").Extract({ path: path.join(process.cwd(), "bots", newBot.id.toString()) }))
+        response.body.pipe(require("unzipper").Extract({ path: path.join(process.cwd(), "bots", newBot.id.toString()) }))
         .on('close', () => {});
       } catch {};
     };
