@@ -1112,11 +1112,11 @@ client.login("${bot.token}");` }
                     <p>${this.escapeHtml(bot.description)}</p>
                   </div>
                   <div class="bot-actions">
+                    <button class="action-btn code-btn" title="Open Code Editor">
+                      <i class="fas fa-code"></i>
+                    </button>
                     <button class="action-btn edit-btn" title="Edit Bot">
                       <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="action-btn terminal-btn" title="View Terminal">
-                      <i class="fas fa-terminal"></i>
                     </button>
                     <button class="action-btn delete-btn" title="Delete Bot">
                       <i class="fas fa-trash"></i>
@@ -1141,6 +1141,25 @@ client.login("${bot.token}");` }
                   </div>
                 </div>
               `;
+
+              const codeBtn = card.querySelector(".code-btn");
+              const editBtn = card.querySelector(".edit-btn");
+              const deleteBtn = card.querySelector(".delete-btn");
+
+              codeBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                this.showCodeEditor(bot);
+              });
+
+              editBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                this.showBotEditor(bot);
+              });
+
+              deleteBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                this.deleteBot(bot);
+              });
 
               document.getElementById("botGrid").appendChild(card);
             });
