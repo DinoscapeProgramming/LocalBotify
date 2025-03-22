@@ -1,3 +1,7 @@
 html {
   filter: invert(10%) hue-rotate(180deg);
 }
+
+img, video {
+  filter: hue-rotate(180deg);
+}

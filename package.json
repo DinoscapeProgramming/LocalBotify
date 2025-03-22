@@ -1,7 +1,7 @@
 {
   "name": "localbotify",
   "productName": "LocalBotify",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -13,7 +13,9 @@
   "dependencies": {
     "@lydell/node-pty": "^1.1.0",
     "@xterm/xterm": "^5.5.0",
-    "markdown-wasm": "^1.2.0"
+    "markdown-wasm": "^1.2.0",
+    "request": "^2.88.2",
+    "unzipper": "^0.12.3"
   },
   "devDependencies": {
     "@electron/rebuild": "^3.7.1",

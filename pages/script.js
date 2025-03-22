@@ -107,7 +107,7 @@ class DiscordBotCreator {
             <i class="fas fa-robot"></i>
           </div>
           <div class="bot-info">
-            <h3>${this.escapeHtml(bot.name)}</h3>
+            <h3${(!bot.description) ? ' style="font-size: 1.2rem; margin-left: 2.5px;"' : ""}>${this.escapeHtml(bot.name)}</h3>
             <p>${this.escapeHtml(bot.description)}</p>
           </div>
           <div class="bot-actions">
@@ -439,10 +439,10 @@ class DiscordBotCreator {
   };
 
   createHelpView() {
-    const help = document.createElement("div");
-    help.className = "help-view show";
+    const helpView = document.createElement("div");
+    helpView.className = "help-view show";
     
-    help.innerHTML = `
+    helpView.innerHTML = `
       <div class="help-explorer">
         <div class="help-tree">${this.renderFileTree(this.getHelpFileTree())}</div>
       </div>
@@ -450,30 +450,34 @@ class DiscordBotCreator {
       <div class="help-container"></div>
     `;
 
+    this.getFileTreeItem(helpView, "README.md").classList.add("active");
+
     fetch(`https://raw.githubusercontent.com/DinoscapeProgramming/Remote-Control/refs/heads/main/README.md`)
     .then((response) => response.text())
     .then((response) => {
       ipcRenderer.invoke("parseMarkdown", response).then((parsedMarkdown) => {
-        help.querySelector(".help-container").innerHTML = parsedMarkdown;
+        helpView.querySelector(".help-container").innerHTML = parsedMarkdown;
         this.loadCodeHighlighter();
       });
     });
     
-    this.setupHelpFileTreeListeners(help);
+    this.setupHelpFileTreeListeners(helpView);
 
-    return help;
+    return helpView;
   };
   
   getHelpFileTree() {
     return [
       {
-        name: "MAIN",
-        path: "main/README.md"
+        name: "Introduction",
+        path: "README.md"
       }
     ];
   };
 
   loadCodeEditor(bot = null) {
+    if (document.querySelector(".code-editor-script")) return;
+
     [
       "codemirror.css",
       "theme/monokai.css"
@@ -486,6 +490,7 @@ class DiscordBotCreator {
     let codeEditorScript = document.createElement("script");
     codeEditorScript.defer = true;
     codeEditorScript.src = "../packages/codemirror/codemirror.js";
+    codeEditorScript.className = "code-editor-script";
     codeEditorScript.addEventListener("load", () => {
       let codeEditorModeScript = document.createElement("script");
       codeEditorModeScript.defer = true;
@@ -615,26 +620,51 @@ module.exports = commands;` },
           <i class="fas fa-times"></i>
         </button>
         <div class="editor-content">
-          <textarea spellcheck="false">${fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ((dir) => {
+          <textarea spellcheck="false">${this.escapeHtml(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ((dir) => {
             const files = fs.readdirSync(dir);
             if (files.includes("index.js")) return "index.js";
             if (files.includes("package.json")) {
               try {
                 const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
                 if (packageJson.main) return packageJson.main;
-              } catch {}
+              } catch {};
               return "package.json";
-            }
+            };
             const firstJsFile = files.find((file) => file.endsWith(".js"));
             if (firstJsFile) return firstJsFile;
             const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
             if (firstNonFolder) return firstNonFolder;
-          })(path.join(process.cwd(), "bots", bot.id.toString()))), "utf8")}</textarea>
+            return "";
+          })(path.join(process.cwd(), "bots", bot.id.toString()))), "utf8"))}</textarea>
+          ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file)).isDirectory())) ? `
+            <div class="editor-content-missing">
+              <h2>No file found</h2>
+            </div>
+          ` : ""}
         </div>
       </div>
       
       <div class="editor-terminal"></div>
     `;
+
+    if (fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file)).isDirectory())) {
+      this.getFileTreeItem(editorView, ((dir) => {
+        const files = fs.readdirSync(dir);
+        if (files.includes("index.js")) return "index.js";
+        if (files.includes("package.json")) {
+          try {
+            const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+            if (packageJson.main) return packageJson.main;
+          } catch {};
+          return "package.json";
+        };
+        const firstJsFile = files.find((file) => file.endsWith(".js"));
+        if (firstJsFile) return firstJsFile;
+        const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
+        if (firstNonFolder) return firstNonFolder;
+        return null;
+      })(path.join(process.cwd(), "bots", bot.id.toString()))).classList.add("active");
+    };
 
     this.loadCodeEditor(bot);
     this.createTerminal();
@@ -756,6 +786,31 @@ client.login("${bot.token}");` }
     }).join("");
   };
 
+  getFileTreeItem(view, path) {
+    let parts = path.split("/");
+    let container = view.querySelector(".file-tree") || view.querySelector(".help-tree");
+
+    for (let part of parts) {
+      let items = container.querySelectorAll(".file-tree-item");
+      let found = null;
+
+      for (let item of items) {
+        if (item.dataset.filename && (item.dataset.filename === part)) {
+          found = item;
+          break;
+        };
+      };
+
+      if (!found) return null;
+
+      container = found.nextElementSibling;
+      if (!container || !container.classList.contains("folder-content")) {
+        return found;
+      };
+    };
+    return null;
+  };
+
   getFilePath(fileItem) {
     let path = [];
     while (fileItem && !fileItem.classList.contains("file-tree")) {
@@ -813,14 +868,16 @@ client.login("${bot.token}");` }
     const helpContainer = helpView.querySelector(".help-container");
 
     fileItems.forEach(item => {
-      if (!item.classList.contains("folder")) {
-        item.addEventListener("click", () => {
+      item.addEventListener("click", () => {
+        if (item.classList.contains("folder")) {
+          item.nextElementSibling.style.display = (item.nextElementSibling.style.display === "none") ? "block" : "none";
+        } else {
           fileItems.forEach(i => i.classList.remove("active"));
           item.classList.add("active");
 
           const filePath = item.dataset.filename;
 
-          fetch(`https://raw.githubusercontent.com/DinoscapeProgramming/Remote-Control/refs/heads/${filePath}`)
+          fetch(`https://raw.githubusercontent.com/DinoscapeProgramming/Remote-Control/refs/heads/main/${filePath}`)
           .then((response) => response.text())
           .then((response) => {
             ipcRenderer.invoke("parseMarkdown", response).then((parsedMarkdown) => {
@@ -828,12 +885,14 @@ client.login("${bot.token}");` }
               this.loadCodeHighlighter();
             });
           });
-        });
-      };
+        };
+      });
     });
   };
 
   loadCodeHighlighter() {
+    if (document.querySelector(".code-highlighter-script")) return;
+
     let codeHighlighterStylesheet = document.createElement("link");
     codeHighlighterStylesheet.rel = "stylesheet";
     codeHighlighterStylesheet.href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css";
@@ -841,6 +900,7 @@ client.login("${bot.token}");` }
     let codeHighlighterScript = document.createElement("script");
     codeHighlighterScript.defer = true;
     codeHighlighterScript.src = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js";
+    codeHighlighterScript.className = "code-highlighter-script";
     codeHighlighterScript.addEventListener("load", () => {
       [
         "javascript"
@@ -911,15 +971,15 @@ client.login("${bot.token}");` }
               <input type="text" id="botName" value="${(bot) ? this.escapeHtml(bot.name) : ""}" required>
             </div>
             <div class="form-group">
-              <label for="botDescription">Description</label>
-              <textarea id="botDescription" required>${(bot) ? this.escapeHtml(bot.description) : ""}</textarea>
+              <label for="botDescription">Description (optional)</label>
+              <textarea id="botDescription">${(bot) ? this.escapeHtml(bot.description) : ""}</textarea>
             </div>
             ${(!bot) ? `<div class="form-group">
               <label for="botToken">Template</label>
               <div>
                 <select id="botTemplate" value="ping-pong">
                   <option value="none">No Template</option>
-                  <option value="ping-pong">Simple Ping-Pong Bot</option>
+                  <option value="ping-pong" selected>Simple Ping-Pong Bot</option>
                   <option value="git">Custom GitHub Repository</option>
                 </select>
               </div>
@@ -1043,19 +1103,38 @@ client.login("${bot.token}");` }
     const path = require("path");
 
     if (!fs.readdirSync(process.cwd()).includes("bots")) fs.mkdirSync(path.join(process.cwd(), "bots"));
-    if (!fs.readdirSync(path.join(process.cwd(), "bots")).includes(newBot.id)) fs.mkdirSync(path.join(process.cwd(), "bots", newBot.id.toString()));
+    if (!fs.readdirSync(path.join(process.cwd(), "bots")).includes(newBot.id.toString())) fs.mkdirSync(path.join(process.cwd(), "bots", newBot.id.toString()));
 
     if (!template.startsWith("git:")) {
       fs.readdirSync(path.join(process.cwd(), "templates", template)).forEach((file) => {
-        fs.cpSync(path.join(path.join(process.cwd(), "templates", template), file), path.join(path.join(process.cwd(), "bots", newBot.id.toString()), file), { recursive: true });
+        fs.cpSync(path.join(path.join(process.cwd(), "templates", template), file), path.join(process.cwd(), "bots", newBot.id.toString(), file), { recursive: true });
       });
+
+      if (fs.readdirSync(path.join(process.cwd(), "templates", template)).includes("localbotify.config") && fs.statSync(path.join(process.cwd(), "templates", template, "localbotify.config")).isFile()) {
+        fs.readFileSync(path.join(process.cwd(), "templates", template, "localbotify.config"), "utf8").split("```").filter((_, index) => (index % 2)).forEach((configFile) => {
+          fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), configFile.split("\n")[0].trim()), configFile.split("\n").slice(1).join("\n").trim().replace(/\$\{([^}]+)\}/g, (_, code) => {
+            try {
+              return eval(code);
+            } catch {};
+          }), "utf8");
+        });
+      };
     } else {
       const url = `${template.substring(4)}/archive/refs/heads/main.zip`;
-      try {
+
+      /*try {
         const response = await fetch(url);
-        response.body.pipe(require("unzipper").Extract({ path: path.join(process.cwd(), "bots", newBot.id.toString()) }))
-        .on('close', () => {});
-      } catch {};
+        response.body.pipeTo(require("unzipper").Extract({ path: path.join(process.cwd(), "bots", newBot.id.toString()) }));
+      } catch (err) { console.log(err); };*/
+
+      const directory = await require("unzipper").Open.url(require("request"), url);
+      return new Promise((resolve, reject) => {
+        directory.files[0]
+        .stream()
+        .pipe(fs.createWriteStream(path.join(process.cwd(), "bots", newBot.id.toString())))
+        .on("error", reject)
+        .on("finish", resolve)
+      });
     };
   };
 

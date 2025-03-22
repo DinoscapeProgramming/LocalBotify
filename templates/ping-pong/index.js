@@ -2,12 +2,12 @@ require("@teeny-tiny/dotenv").config();
 const { Client, GatewayIntentBits } = require("discord.js");
 const fs = require("fs");
 
-const client = new Client({ 
+const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent
-  ] // --> activate intents in developer portal settings too!
+  ] // --> remember to activate intents in developer portal settings too!
 });
 
 client.once("ready", () => {

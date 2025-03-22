@@ -1044,6 +1044,24 @@ body {
   margin-left: -7.5px;
 }
 
+.editor-content-missing {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin-bottom: 22.5px;
+  background-color: #1c1c1c;
+  z-index: 4;
+}
+
+.editor-content-missing h2 {
+  font-size: 2rem;
+}
+
 .editor-terminal {
   grid-column: 1 / -1;
   grid-row: 2;
