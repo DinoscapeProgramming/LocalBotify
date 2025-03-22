@@ -1,0 +1,7 @@
+:root {
+  --discord-primary: #bf9c16;
+}
+
+html {
+  filter: invert(10%) hue-rotate(180deg);
+}

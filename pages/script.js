@@ -5,7 +5,6 @@ Object.assign(process.env, require("fs").readFileSync(require("path").join("./.e
   }
 }), {}));
 const { ipcRenderer } = require("electron");
-const os = require("os");
 
 class DiscordBotCreator {
   constructor() {
@@ -239,6 +238,14 @@ class DiscordBotCreator {
     const closeModal = () => {
       modal.classList.remove("show");
       setTimeout(() => modal.remove(), 300);
+
+      document.querySelectorAll(".nav-item").forEach((navItem) => {
+        navItem.classList.remove("active");
+        if (Array.from(navItem.classList).includes("currentView")) {
+          navItem.classList.remove("currentView");
+          navItem.classList.add("active");
+        };
+      });
     };
 
     modal.querySelector(".close-btn").addEventListener("click", closeModal);
@@ -277,8 +284,9 @@ class DiscordBotCreator {
           <label data-tooltip="Choose between dark and light theme">
             Theme
             <select id="themeSelect">
-              <option value="dark">Dark Theme</option>
-              <option value="light">Light Theme</option>
+              <option value="discord">Discord</option>
+              <option value="serenity">Serenity</option>
+              <option value="monokai">Monokai</option>
             </select>
           </label>
           <div class="setting-description">
@@ -416,10 +424,17 @@ class DiscordBotCreator {
   updateSettings() {
     const settings = JSON.parse(localStorage.getItem("settings") || "{}");
 
-    if (settings.theme === "light") {
-      document.documentElement.style.filter = "invert(10%) hue-rotate(180deg)";
-    } else {
-      document.documentElement.style.removeProperty("filter");
+    document.querySelectorAll(".theme").forEach((themeStylesheet) => {
+      themeStylesheet.remove();
+    });
+
+    if (settings.theme && (settings.theme !== "discord")) {
+      let theme = document.createElement("link");
+      theme.rel = "stylesheet";
+      theme.href = `../themes/${settings.theme}.css`;
+      theme.className = "theme";
+
+      document.head.appendChild(theme);
     };
   };
 
@@ -453,13 +468,12 @@ class DiscordBotCreator {
     return [
       {
         name: "MAIN",
-        path: "main/README.md",
-        files: []
+        path: "main/README.md"
       }
     ];
   };
 
-  loadCodeEditor() {
+  loadCodeEditor(bot = null) {
     [
       "codemirror.css",
       "theme/monokai.css"
@@ -477,7 +491,10 @@ class DiscordBotCreator {
       codeEditorModeScript.defer = true;
       codeEditorModeScript.src = "../packages/codemirror/mode/javascript/javascript.js";
       codeEditorModeScript.addEventListener("load", () => {
-        CodeMirror.fromTextArea(document.querySelector(".code-editor-view textarea"), {
+        const fs = require("fs");
+        const path = require("path");
+
+        this.editor = CodeMirror.fromTextArea(document.querySelector(".code-editor-view textarea"), {
           mode: "javascript",
           theme: "monokai",
           styleActiveLine: true,
@@ -485,6 +502,14 @@ class DiscordBotCreator {
           matchBrackets: true,
           autoCloseBrackets: true,
           autoCloseTags: true
+        });
+
+        this.editor.on("change", () => {
+          const activeFile = document.querySelector(".file-tree-item.active");
+
+          if (activeFile) {
+            fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(activeFile)), this.editor.getValue(), "utf8");
+          };
         });
       });
       document.head.appendChild(codeEditorModeScript);
@@ -524,8 +549,8 @@ class DiscordBotCreator {
     document.head.appendChild(script);
   };
 
-  showCodeEditor(bot) {
-    if (!bot.files) {
+  showCodeEditor(bot = null) {
+    /*if (!bot.files) {
       bot.files = [
         { name: "index.js", type: "file", content: `const Discord = require("discord.js");
 const client = new Discord.Client();
@@ -559,7 +584,10 @@ module.exports = commands;` },
           commands: bot.commands
         }, null, 2) }
       ];
-    };
+    };*/
+
+    const fs = require("fs");
+    const path = require("path");
 
     const editorView = document.createElement("div");
     editorView.className = "code-editor-view";
@@ -578,7 +606,7 @@ module.exports = commands;` },
           </div>
         </div>
         <div class="file-tree">
-          ${this.renderFileTree(bot.files)}
+          ${this.renderFileTree(this.generateFileTree(path.join(process.cwd(), "bots", bot.id.toString())))}
         </div>
       </div>
       
@@ -587,14 +615,28 @@ module.exports = commands;` },
           <i class="fas fa-times"></i>
         </button>
         <div class="editor-content">
-          <textarea spellcheck="false">${bot.files[0].content}</textarea>
+          <textarea spellcheck="false">${fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ((dir) => {
+            const files = fs.readdirSync(dir);
+            if (files.includes("index.js")) return "index.js";
+            if (files.includes("package.json")) {
+              try {
+                const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+                if (packageJson.main) return packageJson.main;
+              } catch {}
+              return "package.json";
+            }
+            const firstJsFile = files.find((file) => file.endsWith(".js"));
+            if (firstJsFile) return firstJsFile;
+            const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
+            if (firstNonFolder) return firstNonFolder;
+          })(path.join(process.cwd(), "bots", bot.id.toString()))), "utf8")}</textarea>
         </div>
       </div>
       
       <div class="editor-terminal"></div>
     `;
 
-    this.loadCodeEditor();
+    this.loadCodeEditor(bot);
     this.createTerminal();
 
     document.body.appendChild(editorView);
@@ -611,7 +653,7 @@ module.exports = commands;` },
       const fileName = prompt("Enter file name:");
       if (fileName) {
         const newFile = {
-          name: fileName.endsWith(".js") || fileName.endsWith(".json") ? fileName : `${fileName}.js`,
+          name: fileName,
           type: "file",
           content: ""
         };
@@ -619,7 +661,7 @@ module.exports = commands;` },
         this.saveBots();
         
         const fileTree = editorView.querySelector(".file-tree");
-        fileTree.innerHTML = this.renderFileTree(bot.files);
+        fileTree.innerHTML = this.renderFileTree(this.generateFileTree(path.join(process.cwd(), "bots", bot.id.toString())));
         this.setupFileTreeListeners(editorView, bot);
       };
     });
@@ -652,7 +694,7 @@ client.login("${bot.token}");` }
         this.saveBots();
         
         const fileTree = editorView.querySelector(".file-tree");
-        fileTree.innerHTML = this.renderFileTree(bot.files);
+        fileTree.innerHTML = this.renderFileTree(this.generateFileTree(path.join(process.cwd(), "bots", bot.id.toString())));
         this.setupFileTreeListeners(editorView, bot);
       };
     });
@@ -661,6 +703,33 @@ client.login("${bot.token}");` }
 
     this.setupFileTreeListeners(editorView, bot);
     this.setupTerminal(editorView);
+  };
+
+  generateFileTree(dir) {
+    const fs = require("fs");
+    const path = require("path");
+
+    const result = [];
+    const files = fs.readdirSync(dir);
+
+    for (const file of files) {
+      const filePath = path.join(dir, file);
+      const stats = fs.statSync(filePath);
+
+      if (stats.isDirectory()) {
+        result.push({
+          name: file,
+          type: "folder",
+          files: this.generateFileTree(filePath)
+        });
+      } else {
+        result.push({
+          name: file,
+          type: "file"
+        });
+      };
+    };
+    return result;
   };
 
   renderFileTree(files) {
@@ -687,28 +756,43 @@ client.login("${bot.token}");` }
     }).join("");
   };
 
+  getFilePath(fileItem) {
+    let path = [];
+    while (fileItem && !fileItem.classList.contains("file-tree")) {
+      if (fileItem.classList.contains("file-tree-item")) {
+        let span = fileItem.querySelector("span");
+        if (span) {
+          path.unshift(span.textContent.trim());
+          };
+      };
+
+      if (fileItem.parentElement && fileItem.parentElement.classList.contains("folder-content")) {
+        fileItem = fileItem.parentElement.previousElementSibling;
+      } else {
+        fileItem = fileItem.parentElement;
+      };
+    };
+    return path.join("/");
+  };
+
   setupFileTreeListeners(editorView, bot) {
+    const fs = require("fs");
+    const path = require("path");
+
     const fileItems = editorView.querySelectorAll(".file-tree-item");
     const editor = editorView.querySelector("textarea");
-    const editorTab = editorView.querySelector(".editor-tab span");
-    const editorTabIcon = editorView.querySelector(".editor-tab i");
 
-    fileItems.forEach(item => {
-      if (!item.classList.contains("folder")) {
-        item.addEventListener("click", () => {
-          fileItems.forEach(i => i.classList.remove("active"));
-          item.classList.add("active");
-          
-          const fileName = item.dataset.filename;
-          const file = bot.files.find(f => f.name === fileName);
-          
-          if (file) {
-            editor.value = file.content;
-            editorTab.textContent = fileName;
-            editorTabIcon.className = `fas ${fileName.endsWith(".json") ? "fa-file" : "fa-file-code"}`;
-          };
-        });
-      };
+    fileItems.forEach((item) => {
+      item.addEventListener("click", () => {
+        if (item.classList.contains("folder")) {
+          item.nextElementSibling.style.display = (item.nextElementSibling.style.display === "none") ? "block" : "none";
+        } else {
+        fileItems.forEach(i => i.classList.remove("active"));
+        item.classList.add("active");
+
+        this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"));
+        };
+      });
     });
 
     editor.addEventListener("input", () => {
@@ -906,6 +990,14 @@ client.login("${bot.token}");` }
     const closeModal = () => {
       modal.classList.remove("show");
       setTimeout(() => modal.remove(), 300);
+
+      document.querySelectorAll(".nav-item").forEach((navItem) => {
+        navItem.classList.remove("active");
+        if (Array.from(navItem.classList).includes("currentView")) {
+          navItem.classList.remove("currentView");
+          navItem.classList.add("active");
+        };
+      });
     };
 
     modal.querySelector(".close-btn").addEventListener("click", closeModal);
@@ -936,7 +1028,7 @@ client.login("${bot.token}");` }
         this.bots[index] = newBot;
       } else {
         this.bots.push(newBot);
-        this.initializeTemplate(newBot, ((modal.querySelector("#botTemplate").tagName === "INPUT") ? "git:" : ""), modal.querySelector("#botTemplate").value);
+        this.initializeTemplate(newBot, ((form.querySelector("#botTemplate").tagName === "INPUT") ? "git:" : "") + form.querySelector("#botTemplate").value);
       };
 
       this.saveBots();
@@ -954,20 +1046,20 @@ client.login("${bot.token}");` }
     if (!fs.readdirSync(path.join(process.cwd(), "bots")).includes(newBot.id)) fs.mkdirSync(path.join(process.cwd(), "bots", newBot.id.toString()));
 
     if (!template.startsWith("git:")) {
-      fs.cpSync(path.join(process.cwd(), "templates", template), path.join(process.cwd(), "bots", newBot.id.toString()), { recursive: true });
+      fs.readdirSync(path.join(process.cwd(), "templates", template)).forEach((file) => {
+        fs.cpSync(path.join(path.join(process.cwd(), "templates", template), file), path.join(path.join(process.cwd(), "bots", newBot.id.toString()), file), { recursive: true });
+      });
     } else {
       const url = `${template.substring(4)}/archive/refs/heads/main.zip`;
       try {
         const response = await fetch(url);
-        const filePath = path.join(process.cwd(), "tempBots", newBot.id.toString() + ".zip");
-
         response.body.pipe(require("unzipper").Extract({ path: path.join(process.cwd(), "bots", newBot.id.toString()) }))
         .on('close', () => {});
       } catch {};
     };
   };
 
-  deleteBot(bot) {
+  deleteBot(bot = null) {
     const modal = document.createElement("div");
     modal.className = "modal";
     
@@ -1011,13 +1103,18 @@ client.login("${bot.token}");` }
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       
-      this.bots = this.bots.filter(b => b.id !== bot.id);
+      this.bots = this.bots.filter((b) => b.id !== bot.id);
       this.saveBots();
       this.renderContent();
 
       this.saveBots();
       this.renderContent();
       closeModal();
+
+      const fs = require("fs");
+      const path = require("path");
+
+      fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString()));
     });
   };
 
@@ -1027,9 +1124,10 @@ client.login("${bot.token}");` }
       this.renderContent();
     });
 
-    document.querySelectorAll(".nav-item").forEach(item => {
+    document.querySelectorAll(".nav-item").forEach((item) => {
       item.addEventListener("click", () => {
-        document.querySelectorAll(".nav-item").forEach(navItem => {
+        document.querySelectorAll(".nav-item").forEach((navItem) => {
+          if (Array.from(navItem.classList).includes("active") && ["Create New", "Feedback"].includes(item.querySelector("span").textContent)) navItem.classList.add("currentView");
           navItem.classList.remove("active");
         });
         item.classList.add("active");
