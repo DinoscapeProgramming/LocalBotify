@@ -476,7 +476,30 @@ class DiscordBotCreator {
   };
 
   loadCodeEditor(bot = null) {
-    if (document.querySelector(".code-editor-script")) return;
+    if (document.querySelector(".code-editor-script")) {
+      const fs = require("fs");
+      const path = require("path");
+
+      this.editor = CodeMirror.fromTextArea(document.querySelector(".code-editor-view textarea"), {
+        mode: "javascript",
+        theme: "monokai",
+        styleActiveLine: true,
+        lineNumbers: true,
+        matchBrackets: true,
+        autoCloseBrackets: true,
+        autoCloseTags: true
+      });
+
+      this.editor.on("change", () => {
+        const activeFile = document.querySelector(".file-tree-item.active");
+
+        if (activeFile) {
+          fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(activeFile)), this.editor.getValue(), "utf8");
+        };
+      });
+
+      return;
+    };
 
     [
       "codemirror.css",
@@ -652,71 +675,129 @@ class DiscordBotCreator {
     });
 
     const addFileBtn = editorView.querySelector(`.file-explorer-btn[title="New File"]`);
-    addFileBtn.addEventListener("click", () => {
-      let newFileTreeItem = document.createElement("div");
-      newFileTreeItem.className = "file-tree-item";
-      newFileTreeItem.style.cursor = "text";
-      newFileTreeItem.innerHTML = `
-        <i class="fas fa-file"></i>
-        <span contenteditable="true"></span>
-      `;
+    [
+      ...[
+        addFileBtn
+      ],
+      ...(editorView.querySelector(".editor-content-missing")) ? [
+        editorView.querySelectorAll(".editor-content-missing button")[1]
+      ] : []
+    ].forEach((button) => {
+      button.addEventListener("click", () => {
+        let newFileTreeItem = document.createElement("div");
+        newFileTreeItem.className = "file-tree-item";
+        newFileTreeItem.style.cursor = "text";
+        newFileTreeItem.innerHTML = `
+          <i class="fas fa-file"></i>
+          <span contenteditable="true"></span>
+        `;
 
-      newFileTreeItem.querySelector("span").addEventListener("blur", () => {
-        if (!newFileTreeItem.querySelector("span").textContent.trim()) return newFileTreeItem.remove();
-        newFileTreeItem.style.removeProperty("cursor");
-        newFileTreeItem.querySelector("i").className = `fas ${(newFileTreeItem.querySelector("span").textContent.endsWith(".json")) ? "fa-file" : "fa-file-code"}`;
-        newFileTreeItem.querySelector("span").contentEditable = false;
+        newFileTreeItem.querySelector("span").addEventListener("blur", () => {
+          if (!newFileTreeItem.querySelector("span").textContent.trim()) return newFileTreeItem.remove();
+          if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
 
-        const path = require("path");
-        fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "", "utf8");
+          newFileTreeItem.style.removeProperty("cursor");
+          newFileTreeItem.querySelector("i").className = `fas ${(newFileTreeItem.querySelector("span").textContent.endsWith(".json")) ? "fa-file" : "fa-file-code"}`;
+          newFileTreeItem.querySelector("span").contentEditable = false;
 
-        newFileTreeItem.addEventListener("click", () => {
-          const fileItems = editorView.querySelectorAll(".file-tree-item");
+          const path = require("path");
+          fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "", "utf8");
 
-          fileItems.forEach(i => i.classList.remove("active"));
-          newFileTreeItem.classList.add("active");
-  
-          this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
+          newFileTreeItem.addEventListener("click", () => {
+            const fileItems = editorView.querySelectorAll(".file-tree-item");
+
+            fileItems.forEach(i => i.classList.remove("active"));
+            newFileTreeItem.classList.add("active");
+
+            this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
+          });
         });
-      });
 
-      ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").parentElement : document.querySelector(".file-tree")).appendChild(newFileTreeItem);
-      newFileTreeItem.querySelector("span").focus();
+        newFileTreeItem.querySelector("span").addEventListener("keydown", (e) => {
+          if (e.key !== "Enter") return;
+          if (!newFileTreeItem.querySelector("span").textContent.trim()) return newFileTreeItem.remove();
+          if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+
+          newFileTreeItem.style.removeProperty("cursor");
+          newFileTreeItem.querySelector("i").className = `fas ${(newFileTreeItem.querySelector("span").textContent.endsWith(".json")) ? "fa-file" : "fa-file-code"}`;
+          newFileTreeItem.querySelector("span").contentEditable = false;
+
+          const path = require("path");
+          fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "", "utf8");
+
+          newFileTreeItem.addEventListener("click", () => {
+            const fileItems = editorView.querySelectorAll(".file-tree-item");
+
+            fileItems.forEach(i => i.classList.remove("active"));
+            newFileTreeItem.classList.add("active");
+
+            this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
+          });
+        });
+
+        ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").parentElement : document.querySelector(".file-tree")).appendChild(newFileTreeItem);
+        newFileTreeItem.querySelector("span").focus();
+      });
     });
 
     const addFolderBtn = editorView.querySelector(`.file-explorer-btn[title="New Folder"]`);
-    addFolderBtn.addEventListener("click", () => {
-      let newFolderTreeItem = document.createElement("div");
-      newFolderTreeItem.className = "file-tree-item folder";
-      newFolderTreeItem.style.cursor = "text";
-      newFolderTreeItem.innerHTML = `
-        <i class="fas fa-folder"></i>
-        <span contenteditable="true"></span>
-      `;
+    [
+      ...[
+        addFolderBtn
+      ],
+      ...(editorView.querySelector(".editor-content-missing")) ? [
+        editorView.querySelectorAll(".editor-content-missing button")[0]
+      ] : []
+    ].forEach((button) => {
+      button.addEventListener("click", () => {
+        let newFolderTreeItem = document.createElement("div");
+        newFolderTreeItem.className = "file-tree-item folder";
+        newFolderTreeItem.style.cursor = "text";
+        newFolderTreeItem.innerHTML = `
+          <i class="fas fa-folder"></i>
+          <span contenteditable="true"></span>
+        `;
 
-      let newFolderTreeContent = document.createElement("div");
-      newFolderTreeContent.className = "folder-content";
-      newFolderTreeContent.style.paddingLeft = "1px";
+        let newFolderTreeContent = document.createElement("div");
+        newFolderTreeContent.className = "folder-content";
+        newFolderTreeContent.style.paddingLeft = "1px";
 
-      newFolderTreeItem.querySelector("span").addEventListener("blur", () => {
-        if (!newFolderTreeItem.querySelector("span").textContent.trim()) return newFolderTreeItem.remove();
-        newFolderTreeItem.style.removeProperty("cursor");
-        newFolderTreeItem.querySelector("span").contentEditable = false;
+        newFolderTreeItem.querySelector("span").addEventListener("blur", () => {
+          if (!newFolderTreeItem.querySelector("span").textContent.trim()) return newFolderTreeItem.remove();
+          if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
 
-        const path = require("path");
-        fs.mkdirSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)));
+          newFolderTreeItem.style.removeProperty("cursor");
+          newFolderTreeItem.querySelector("span").contentEditable = false;
 
-        newFolderTreeItem.addEventListener("click", () => {
-          newFolderTreeItem.nextElementSibling.style.display = (newFolderTreeItem.nextElementSibling.style.display === "none") ? "block" : "none";
+          const path = require("path");
+          fs.mkdirSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)));
+
+          newFolderTreeItem.addEventListener("click", () => {
+            newFolderTreeItem.nextElementSibling.style.display = (newFolderTreeItem.nextElementSibling.style.display === "none") ? "block" : "none";
+          });
         });
+
+        newFolderTreeItem.querySelector("span").addEventListener("keydown", (e) => {
+          if (e.key !== "Enter") return;
+          if (!newFolderTreeItem.querySelector("span").textContent.trim()) return newFolderTreeItem.remove();
+          if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+
+          newFolderTreeItem.style.removeProperty("cursor");
+          newFolderTreeItem.querySelector("span").contentEditable = false;
+
+          const path = require("path");
+          fs.mkdirSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)));
+
+          newFolderTreeItem.addEventListener("click", () => {
+            newFolderTreeItem.nextElementSibling.style.display = (newFolderTreeItem.nextElementSibling.style.display === "none") ? "block" : "none";
+          });
+        });
+
+        ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").parentElement : document.querySelector(".file-tree")).appendChild(newFolderTreeItem);
+        ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").parentElement : document.querySelector(".file-tree")).appendChild(newFolderTreeContent);
+        newFolderTreeItem.querySelector("span").focus();
       });
-
-      ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").parentElement : document.querySelector(".file-tree")).appendChild(newFolderTreeItem);
-      ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").parentElement : document.querySelector(".file-tree")).appendChild(newFolderTreeContent);
-      newFolderTreeItem.querySelector("span").focus();
     });
-
-    
 
     this.setupFileTreeListeners(editorView, bot);
     this.setupTerminal(editorView);
@@ -878,7 +959,7 @@ class DiscordBotCreator {
   };
 
   loadCodeHighlighter() {
-    if (document.querySelector(".code-highlighter-script")) return;
+    if (document.querySelector(".code-highlighter-script")) return hljs.highlightAll();
 
     let codeHighlighterStylesheet = document.createElement("link");
     codeHighlighterStylesheet.rel = "stylesheet";

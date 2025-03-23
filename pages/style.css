@@ -1059,7 +1059,7 @@ body {
 
 .editor-content-missing h2 {
   font-size: 1.75rem;
-  margin-top: calc(50% - 87.5px);
+  margin-top: calc(50vh - 160px);
 }
 
 .editor-content-missing div {
