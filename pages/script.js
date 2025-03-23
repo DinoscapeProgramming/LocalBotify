@@ -522,8 +522,8 @@ class DiscordBotCreator {
     document.head.appendChild(codeEditorScript);
   };
 
-  createTerminal() {
-    ipcRenderer.send("openTerminal");
+  createTerminal(bot = null) {
+    ipcRenderer.send("openTerminal", bot.id);
 
     let stylesheet = document.createElement("link");
     stylesheet.rel = "stylesheet";
@@ -537,7 +537,6 @@ class DiscordBotCreator {
         rows: Math.round(200 / 17)
       });
       let currentLine = "";
-      let entries = [];
 
       terminal.open(document.querySelector(".editor-terminal"));
       terminal.onKey((data) => {
@@ -555,42 +554,6 @@ class DiscordBotCreator {
   };
 
   showCodeEditor(bot = null) {
-    /*if (!bot.files) {
-      bot.files = [
-        { name: "index.js", type: "file", content: `const Discord = require("discord.js");
-const client = new Discord.Client();
-
-client.on("ready", () => {
-  console.log("Bot is ready!");
-});
-
-client.on("message", message => {
-  if (message.content === "!ping") {
-    message.reply("pong");
-  }
-});
-
-client.login("${bot.token}");` },
-        { name: "commands.js", type: "file", content: `// Bot commands
-const commands = {
-  ping: (message) => {
-    message.reply("pong");
-  },
-  help: (message) => {
-    message.channel.send("Available commands: ${bot.commands.join(", ")}");
-  }
-};
-
-module.exports = commands;` },
-        { name: "config.json", type: "file", content: JSON.stringify({
-          token: bot.token,
-          prefix: bot.prefix,
-          name: bot.name,
-          commands: bot.commands
-        }, null, 2) }
-      ];
-    };*/
-
     const fs = require("fs");
     const path = require("path");
 
@@ -620,7 +583,7 @@ module.exports = commands;` },
           <i class="fas fa-times"></i>
         </button>
         <div class="editor-content">
-          <textarea spellcheck="false">${this.escapeHtml(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ((dir) => {
+          <textarea spellcheck="false">${(fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file)).isDirectory())) ? this.escapeHtml(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ((dir) => {
             const files = fs.readdirSync(dir);
             if (files.includes("index.js")) return "index.js";
             if (files.includes("package.json")) {
@@ -634,11 +597,21 @@ module.exports = commands;` },
             if (firstJsFile) return firstJsFile;
             const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
             if (firstNonFolder) return firstNonFolder;
-            return "";
-          })(path.join(process.cwd(), "bots", bot.id.toString()))), "utf8"))}</textarea>
+            return null;
+          })(path.join(process.cwd(), "bots", bot.id.toString()))), "utf8")) : ""}</textarea>
           ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file)).isDirectory())) ? `
             <div class="editor-content-missing">
               <h2>No file found</h2>
+              <div>
+                <button>
+                  <i class="fas fa-plus"></i>
+                  New File
+                </button>
+                <button>
+                  <i class="fas fa-plus"></i>
+                  New Folder
+                </button>
+              </div>
             </div>
           ` : ""}
         </div>
@@ -667,7 +640,7 @@ module.exports = commands;` },
     };
 
     this.loadCodeEditor(bot);
-    this.createTerminal();
+    this.createTerminal(bot);
 
     document.body.appendChild(editorView);
     setTimeout(() => editorView.classList.add("show"), 10);
@@ -680,53 +653,67 @@ module.exports = commands;` },
 
     const addFileBtn = editorView.querySelector(`.file-explorer-btn[title="New File"]`);
     addFileBtn.addEventListener("click", () => {
-      const fileName = prompt("Enter file name:");
-      if (fileName) {
-        const newFile = {
-          name: fileName,
-          type: "file",
-          content: ""
-        };
-        bot.files.push(newFile);
-        this.saveBots();
-        
-        const fileTree = editorView.querySelector(".file-tree");
-        fileTree.innerHTML = this.renderFileTree(this.generateFileTree(path.join(process.cwd(), "bots", bot.id.toString())));
-        this.setupFileTreeListeners(editorView, bot);
-      };
+      let newFileTreeItem = document.createElement("div");
+      newFileTreeItem.className = "file-tree-item";
+      newFileTreeItem.style.cursor = "text";
+      newFileTreeItem.innerHTML = `
+        <i class="fas fa-file"></i>
+        <span contenteditable="true"></span>
+      `;
+
+      newFileTreeItem.querySelector("span").addEventListener("blur", () => {
+        if (!newFileTreeItem.querySelector("span").textContent.trim()) return newFileTreeItem.remove();
+        newFileTreeItem.style.removeProperty("cursor");
+        newFileTreeItem.querySelector("i").className = `fas ${(newFileTreeItem.querySelector("span").textContent.endsWith(".json")) ? "fa-file" : "fa-file-code"}`;
+        newFileTreeItem.querySelector("span").contentEditable = false;
+
+        const path = require("path");
+        fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "", "utf8");
+
+        newFileTreeItem.addEventListener("click", () => {
+          const fileItems = editorView.querySelectorAll(".file-tree-item");
+
+          fileItems.forEach(i => i.classList.remove("active"));
+          newFileTreeItem.classList.add("active");
+  
+          this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
+        });
+      });
+
+      ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").parentElement : document.querySelector(".file-tree")).appendChild(newFileTreeItem);
+      newFileTreeItem.querySelector("span").focus();
     });
 
     const addFolderBtn = editorView.querySelector(`.file-explorer-btn[title="New Folder"]`);
     addFolderBtn.addEventListener("click", () => {
-      const folderName = prompt("Enter folder name:");
-      if (folderName) {
-        const newFolder = {
-          name: folderName,
-          type: "folder",
-          files: [
-            { name: "index.js", type: "file", content: `const Discord = require("discord.js");
-const client = new Discord.Client();
+      let newFolderTreeItem = document.createElement("div");
+      newFolderTreeItem.className = "file-tree-item folder";
+      newFolderTreeItem.style.cursor = "text";
+      newFolderTreeItem.innerHTML = `
+        <i class="fas fa-folder"></i>
+        <span contenteditable="true"></span>
+      `;
 
-client.on("ready", () => {
-  console.log("Bot is ready!");
-});
+      let newFolderTreeContent = document.createElement("div");
+      newFolderTreeContent.className = "folder-content";
+      newFolderTreeContent.style.paddingLeft = "1px";
 
-client.on("message", message => {
-  if (message.content === "!ping") {
-    message.reply("pong");
-  }
-});
+      newFolderTreeItem.querySelector("span").addEventListener("blur", () => {
+        if (!newFolderTreeItem.querySelector("span").textContent.trim()) return newFolderTreeItem.remove();
+        newFolderTreeItem.style.removeProperty("cursor");
+        newFolderTreeItem.querySelector("span").contentEditable = false;
 
-client.login("${bot.token}");` }
-          ]
-        };
-        bot.files.push(newFolder);
-        this.saveBots();
-        
-        const fileTree = editorView.querySelector(".file-tree");
-        fileTree.innerHTML = this.renderFileTree(this.generateFileTree(path.join(process.cwd(), "bots", bot.id.toString())));
-        this.setupFileTreeListeners(editorView, bot);
-      };
+        const path = require("path");
+        fs.mkdirSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)));
+
+        newFolderTreeItem.addEventListener("click", () => {
+          newFolderTreeItem.nextElementSibling.style.display = (newFolderTreeItem.nextElementSibling.style.display === "none") ? "block" : "none";
+        });
+      });
+
+      ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").parentElement : document.querySelector(".file-tree")).appendChild(newFolderTreeItem);
+      ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").parentElement : document.querySelector(".file-tree")).appendChild(newFolderTreeContent);
+      newFolderTreeItem.querySelector("span").focus();
     });
 
     
@@ -763,7 +750,7 @@ client.login("${bot.token}");` }
   };
 
   renderFileTree(files) {
-    return files.map(file => {
+    return files.map((file) => {
       if (file.type === "folder") {
         return `
           <div class="file-tree-item folder">
@@ -775,7 +762,7 @@ client.login("${bot.token}");` }
           </div>
         `;
       } else {
-        const icon = file.name.endsWith(".json") ? "fa-file" : "fa-file-code";
+        const icon = (file.name.endsWith(".json")) ? "fa-file" : "fa-file-code";
         return `
           <div class="file-tree-item" data-filename="${this.escapeHtml(file.path || file.name)}">
             <i class="fas ${icon}"></i>
@@ -842,10 +829,10 @@ client.login("${bot.token}");` }
         if (item.classList.contains("folder")) {
           item.nextElementSibling.style.display = (item.nextElementSibling.style.display === "none") ? "block" : "none";
         } else {
-        fileItems.forEach(i => i.classList.remove("active"));
-        item.classList.add("active");
+          fileItems.forEach(i => i.classList.remove("active"));
+          item.classList.add("active");
 
-        this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"));
+          this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"));
         };
       });
     });
@@ -1105,6 +1092,8 @@ client.login("${bot.token}");` }
     if (!fs.readdirSync(process.cwd()).includes("bots")) fs.mkdirSync(path.join(process.cwd(), "bots"));
     if (!fs.readdirSync(path.join(process.cwd(), "bots")).includes(newBot.id.toString())) fs.mkdirSync(path.join(process.cwd(), "bots", newBot.id.toString()));
 
+    if (template === "none") return;
+    
     if (!template.startsWith("git:")) {
       fs.readdirSync(path.join(process.cwd(), "templates", template)).forEach((file) => {
         fs.cpSync(path.join(path.join(process.cwd(), "templates", template), file), path.join(process.cwd(), "bots", newBot.id.toString(), file), { recursive: true });

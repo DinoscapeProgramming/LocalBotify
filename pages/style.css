@@ -934,6 +934,7 @@ body {
 .file-tree-item {
   padding: 0.25rem 0.5rem;
   margin-bottom: 5px;
+  max-width: calc(100% - 2.5px);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -999,7 +1000,7 @@ body {
   padding: 4.5px 6.5px;
   border-radius: var(--radius-sm);
   transition: all 0.2s ease;
-  z-index: 3;
+  z-index: 5;
 }
 
 .editor-close-btn:hover {
@@ -1045,9 +1046,6 @@ body {
 }
 
 .editor-content-missing {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   position: absolute;
   top: 0;
   left: 0;
@@ -1055,11 +1053,43 @@ body {
   bottom: 0;
   margin-bottom: 22.5px;
   background-color: #1c1c1c;
+  text-align: center;
   z-index: 4;
 }
 
 .editor-content-missing h2 {
-  font-size: 2rem;
+  font-size: 1.75rem;
+  margin-top: calc(50% - 87.5px);
+}
+
+.editor-content-missing div {
+  margin-top: 10px;
+}
+
+.editor-content-missing div button {
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--discord-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.editor-content-missing div button:hover {
+  background-color: #4752c4;
+}
+
+.editor-content-missing div button:first-child {
+  margin-right: 1.75px;
+}
+
+.editor-content-missing div button:last-child {
+  margin-left: 1.75px;
 }
 
 .editor-terminal {

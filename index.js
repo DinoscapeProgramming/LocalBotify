@@ -93,11 +93,14 @@ const createWindow = () => {
     });
   });
 
-  ipcMain.on("openTerminal", () => {
+  ipcMain.on("openTerminal", (_, botId) => {
+    if (ptyProcess) ptyProcess.kill();
+
     ptyProcess = require("@lydell/node-pty").spawn((require("os").platform() === "win32") ? "powershell.exe" : "bash", [], {
       name: "xterm-color",
       cols: 80,
       rows: Math.round(200 / 17),
+      cwd: path.join(process.cwd(), "bots", botId.toString()),
       env: process.env
     });
 
