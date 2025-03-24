@@ -987,7 +987,7 @@ body {
   font-size: 0.9rem;
 }
 
-.editor-close-btn {
+.editor-btn {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
@@ -1003,7 +1003,11 @@ body {
   z-index: 5;
 }
 
-.editor-close-btn:hover {
+.editor-btn:nth-child(n) {
+  right: calc(0.5rem + (n * 1.5rem));
+}
+
+.editor-btn:hover {
   background-color: var(--discord-hover);
 }
 

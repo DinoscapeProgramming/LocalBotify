@@ -475,30 +475,11 @@ class DiscordBotCreator {
     ];
   };
 
-  loadCodeEditor(bot = null) {
-    if (document.querySelector(".code-editor-script")) {
-      const fs = require("fs");
-      const path = require("path");
-
-      this.editor = CodeMirror.fromTextArea(document.querySelector(".code-editor-view textarea"), {
-        mode: "javascript",
-        theme: "monokai",
-        styleActiveLine: true,
-        lineNumbers: true,
-        matchBrackets: true,
-        autoCloseBrackets: true,
-        autoCloseTags: true
+  loadCodeEditor(editorView, bot = null) {
+    if (document.querySelectorAll(".code-editor-script").length) {
+      document.querySelectorAll(".code-editor-script").forEach((codeEditorScript) => {
+        codeEditorScript.remove();
       });
-
-      this.editor.on("change", () => {
-        const activeFile = document.querySelector(".file-tree-item.active");
-
-        if (activeFile) {
-          fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(activeFile)), this.editor.getValue(), "utf8");
-        };
-      });
-
-      return;
     };
 
     [
@@ -508,6 +489,7 @@ class DiscordBotCreator {
       let codeEditorStylesheet = document.createElement("link");
       codeEditorStylesheet.rel = "stylesheet";
       codeEditorStylesheet.href = "../packages/codemirror/" + codeEditorStylesheetSource;
+      codeEditorStylesheet.className = "code-editor-script";
       document.head.appendChild(codeEditorStylesheet);
     });
     let codeEditorScript = document.createElement("script");
@@ -518,11 +500,12 @@ class DiscordBotCreator {
       let codeEditorModeScript = document.createElement("script");
       codeEditorModeScript.defer = true;
       codeEditorModeScript.src = "../packages/codemirror/mode/javascript/javascript.js";
+      codeEditorModeScript.className = "code-editor-script";
       codeEditorModeScript.addEventListener("load", () => {
         const fs = require("fs");
         const path = require("path");
 
-        this.editor = CodeMirror.fromTextArea(document.querySelector(".code-editor-view textarea"), {
+        this.editor = CodeMirror.fromTextArea(editorView.querySelector(".code-editor-view textarea"), {
           mode: "javascript",
           theme: "monokai",
           styleActiveLine: true,
@@ -533,7 +516,7 @@ class DiscordBotCreator {
         });
 
         this.editor.on("change", () => {
-          const activeFile = document.querySelector(".file-tree-item.active");
+          const activeFile = editorView.querySelector(".file-tree-item.active");
 
           if (activeFile) {
             fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(activeFile)), this.editor.getValue(), "utf8");
@@ -602,9 +585,17 @@ class DiscordBotCreator {
       </div>
       
       <div class="editor-container">
-        <button class="editor-close-btn">
-          <i class="fas fa-times"></i>
-        </button>
+        <div>
+          <button class="editor-btn">
+            <i class="fas fa-play"></i>
+          </button>
+          <button class="editor-btn">
+            <i class="fas fa-publish"></i>
+          </button>
+          <button class="editor-btn">
+            <i class="fas fa-times" style="transform: translateY(1px);"></i>
+          </button>
+        </div>
         <div class="editor-content">
           <textarea spellcheck="false">${(fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file)).isDirectory())) ? this.escapeHtml(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ((dir) => {
             const files = fs.readdirSync(dir);
@@ -662,7 +653,7 @@ class DiscordBotCreator {
       })(path.join(process.cwd(), "bots", bot.id.toString()))).classList.add("active");
     };
 
-    this.loadCodeEditor(bot);
+    this.loadCodeEditor(editorView, bot);
     this.createTerminal(bot);
 
     document.body.appendChild(editorView);
@@ -1180,8 +1171,8 @@ class DiscordBotCreator {
         fs.cpSync(path.join(path.join(process.cwd(), "templates", template), file), path.join(process.cwd(), "bots", newBot.id.toString(), file), { recursive: true });
       });
 
-      if (fs.readdirSync(path.join(process.cwd(), "templates", template)).includes("localbotify.config") && fs.statSync(path.join(process.cwd(), "templates", template, "localbotify.config")).isFile()) {
-        fs.readFileSync(path.join(process.cwd(), "templates", template, "localbotify.config"), "utf8").split("```").filter((_, index) => (index % 2)).forEach((configFile) => {
+      if (fs.readdirSync(path.join(process.cwd(), "templates", template)).includes("files.config") && fs.statSync(path.join(process.cwd(), "templates", template, "files.config")).isFile()) {
+        fs.readFileSync(path.join(process.cwd(), "templates", template, "files.config"), "utf8").split("```").filter((_, index) => (index % 2)).forEach((configFile) => {
           fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), configFile.split("\n")[0].trim()), configFile.split("\n").slice(1).join("\n").trim().replace(/\$\{([^}]+)\}/g, (_, code) => {
             try {
               return eval(code);
