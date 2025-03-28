@@ -586,14 +586,14 @@ class DiscordBotCreator {
       
       <div class="editor-container">
         <div>
-          <button class="editor-btn">
+          <button class="editor-btn" style="--index: 2;">
             <i class="fas fa-play"></i>
           </button>
-          <button class="editor-btn">
-            <i class="fas fa-publish"></i>
+          <button class="editor-btn" style="--index: 1;">
+            <i class="fas fa-upload"></i>
           </button>
-          <button class="editor-btn">
-            <i class="fas fa-times" style="transform: translateY(1px);"></i>
+          <button class="editor-btn" style="--index: 0; transform: translateX(-2.5px);">
+            <i class="fas fa-times" style="transform: trasnalteY(1px);"></i>
           </button>
         </div>
         <div class="editor-content">
@@ -659,7 +659,7 @@ class DiscordBotCreator {
     document.body.appendChild(editorView);
     setTimeout(() => editorView.classList.add("show"), 10);
 
-    const closeBtn = editorView.querySelector(".editor-close-btn");
+    const closeBtn = Array.from(editorView.querySelectorAll(".editor-btn")).at(-1);
     closeBtn.addEventListener("click", () => {
       editorView.classList.remove("show");
       setTimeout(() => editorView.remove(), 300);
@@ -751,6 +751,7 @@ class DiscordBotCreator {
 
         let newFolderTreeContent = document.createElement("div");
         newFolderTreeContent.className = "folder-content";
+        newFolderTreeContent.style.display = "none";
         newFolderTreeContent.style.paddingLeft = "1px";
 
         newFolderTreeItem.querySelector("span").addEventListener("blur", () => {
@@ -829,7 +830,7 @@ class DiscordBotCreator {
             <i class="fas fa-folder"></i>
             <span>${this.escapeHtml(file.name)}</span>
           </div>
-          <div class="folder-content" style="padding-left: 1rem;">
+          <div class="folder-content" style="display: none; padding-left: 1rem;">
             ${this.renderFileTree(file.files)}
           </div>
         `;
