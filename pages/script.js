@@ -10,12 +10,10 @@ class DiscordBotCreator {
   constructor() {
     this.bots = JSON.parse(localStorage.getItem("bots")) || [];
     this.currentView = "bots";
-    if (this.bots.length === 0) {
-      this.initializeDemoData();
-    }
     this.renderContent();
     this.setupEventListeners();
     this.updateSettings();
+    this.runBots();
   };
 
   initializeDemoData() {
@@ -30,7 +28,8 @@ class DiscordBotCreator {
         users: 0,
         token: "EXAMPLE TOKEN",
         prefix: "!",
-        commands: ["ping"]
+        commands: ["ping"],
+        initialized: false
       }
     ];
     this.saveBots();
@@ -157,7 +156,19 @@ class DiscordBotCreator {
 
       deleteBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        this.deleteBot(bot);
+        this.confirm("Delete Bot", `Are you sure about deleting ${this.escapeHtml(bot.name)}?`).then(() => {
+          this.bots = this.bots.filter((b) => b.id !== bot.id);
+          this.saveBots();
+          this.renderContent();
+
+          this.saveBots();
+          this.renderContent();
+          
+          const fs = require("fs");
+          const path = require("path");
+
+          fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString()));
+        }).catch(() => {});
       });
 
       grid.appendChild(card);
@@ -547,11 +558,17 @@ class DiscordBotCreator {
       terminal.open(document.querySelector(".editor-terminal"));
       terminal.onKey((data) => {
         currentLine += data.key;
-        ipcRenderer.send("terminalData", data.key);
+        ipcRenderer.send("terminalData", [
+          bot.id,
+          data.key
+        ]);
       });
 
-      ipcRenderer.on("terminalData", (_, data) => {
-        terminal.write(data);
+      ipcRenderer.on("terminalData", (_, [botId, data]) => {
+        if (botId !== bot.id) return;
+        try {
+          terminal.write(data);
+        } catch {};
       });
     });
 
@@ -563,76 +580,89 @@ class DiscordBotCreator {
     const fs = require("fs");
     const path = require("path");
 
-    const editorView = document.createElement("div");
-    editorView.className = "code-editor-view";
+    const workspaceView = document.createElement("div");
+    workspaceView.className = "workspace-view";
     
-    editorView.innerHTML = `
-      <div class="file-explorer">
-        <div class="file-explorer-header">
-          <span class="file-explorer-title">Files</span>
-          <div class="file-explorer-actions">
-            <button class="file-explorer-btn" title="New File">
-              <i class="fas fa-plus"></i>
-            </button>
-            <button class="file-explorer-btn" title="New Folder">
-              <i class="fas fa-folder-plus"></i>
-            </button>
+    workspaceView.innerHTML = `
+      <div class="workspace-tabs">
+        <button class="active">
+          <i class="fas fa-tools"></i>
+          Workbench
+        </button>
+        <button>
+          <i class="fas fa-code"></i>
+          Code Lab
+        </button>
+        <button>
+          <i class="fas fa-trophy"></i>
+          Pro Suite
+        </button>
+      </div>
+      <button class="workspace-close-btn">
+        <i class="fas fa-times"></i>
+      </button>
+      <div class="code-editor-view">
+        <div class="file-explorer">
+          <div class="file-explorer-header">
+            <span class="file-explorer-title">Files</span>
+            <div class="file-explorer-actions">
+              <button class="file-explorer-btn" title="New File">
+                <i class="fas fa-plus"></i>
+              </button>
+              <button class="file-explorer-btn" title="New Folder">
+                <i class="fas fa-folder-plus"></i>
+              </button>
+            </div>
+          </div>
+          <div class="file-tree">
+            ${this.renderFileTree(this.generateFileTree(path.join(process.cwd(), "bots", bot.id.toString())))}
           </div>
         </div>
-        <div class="file-tree">
-          ${this.renderFileTree(this.generateFileTree(path.join(process.cwd(), "bots", bot.id.toString())))}
-        </div>
-      </div>
-      
-      <div class="editor-container">
-        <div>
-          <button class="editor-btn" style="--index: 2;">
+        
+        <div class="editor-container">
+          <button class="editor-play-btn">
             <i class="fas fa-play"></i>
           </button>
-          <button class="editor-btn" style="--index: 1;">
-            <i class="fas fa-upload"></i>
-          </button>
-          <button class="editor-btn" style="--index: 0; transform: translateX(-2.5px);">
-            <i class="fas fa-times" style="transform: trasnalteY(1px);"></i>
-          </button>
-        </div>
-        <div class="editor-content">
-          <textarea spellcheck="false">${(fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file)).isDirectory())) ? this.escapeHtml(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ((dir) => {
-            const files = fs.readdirSync(dir);
-            if (files.includes("index.js")) return "index.js";
-            if (files.includes("package.json")) {
-              try {
-                const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
-                if (packageJson.main) return packageJson.main;
-              } catch {};
-              return "package.json";
-            };
-            const firstJsFile = files.find((file) => file.endsWith(".js"));
-            if (firstJsFile) return firstJsFile;
-            const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
-            if (firstNonFolder) return firstNonFolder;
-            return null;
-          })(path.join(process.cwd(), "bots", bot.id.toString()))), "utf8")) : ""}</textarea>
-          ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file)).isDirectory())) ? `
-            <div class="editor-content-missing">
-              <h2>No file found</h2>
-              <div>
-                <button>
-                  <i class="fas fa-plus"></i>
-                  New File
-                </button>
-                <button>
-                  <i class="fas fa-plus"></i>
-                  New Folder
-                </button>
+          <div class="editor-content">
+            <textarea spellcheck="false">${(fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file)).isDirectory())) ? this.escapeHtml(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ((dir) => {
+              const files = fs.readdirSync(dir);
+              if (files.includes("index.js")) return "index.js";
+              if (files.includes("package.json")) {
+                try {
+                  const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+                  if (packageJson.main) return packageJson.main;
+                } catch {};
+                return "package.json";
+              };
+              const firstJsFile = files.find((file) => file.endsWith(".js"));
+              if (firstJsFile) return firstJsFile;
+              const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
+              if (firstNonFolder) return firstNonFolder;
+              return null;
+            })(path.join(process.cwd(), "bots", bot.id.toString()))), "utf8")) : ""}</textarea>
+            ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file)).isDirectory())) ? `
+              <div class="editor-content-missing">
+                <h2>No file found</h2>
+                <div>
+                  <button>
+                    <i class="fas fa-plus"></i>
+                    New File
+                  </button>
+                  <button>
+                    <i class="fas fa-plus"></i>
+                    New Folder
+                  </button>
+                </div>
               </div>
-            </div>
-          ` : ""}
+            ` : ""}
+          </div>
         </div>
+        
+        <div class="editor-terminal"></div>
       </div>
-      
-      <div class="editor-terminal"></div>
     `;
+
+    const editorView = workspaceView.querySelector(".code-editor-view");
 
     if (fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file)).isDirectory())) {
       this.getFileTreeItem(editorView, ((dir) => {
@@ -656,13 +686,13 @@ class DiscordBotCreator {
     this.loadCodeEditor(editorView, bot);
     this.createTerminal(bot);
 
-    document.body.appendChild(editorView);
-    setTimeout(() => editorView.classList.add("show"), 10);
+    document.body.appendChild(workspaceView);
+    setTimeout(() => workspaceView.classList.add("show"), 10);
 
-    const closeBtn = Array.from(editorView.querySelectorAll(".editor-btn")).at(-1);
+    const closeBtn = workspaceView.querySelector(".workspace-close-btn");
     closeBtn.addEventListener("click", () => {
-      editorView.classList.remove("show");
-      setTimeout(() => editorView.remove(), 300);
+      workspaceView.classList.remove("show");
+      setTimeout(() => workspaceView.remove(), 300);
     });
 
     const addFileBtn = editorView.querySelector(`.file-explorer-btn[title="New File"]`);
@@ -752,7 +782,7 @@ class DiscordBotCreator {
         let newFolderTreeContent = document.createElement("div");
         newFolderTreeContent.className = "folder-content";
         newFolderTreeContent.style.display = "none";
-        newFolderTreeContent.style.paddingLeft = "1px";
+        newFolderTreeContent.style.paddingLeft = "1rem";
 
         newFolderTreeItem.querySelector("span").addEventListener("blur", () => {
           if (!newFolderTreeItem.querySelector("span").textContent.trim()) return newFolderTreeItem.remove();
@@ -1140,7 +1170,7 @@ class DiscordBotCreator {
         status: bot ? bot.status : "offline",
         servers: bot ? bot.servers : 0,
         users: bot ? bot.users : 0,
-        logs: bot ? bot.logs : []
+        initialized: false
       };
 
       if (bot) {
@@ -1200,62 +1230,47 @@ class DiscordBotCreator {
     };
   };
 
-  deleteBot(bot = null) {
-    const modal = document.createElement("div");
-    modal.className = "modal";
-    
-    modal.innerHTML = `
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Delete Bot</h2>
-          <button class="close-btn"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="modal-body">
-          <form id="botForm">
-            <div class="form-group">
-              Are you sure about deleting ${this.escapeHtml(bot.name)}?
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="submit-btn">
-                Delete Bot
-              </button>
-              <button type="button" class="cancel-btn">Cancel</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    `;
+  runBots() {
+    const fs = require("fs");
+    const path = require("path");
 
-    document.body.appendChild(modal);
-    setTimeout(() => modal.classList.add("show"), 10);
+    this.bots.forEach(async (bot) => {
+      let readConfigFile = (configPath) => Object.assign(process.env, fs.readFileSync(path.join(configPath), "utf8").split("\n").filter((line) => !line.startsWith("#") && (line.split("=").length > 1)).map((line) => line.trim().split(/\/\/|#/)[0].split("=")).reduce((data, accumulator) => ({
+        ...data,
+        ...{
+          [accumulator[0]]: JSON.parse(accumulator[1].trim())
+        }
+      }), {}));
 
-    const closeModal = () => {
-      modal.classList.remove("show");
-      setTimeout(() => modal.remove(), 300);
-    };
-
-    modal.querySelector(".close-btn").addEventListener("click", closeModal);
-    modal.querySelector(".cancel-btn").addEventListener("click", closeModal);
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) closeModal();
-    });
-
-    const form = modal.querySelector("#botForm");
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
+      let configFile;
+      try {
+        configFile = readConfigFile(path.join(process.cwd(), "bots", bot.id.toString(), ".env"));
+      } catch {
+        configFile = {};
+      };
       
-      this.bots = this.bots.filter((b) => b.id !== bot.id);
-      this.saveBots();
-      this.renderContent();
+      if (!bot.initialized && !configFile.INITIALIZATION_COMMAND) {
+        configFile.INITIALIZATION_COMMAND = await this.prompt("Enter Initialization Command");
+      };
+      
+      if (!configFile.STARTUP_COMMAND) {
+        configFile.STARTUP_COMMAND = await this.prompt("Enter Startup Command");
+      };
 
-      this.saveBots();
-      this.renderContent();
-      closeModal();
+      ipcRenderer.invoke("runBotCommand", [
+        bot.id,
+        ((bot.initialized) ? (configFile.INITIALIZATION_COMMAND + "; ") : "") + configFile.STARTUP_COMMAND
+      ]).then((success) => {
+        if (!success) return;
 
-      const fs = require("fs");
-      const path = require("path");
+        const newBot = bot;
+        newBot.initialized = true;
 
-      fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString()));
+        const index = this.bots.findIndex((b) => b.id === bot.id);
+        this.bots[index] = newBot;
+
+        this.saveBots();
+      });
     });
   };
 
@@ -1397,7 +1412,19 @@ class DiscordBotCreator {
 
               deleteBtn.addEventListener("click", (e) => {
                 e.stopPropagation();
-                this.deleteBot(bot);
+                this.confirm("Delete Bot", `Are you sure about deleting ${this.escapeHtml(bot.name)}?`).then(() => {
+                this.bots = this.bots.filter((b) => b.id !== bot.id);
+                this.saveBots();
+                this.renderContent();
+
+                this.saveBots();
+                this.renderContent();
+
+                const fs = require("fs");
+                const path = require("path");
+
+                fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString()));
+              }).catch(() => {});
               });
 
               document.getElementById("botGrid").appendChild(card);
@@ -1411,6 +1438,59 @@ class DiscordBotCreator {
       if (e.target.matches(".create-btn") || e.target.closest(".create-btn")) {
         this.showBotEditor();
       };
+    });
+  };
+  
+  confirm(title, message) {
+    return new Promise((resolve, reject) => {
+      const modal = document.createElement("div");
+      modal.className = "modal";
+
+      modal.innerHTML = `
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>${this.escapeHtml(title)}</h2>
+            <button class="close-btn"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="modal-body">
+            <form id="botForm">
+              <div class="form-group">
+                ${this.escapeHtml(message)}
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="submit-btn">
+                  ${this.escapeHtml(title)}
+                </button>
+                <button type="button" class="cancel-btn">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+      setTimeout(() => modal.classList.add("show"), 10);
+
+      const closeModal = () => {
+        modal.classList.remove("show");
+        setTimeout(() => modal.remove(), 300);
+        reject();
+      };
+
+      modal.querySelector(".close-btn").addEventListener("click", closeModal);
+      modal.querySelector(".cancel-btn").addEventListener("click", closeModal);
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+      });
+
+      const form = modal.querySelector("#botForm");
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        closeModal();
+ 
+        resolve();
+      });
     });
   };
 

@@ -19,7 +19,7 @@ const os = require("os");
 const path = require("path");
 const { parse } = require("markdown-wasm");
 let tray;
-let ptyProcess;
+let ptyProcesses = [];
 
 const createWindow = () => {
   const window = new BrowserWindow({
@@ -94,9 +94,9 @@ const createWindow = () => {
   });
 
   ipcMain.on("openTerminal", (_, botId) => {
-    if (ptyProcess) ptyProcess.kill();
+    if (ptyProcesses[botId]) return;
 
-    ptyProcess = require("@lydell/node-pty").spawn((require("os").platform() === "win32") ? "powershell.exe" : "bash", [], {
+    ptyProcesses[botId] = require("@lydell/node-pty").spawn((require("os").platform() === "win32") ? "powershell.exe" : "bash", [], {
       name: "xterm-color",
       cols: 80,
       rows: Math.round(200 / 17),
@@ -104,13 +104,48 @@ const createWindow = () => {
       env: process.env
     });
 
-    ptyProcess.on("data", (data) => {
-      window.webContents.send("terminalData", data);
+    ptyProcesses[botId].on("data", (data) => {
+      window.webContents.send("terminalData", [
+        botId,
+        data
+      ]);
     });
   });
 
-  ipcMain.on("terminalData", (_, data) => {
-    ptyProcess.write(data);
+  ipcMain.on("terminalData", (_, [botId, data]) => {
+    try {
+      ptyProcesses[botId].write(data);
+    } catch {};
+  });
+  
+  ipcMain.handle("runBotCommand", (_, [botId, command]) => {
+    if (ptyProcesses[botId]) {
+      ptyProcesses[botId].write(command);
+      return true;
+    };
+
+    ptyProcesses[botId] = require("@lydell/node-pty").spawn((require("os").platform() === "win32") ? "powershell.exe" : "bash", [], {
+      name: "xterm-color",
+      cols: 80,
+      rows: Math.round(200 / 17),
+      cwd: path.join(process.cwd(), "bots", botId.toString()),
+      env: process.env
+    });
+    
+    ptyProcesses[botId].on("data", (data) => {
+      window.webContents.send("terminalData", [
+        botId,
+        data
+      ]);
+    });
+
+    try {
+      ptyProcesses[botId].write(command);
+    } catch {
+      return false;
+    } finally {
+      return true;
+    };
   });
 
   ipcMain.handle("parseMarkdown", (_, markdown) => parse(markdown));
