@@ -301,7 +301,7 @@ class DiscordBotCreator {
             </select>
           </label>
           <div class="setting-description">
-            Customize the look and feel of your Discord Bot Creator
+            Customize the look and feel of your LocalBotify application
           </div>
         </div>
         <div class="setting-item">
@@ -582,7 +582,7 @@ class DiscordBotCreator {
 
     const workspaceView = document.createElement("div");
     workspaceView.className = "workspace-view";
-    
+
     workspaceView.innerHTML = `
       <div class="workspace-tabs">
         <button class="active">
@@ -598,9 +598,137 @@ class DiscordBotCreator {
           Pro Suite
         </button>
       </div>
+
       <button class="workspace-close-btn">
         <i class="fas fa-times"></i>
       </button>
+
+      <div class="workbench-view">
+        <div class="settings-section">
+          <h3><i class="fas fa-palette"></i>Appearance</h3>
+          <div class="setting-item">
+            <label data-tooltip="Choose the default language for your bot">
+              <span>Bot Avatar</span>
+              <select id="Language">
+                <option value="discord">Discord</option>
+                <option value="serenity">Serenity</option>
+                <option value="monokai">Monokai</option>
+              </select>
+            </label>
+            <div class="setting-description">
+              Customize the look and feel of your Discord Bot Creator
+            </div>
+          </div>
+          <div class="setting-item">
+            <label data-tooltip="Choose the default language for your bot">
+              <span>Bot Status</span>
+              <select id="Language" style="width: fit-content; border-top-right-radius: 0; border-bottom-right-radius: 0;">
+                <option value="online">🟢</option>
+                <option value="idle">🌙</option>
+                <option value="doNotDisturb">🔴</option>
+                <option value="invisible">🔘</option>
+              </select>
+              <input type="text" id="defaultPrefix" value="Ready to assist!" placeholder="Enter status message..." style="width: 9.05rem; margin-left: -0.75rem; border-top-left-radius: 0; border-bottom-left-radius: 0;" />
+            </label>
+            <div class="setting-description">
+              Customize the look and feel of your Discord Bot Creator
+            </div>
+          </div>
+          <div class="setting-item">
+            <label data-tooltip="Show yourself using the footer">
+              <span>Bot Embed Footer</span>
+              <input type="text" id="defaultPrefix" value="Created with LocalBotify.app • {Date.now}" placeholder="Enter footer..." style="width: 19.75rem;" />
+            </label>
+            <div class="setting-description">
+              Customize bot footer
+            </div>
+          </div>
+          <div class="setting-item">
+            <label data-tooltip="Be ready when something goes wrong">
+              <span>Update Notifications</span>
+              <input type="checkbox" id="updateNotifications" />
+            </label>
+            <div class="setting-description">
+              Reduce spacing and show more content at once
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3><i class="fas fa-code"></i>Developer Settings</h3>
+          <div class="setting-item">
+            <label data-tooltip="Default prefix for new bots">
+              Default Bot Prefix
+              <input type="text" id="defaultPrefix" value="!" placeholder="Enter prefix..." />
+            </label>
+            <div class="setting-description">
+              Set the default command prefix for newly created bots
+            </div>
+          </div>
+          <div class="setting-item">
+            <label data-tooltip="Timeout for API requests">
+              API Request Timeout
+              <input type="number" id="apiTimeout" value="5000" min="1000" step="1000" />
+              <div class="setting-item-spinner-buttons">
+                <button aria-label="Increment" onclick="this.parentElement.previousElementSibling.value++;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="18 15 12 9 6 15"></polyline>
+                  </svg>
+                </button>
+                <button aria-label="Decrement" onclick="this.parentElement.previousElementSibling.value--;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+              </div>
+            </label>
+            <div class="setting-description">
+              Maximum time to wait for API responses (in milliseconds)
+            </div>
+          </div>
+          <div class="setting-item">
+            <label data-tooltip="Enable development mode">
+              <span>Developer Mode</span>
+              <input type="checkbox" id="devMode" />
+            </label>
+            <div class="setting-description">
+              Show additional debugging information and developer tools
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3><i class="fas fa-bell"></i>Notifications</h3>
+          <div class="setting-item">
+            <label data-tooltip="Get notified about errors">
+              <span>Error Notifications</span>
+              <input type="checkbox" id="errorNotifications" checked />
+            </label>
+            <div class="setting-description">
+              Receive notifications when errors occur
+            </div>
+          </div>
+          <div class="setting-item">
+            <label data-tooltip="Get notified about status changes">
+              <span>Status Notifications</span>
+              <input type="checkbox" id="statusNotifications" checked />
+            </label>
+            <div class="setting-description">
+              Receive notifications when bot status changes
+            </div>
+          </div>
+          <div class="setting-item">
+            <label data-tooltip="Get notified about updates">
+              <span>Update Notifications</span>
+              <input type="checkbox" id="updateNotifications" checked />
+            </label>
+            <div class="setting-description">
+              Receive notifications about new features and updates
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="code-editor-view">
         <div class="file-explorer">
           <div class="file-explorer-header">
@@ -618,7 +746,7 @@ class DiscordBotCreator {
             ${this.renderFileTree(this.generateFileTree(path.join(process.cwd(), "bots", bot.id.toString())))}
           </div>
         </div>
-        
+
         <div class="editor-container">
           <button class="editor-play-btn">
             <i class="fas fa-play"></i>
@@ -657,9 +785,11 @@ class DiscordBotCreator {
             ` : ""}
           </div>
         </div>
-        
+
         <div class="editor-terminal"></div>
       </div>
+      
+      <div></div>
     `;
 
     const editorView = workspaceView.querySelector(".code-editor-view");
@@ -1250,11 +1380,15 @@ class DiscordBotCreator {
       };
       
       if (!bot.initialized && !configFile.INITIALIZATION_COMMAND) {
-        configFile.INITIALIZATION_COMMAND = await this.prompt("Enter Initialization Command");
+        try {
+          configFile.INITIALIZATION_COMMAND = await this.prompt("Enter Initialization Command");
+        } catch {};
       };
       
       if (!configFile.STARTUP_COMMAND) {
-        configFile.STARTUP_COMMAND = await this.prompt("Enter Startup Command");
+        try {
+          configFile.STARTUP_COMMAND = await this.prompt("Enter Startup Command");
+        } catch {};
       };
 
       ipcRenderer.invoke("runBotCommand", [
@@ -1413,18 +1547,18 @@ class DiscordBotCreator {
               deleteBtn.addEventListener("click", (e) => {
                 e.stopPropagation();
                 this.confirm("Delete Bot", `Are you sure about deleting ${this.escapeHtml(bot.name)}?`).then(() => {
-                this.bots = this.bots.filter((b) => b.id !== bot.id);
-                this.saveBots();
-                this.renderContent();
+                  this.bots = this.bots.filter((b) => b.id !== bot.id);
+                  this.saveBots();
+                  this.renderContent();
 
-                this.saveBots();
-                this.renderContent();
+                  this.saveBots();
+                  this.renderContent();
 
-                const fs = require("fs");
-                const path = require("path");
+                  const fs = require("fs");
+                  const path = require("path");
 
-                fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString()));
-              }).catch(() => {});
+                  fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString()));
+                }).catch(() => {});
               });
 
               document.getElementById("botGrid").appendChild(card);
@@ -1438,6 +1572,59 @@ class DiscordBotCreator {
       if (e.target.matches(".create-btn") || e.target.closest(".create-btn")) {
         this.showBotEditor();
       };
+    });
+  };
+  
+  prompt(title, placeholder = "") {
+    return new Promise((resolve, reject) => {
+      const modal = document.createElement("div");
+      modal.className = "modal";
+
+      modal.innerHTML = `
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>${this.escapeHtml(title)}</h2>
+            <button class="close-btn"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="modal-body">
+            <form id="botForm">
+              <div class="form-group">
+                <input type="text" id="formInput" placeholder="${placeholder}"></input>
+              </div>
+              <div class="form-actions" style="margin-top: 0;">
+                <button type="submit" class="submit-btn">
+                  Submit
+                </button>
+                <button type="button" class="cancel-btn">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+      setTimeout(() => modal.classList.add("show"), 10);
+
+      const closeModal = () => {
+        modal.classList.remove("show");
+        setTimeout(() => modal.remove(), 300);
+        reject();
+      };
+
+      modal.querySelector(".close-btn").addEventListener("click", closeModal);
+      modal.querySelector(".cancel-btn").addEventListener("click", closeModal);
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+      });
+
+      const form = modal.querySelector("#botForm");
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        closeModal();
+ 
+        resolve(form.querySelector("#formInput").value);
+      });
     });
   };
   
@@ -1487,8 +1674,8 @@ class DiscordBotCreator {
       form.addEventListener("submit", (e) => {
         e.preventDefault();
 
-        closeModal();
- 
+        modal.classList.remove("show");
+        setTimeout(() => modal.remove(), 300);
         resolve();
       });
     });
