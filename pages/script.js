@@ -604,132 +604,52 @@ class DiscordBotCreator {
       </button>
 
       <div class="workbench-view">
-        <div class="settings-section">
-          <h3><i class="fas fa-palette"></i>Appearance</h3>
-          <div class="setting-item">
-            <label data-tooltip="Choose the default language for your bot">
-              <span>Bot Avatar</span>
-              <select id="Language">
-                <option value="discord">Discord</option>
-                <option value="serenity">Serenity</option>
-                <option value="monokai">Monokai</option>
-              </select>
-            </label>
-            <div class="setting-description">
-              Customize the look and feel of your Discord Bot Creator
-            </div>
+        <div class="bot-header" style="margin-bottom: 1.65rem;">
+          <div class="bot-avatar" style="width: 60px; height: 60px;">
+            <i class="fas fa-robot" style="font-size: 1.65rem;"></i>
           </div>
-          <div class="setting-item">
-            <label data-tooltip="Choose the default language for your bot">
-              <span>Bot Status</span>
-              <select id="Language" style="width: fit-content; border-top-right-radius: 0; border-bottom-right-radius: 0;">
-                <option value="online">🟢</option>
-                <option value="idle">🌙</option>
-                <option value="doNotDisturb">🔴</option>
-                <option value="invisible">🔘</option>
-              </select>
-              <input type="text" id="defaultPrefix" value="Ready to assist!" placeholder="Enter status message..." style="width: 9.05rem; margin-left: -0.75rem; border-top-left-radius: 0; border-bottom-left-radius: 0;" />
-            </label>
-            <div class="setting-description">
-              Customize the look and feel of your Discord Bot Creator
-            </div>
-          </div>
-          <div class="setting-item">
-            <label data-tooltip="Show yourself using the footer">
-              <span>Bot Embed Footer</span>
-              <input type="text" id="defaultPrefix" value="Created with LocalBotify.app • {Date.now}" placeholder="Enter footer..." style="width: 19.75rem;" />
-            </label>
-            <div class="setting-description">
-              Customize bot footer
-            </div>
-          </div>
-          <div class="setting-item">
-            <label data-tooltip="Be ready when something goes wrong">
-              <span>Update Notifications</span>
-              <input type="checkbox" id="updateNotifications" />
-            </label>
-            <div class="setting-description">
-              Reduce spacing and show more content at once
-            </div>
+          <div class="bot-info">
+            <h3 style="font-size: 1.5rem; margin-left: 2.5px;">${this.escapeHtml(bot.name)}</h3>
+            <p></p>
           </div>
         </div>
-
-        <div class="settings-section">
-          <h3><i class="fas fa-code"></i>Developer Settings</h3>
-          <div class="setting-item">
-            <label data-tooltip="Default prefix for new bots">
-              Default Bot Prefix
-              <input type="text" id="defaultPrefix" value="!" placeholder="Enter prefix..." />
-            </label>
-            <div class="setting-description">
-              Set the default command prefix for newly created bots
-            </div>
-          </div>
-          <div class="setting-item">
-            <label data-tooltip="Timeout for API requests">
-              API Request Timeout
-              <input type="number" id="apiTimeout" value="5000" min="1000" step="1000" />
-              <div class="setting-item-spinner-buttons">
-                <button aria-label="Increment" onclick="this.parentElement.previousElementSibling.value++;">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="18 15 12 9 6 15"></polyline>
-                  </svg>
-                </button>
-                <button aria-label="Decrement" onclick="this.parentElement.previousElementSibling.value--;">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </button>
-              </div>
-            </label>
-            <div class="setting-description">
-              Maximum time to wait for API responses (in milliseconds)
-            </div>
-          </div>
-          <div class="setting-item">
-            <label data-tooltip="Enable development mode">
-              <span>Developer Mode</span>
-              <input type="checkbox" id="devMode" />
-            </label>
-            <div class="setting-description">
-              Show additional debugging information and developer tools
-            </div>
+        <div class="setting-item" style="margin-bottom: 0.85rem;">
+          <label data-tooltip="Choose the status for your bot">
+            <span>Bot Status</span>
+            <select id="Language" style="width: fit-content; border-top-right-radius: 0; border-bottom-right-radius: 0;">
+              <option value="online">🟢</option>
+              <option value="idle">🌙</option>
+              <option value="doNotDisturb">🔴</option>
+              <option value="invisible">🔘</option>
+            </select>
+            <input type="text" id="defaultPrefix" value="Ready to assist!" placeholder="Enter status message..." style="width: 9.05rem; margin-left: -0.75rem; border-top-left-radius: 0; border-bottom-left-radius: 0;" />
+          </label>
+          <div class="setting-description">
+            Give your bot a personality
           </div>
         </div>
-
-        <div class="settings-section">
-          <h3><i class="fas fa-bell"></i>Notifications</h3>
-          <div class="setting-item">
-            <label data-tooltip="Get notified about errors">
-              <span>Error Notifications</span>
-              <input type="checkbox" id="errorNotifications" checked />
-            </label>
-            <div class="setting-description">
-              Receive notifications when errors occur
-            </div>
+        <div class="setting-item" style="margin-bottom: 0.85rem;">
+          <label data-tooltip="Show yourself using the footer">
+            <span>Bot Embed Footer</span>
+            <input type="text" id="defaultPrefix" value="Created with LocalBotify.app • {Date.now}" placeholder="Enter footer..." style="width: 19.75rem;" />
+          </label>
+          <div class="setting-description">
+            Customize your bot embed footer
           </div>
-          <div class="setting-item">
-            <label data-tooltip="Get notified about status changes">
-              <span>Status Notifications</span>
-              <input type="checkbox" id="statusNotifications" checked />
-            </label>
-            <div class="setting-description">
-              Receive notifications when bot status changes
-            </div>
+        </div>
+        <div class="setting-item" style="margin-bottom: 0.85rem;">
+          <label data-tooltip="Be ready when something goes wrong">
+            <span>Update Notifications</span>
+            <input type="checkbox" id="updateNotifications" />
+          </label>
+          <div class="setting-description">
+            Receive notifications when your bot goes up or down
           </div>
-          <div class="setting-item">
-            <label data-tooltip="Get notified about updates">
-              <span>Update Notifications</span>
-              <input type="checkbox" id="updateNotifications" checked />
-            </label>
-            <div class="setting-description">
-              Receive notifications about new features and updates
-            </div>
           </div>
         </div>
       </div>
 
-      <div class="code-editor-view">
+      <div class="code-editor-view" style="display: none;">
         <div class="file-explorer">
           <div class="file-explorer-header">
             <span class="file-explorer-title">Files</span>
@@ -792,7 +712,23 @@ class DiscordBotCreator {
       <div></div>
     `;
 
+    const workbenchView = workspaceView.querySelector(".workbench-view");
     const editorView = workspaceView.querySelector(".code-editor-view");
+
+    workspaceView.querySelectorAll(".workspace-tabs button").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        workspaceView.querySelectorAll(".workspace-tabs button").forEach((activeTab) => activeTab.classList.remove("active"));
+        tab.classList.add("active");
+
+        if (tab.querySelector("i").className === "fas fa-tools") {
+          editorView.style.display = "none";
+          workbenchView.style.display = "block";
+        } else if (tab.querySelector("i").className === "fas fa-code") {
+          workbenchView.style.display = "none";
+          editorView.style.display = "grid";
+        };
+      });
+    });
 
     if (fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file)).isDirectory())) {
       this.getFileTreeItem(editorView, ((dir) => {

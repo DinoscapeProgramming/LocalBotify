@@ -953,13 +953,14 @@ body {
 }
 
 .workbench-view {
-  padding: 5.5rem 7rem;
+  padding: 3.5rem 4rem;
   margin: 0 auto;
   animation: slideUp 0.5s ease;
   position: relative;
   left: 0;
   top: 35.5px;
   border-top: 1.35px solid #ffffff26;
+  overflow-y: auto;
 }
 
 .code-editor-view {
