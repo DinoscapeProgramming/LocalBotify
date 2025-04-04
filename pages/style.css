@@ -955,7 +955,6 @@ body {
 .workbench-view {
   padding: 3.5rem 4rem;
   margin: 0 auto;
-  animation: slideUp 0.5s ease;
   position: relative;
   left: 0;
   top: 35.5px;
@@ -1014,6 +1013,10 @@ body {
   transition: all 0.2s ease;
 }
 
+.file-explorer-btn.animationless {
+  transition: none;
+}
+
 .file-explorer-btn:hover {
   color: var(--discord-text);
   background-color: var(--discord-hover);
@@ -1034,6 +1037,10 @@ body {
   border-radius: var(--radius-sm);
   transition: all 0.2s ease;
   user-select: none;
+}
+
+.file-tree-item.animationless {
+  transition: none;
 }
 
 .file-tree-item:hover {

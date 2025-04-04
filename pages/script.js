@@ -604,52 +604,64 @@ class DiscordBotCreator {
       </button>
 
       <div class="workbench-view">
-        <div class="bot-header" style="margin-bottom: 1.65rem;">
-          <div class="bot-avatar" style="width: 60px; height: 60px;">
-            <i class="fas fa-robot" style="font-size: 1.65rem;"></i>
+        <div style="animation: slideUp 0.5s ease;">
+          <div class="bot-header" style="margin-bottom: 1.65rem;">
+            <div class="bot-avatar" style="width: 60px; height: 60px;">
+              <i class="fas fa-robot" style="font-size: 1.65rem;"></i>
+            </div>
+            <div class="bot-info">
+              <h3 style="font-size: 1.5rem; margin-left: 2.5px;">${this.escapeHtml(bot.name)}</h3>
+              <p style="font-size: 0.95rem; margin-left: 2.5px; margin-top: -2.5px;">${(bot.description) ? this.escapeHtml(bot.description) : ""}</p>
+            </div>
           </div>
-          <div class="bot-info">
-            <h3 style="font-size: 1.5rem; margin-left: 2.5px;">${this.escapeHtml(bot.name)}</h3>
-            <p></p>
+          <div class="setting-item" style="margin-bottom: 0.85rem;">
+            <label data-tooltip="Choose the status for your bot">
+              <span>Bot Status</span>
+              <select id="botStatusSymbol" style="width: fit-content; border-top-right-radius: 0; border-bottom-right-radius: 0;">
+                <option value="online">🟢</option>
+                <option value="idle">🌙</option>
+                <option value="doNotDisturb">🔴</option>
+                <option value="invisible">🔘</option>
+              </select>
+              <input type="text" id="botStatusMessage" value="Ready to assist!" placeholder="Enter status message..." style="width: 9.05rem; margin-left: -0.75rem; border-top-left-radius: 0; border-bottom-left-radius: 0;" />
+            </label>
+            <div class="setting-description">
+              Give your bot a personality
+            </div>
           </div>
-        </div>
-        <div class="setting-item" style="margin-bottom: 0.85rem;">
-          <label data-tooltip="Choose the status for your bot">
-            <span>Bot Status</span>
-            <select id="Language" style="width: fit-content; border-top-right-radius: 0; border-bottom-right-radius: 0;">
-              <option value="online">🟢</option>
-              <option value="idle">🌙</option>
-              <option value="doNotDisturb">🔴</option>
-              <option value="invisible">🔘</option>
-            </select>
-            <input type="text" id="defaultPrefix" value="Ready to assist!" placeholder="Enter status message..." style="width: 9.05rem; margin-left: -0.75rem; border-top-left-radius: 0; border-bottom-left-radius: 0;" />
-          </label>
-          <div class="setting-description">
-            Give your bot a personality
+          <div class="setting-item" style="margin-bottom: 0.85rem;">
+            <label data-tooltip="Show yourself using the footer">
+              <span>Bot Embed Footer</span>
+              <input type="text" id="botFooter" value="Created with LocalBotify.app • {Date.now}" placeholder="Enter footer..." style="width: 19.75rem;" />
+            </label>
+            <div class="setting-description">
+              Customize your bot embed footer
+            </div>
           </div>
-        </div>
-        <div class="setting-item" style="margin-bottom: 0.85rem;">
-          <label data-tooltip="Show yourself using the footer">
-            <span>Bot Embed Footer</span>
-            <input type="text" id="defaultPrefix" value="Created with LocalBotify.app • {Date.now}" placeholder="Enter footer..." style="width: 19.75rem;" />
-          </label>
-          <div class="setting-description">
-            Customize your bot embed footer
+          <div class="setting-item" style="margin-bottom: 0.85rem;">
+            <label data-tooltip="Be ready when something goes wrong">
+              <span>Update Notifications</span>
+              <input type="checkbox" id="updateNotifications" />
+            </label>
+            <div class="setting-description">
+              Receive notifications when your bot goes up or down
+            </div>
           </div>
-        </div>
-        <div class="setting-item" style="margin-bottom: 0.85rem;">
-          <label data-tooltip="Be ready when something goes wrong">
-            <span>Update Notifications</span>
-            <input type="checkbox" id="updateNotifications" />
-          </label>
-          <div class="setting-description">
-            Receive notifications when your bot goes up or down
-          </div>
+          <div class="settings-section" style="
+            padding: 1.5rem 2rem;
+            margin-top: 1.75rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-md);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            box-shadow: none;
+          ">
+            <h3><i class="fas fa-code"></i>Commands</h3>
           </div>
         </div>
       </div>
 
-      <div class="code-editor-view" style="display: none;">
+      <div class="code-editor-view" style="visibility: hidden;">
         <div class="file-explorer">
           <div class="file-explorer-header">
             <span class="file-explorer-title">Files</span>
@@ -717,21 +729,62 @@ class DiscordBotCreator {
 
     workspaceView.querySelectorAll(".workspace-tabs button").forEach((tab) => {
       tab.addEventListener("click", () => {
+        if (tab.classList.contains("active")) return;
+
         workspaceView.querySelectorAll(".workspace-tabs button").forEach((activeTab) => activeTab.classList.remove("active"));
         tab.classList.add("active");
 
         if (tab.querySelector("i").className === "fas fa-tools") {
-          editorView.style.display = "none";
+          editorView.querySelectorAll(".file-explorer-btn, .file-tree-item").forEach((fileElement) => fileElement.classList.add("animationless"));
+          editorView.style.visibility = "hidden";
           workbenchView.style.display = "block";
         } else if (tab.querySelector("i").className === "fas fa-code") {
           workbenchView.style.display = "none";
-          editorView.style.display = "grid";
+          editorView.style.visibility = "visible";
+          editorView.style.animation = "slideUp 0.5s ease";
+          setTimeout(() => {
+            editorView.style.animation = "none";
+          }, 500);
+          editorView.querySelectorAll(".file-explorer-btn, .file-tree-item").forEach((fileElement) => fileElement.classList.remove("animationless"));
         };
       });
     });
 
+    workbenchView.querySelectorAll("#botStatusSymbol, #botStatusMessage, #botFooter, #updateNotifications").forEach((botConfigItem) => {
+      botConfigItem.addEventListener("change", (e) => {
+        let configFile = JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")) || `
+          {
+            "status": ["online", "Ready to assist!"],
+            "footer": "Created with LocalBotify.app • {Date.now}",
+            "notifications": false,
+            "commands": {
+              "initialization": "npm install",
+              "startup": "node . "
+            }
+          }
+        `);
+
+        switch (e.target.id) {
+          case "botStatusSymbol":
+            configFile.status[0] = e.target.value;
+            break;
+          case "botStatusMessage":
+            configFile.status[1] = e.target.value;
+            break;
+          case "botFooter":
+            configFile.footer = e.target.value;
+            break;
+          case "updateNotifications":
+            configFile.notifications = e.target.checked;
+            break;
+        };
+
+        fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
+      });
+    });
+
     if (fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file)).isDirectory())) {
-      this.getFileTreeItem(editorView, ((dir) => {
+      const activeFile = ((dir) => {
         const files = fs.readdirSync(dir);
         if (files.includes("index.js")) return "index.js";
         if (files.includes("package.json")) {
@@ -746,7 +799,14 @@ class DiscordBotCreator {
         const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
         if (firstNonFolder) return firstNonFolder;
         return null;
-      })(path.join(process.cwd(), "bots", bot.id.toString()))).classList.add("active");
+      })(path.join(process.cwd(), "bots", bot.id.toString()));
+
+      this.getFileTreeItem(editorView, activeFile).classList.add("active");
+      this.fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), activeFile), (eventType) => {
+        if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), activeFile), "utf8"))) return;
+
+        this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), activeFile), "utf8"));
+      });
     };
 
     this.loadCodeEditor(editorView, bot);
@@ -797,6 +857,12 @@ class DiscordBotCreator {
             newFileTreeItem.classList.add("active");
 
             this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
+            this.fileWatcher.close();
+            this.fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), (eventType) => {
+              if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), activeFile), "utf8"))) return;
+
+              this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
+            });
           });
         });
 
@@ -819,6 +885,12 @@ class DiscordBotCreator {
             newFileTreeItem.classList.add("active");
 
             this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
+            this.fileWatcher.close();
+            this.fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), (eventType) => {
+              if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), activeFile), "utf8"))) return;
+
+              this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
+            });
           });
         });
 
@@ -1002,6 +1074,12 @@ class DiscordBotCreator {
           item.classList.add("active");
 
           this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"));
+          this.fileWatcher.close();
+          this.fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), (eventType) => {
+            if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), activeFile), "utf8"))) return;
+
+            this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"));
+          });
         };
       });
     });
@@ -1135,7 +1213,7 @@ class DiscordBotCreator {
               <div>
                 <select id="botTemplate" value="ping-pong">
                   <option value="none">No Template</option>
-                  <option value="ping-pong" selected>Simple Ping-Pong Bot</option>
+                  <option value="nucleus" selected>LocalBotify NucleusBot</option>
                   <option value="git">Custom GitHub Repository</option>
                 </select>
               </div>
@@ -1352,6 +1430,8 @@ class DiscordBotCreator {
 
     document.querySelectorAll(".nav-item").forEach((item) => {
       item.addEventListener("click", () => {
+        if (item.classList.contains("active")) return;
+
         document.querySelectorAll(".nav-item").forEach((navItem) => {
           if (Array.from(navItem.classList).includes("active") && ["Create New", "Feedback"].includes(item.querySelector("span").textContent)) navItem.classList.add("currentView");
           navItem.classList.remove("active");
@@ -1615,6 +1695,20 @@ class DiscordBotCreator {
         resolve();
       });
     });
+  };
+
+  readFileSafelySync(path) {
+    const fs = require("fs");
+
+    try {
+      return fs.readFileSync(path, "utf8");
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        return null;
+      } else {
+        throw err;
+      };
+    };
   };
 
   formatNumber(num) {

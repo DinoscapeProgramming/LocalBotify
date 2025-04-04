@@ -1,0 +1,9 @@
+{
+  "status": ["online", "Ready to assist!"],
+  "footer": "Created with LocalBotify.app • {Date.now}",
+  "notifications": false,
+  "commands": {
+    "initialization": "npm install",
+    "startup": "node . "
+  }
+}

@@ -1,6 +1,7 @@
 require("@teeny-tiny/dotenv").config();
 const { Client, GatewayIntentBits } = require("discord.js");
 const fs = require("fs");
+const updateStatistics = require("./trackers/statistics.js");
 
 const client = new Client({
   intents: [
@@ -11,6 +12,7 @@ const client = new Client({
 });
 
 client.once("ready", () => {
+  require("./trackers/status.js");
   console.log("Ping Pong Bot is Online!");
 });
 
@@ -21,8 +23,11 @@ client.on("messageCreate", (message) => {
   let commandName = command.substring(process.env.PREFIX.length);
 
   if (!fs.readdirSync("./commands").includes(`${commandName}.js`)) {
-    require(`./commands/${commandName}.js`)(Client, message);
+    require(`./commands/${commandName}.js`)(client, message);
   };
 });
+
+client.on("guildCreate", () => updateStatistics(client));
+client.on("guildMemberAdd", () => updateStatistics(client));
 
 client.login(process.env.TOKEN);
