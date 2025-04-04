@@ -1,0 +1,23 @@
+- Alert method
+- Fix: start bots on startup
+- Fix the code editor (rename files, delete files, etc.)
+- Request admin permissions by itself
+- Move buttons in editor depending on scrollbar
+- Add files or folders inside others
+- Pro Suite (Analytics, etc.)
+- Fix website
+- Command variable editor
+- Change bot profile picture (icon picker, picture, etc.)
+- Implement features into NucleusBot
+- Working settings
+- Add bot store
+- Add command store
+- Show actual bot status and statistics
+- Write documentation
+- More aesthetic help section
+- Working feedback system
+- Working LocalBotify server
+- Add developer portal
+- Figure out Stripe
+
+- LAUNCH!!! 🔥🔥🔥
