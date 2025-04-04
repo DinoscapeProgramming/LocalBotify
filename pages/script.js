@@ -13,6 +13,7 @@ class DiscordBotCreator {
     this.renderContent();
     this.setupEventListeners();
     this.updateSettings();
+    this.setupNode();
     this.runBots();
   };
 
@@ -647,7 +648,7 @@ class DiscordBotCreator {
               Receive notifications when your bot goes up or down
             </div>
           </div>
-          <div class="settings-section" style="
+          <div class="workbench-section settings-section" style="
             padding: 1.5rem 2rem;
             margin-top: 1.75rem;
             background: rgba(0, 0, 0, 0.2);
@@ -656,7 +657,16 @@ class DiscordBotCreator {
             border: 1px solid transparent;
             box-shadow: none;
           ">
-            <h3><i class="fas fa-code"></i>Commands</h3>
+            <h3 style="flex-direction: row; margin-bottom: 1rem;">
+              <i class="fas fa-code"></i>Commands
+              <button class="add-command-btn">
+                <i class="fas fa-plus"></i>
+                Add Command
+              </button>
+            </h3>
+            ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).length) ? `<span style="color: grey;">No commands found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).map((command) => `
+              <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; padding: 0.5rem 1rem;">${command.substring(0, command.length - 3)}</div>
+            `).join("")}
           </div>
         </div>
       </div>
@@ -735,7 +745,7 @@ class DiscordBotCreator {
         tab.classList.add("active");
 
         if (tab.querySelector("i").className === "fas fa-tools") {
-          editorView.querySelectorAll(".file-explorer-btn, .file-tree-item").forEach((fileElement) => fileElement.classList.add("animationless"));
+          editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.add("animationless"));
           editorView.style.visibility = "hidden";
           workbenchView.style.display = "block";
         } else if (tab.querySelector("i").className === "fas fa-code") {
@@ -745,7 +755,7 @@ class DiscordBotCreator {
           setTimeout(() => {
             editorView.style.animation = "none";
           }, 500);
-          editorView.querySelectorAll(".file-explorer-btn, .file-tree-item").forEach((fileElement) => fileElement.classList.remove("animationless"));
+          editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.remove("animationless"));
         };
       });
     });
@@ -859,7 +869,7 @@ class DiscordBotCreator {
             this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
             this.fileWatcher.close();
             this.fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), (eventType) => {
-              if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), activeFile), "utf8"))) return;
+              if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"))) return;
 
               this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
             });
@@ -887,7 +897,7 @@ class DiscordBotCreator {
             this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
             this.fileWatcher.close();
             this.fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), (eventType) => {
-              if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), activeFile), "utf8"))) return;
+              if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"))) return;
 
               this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
             });
@@ -1076,7 +1086,7 @@ class DiscordBotCreator {
           this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"));
           this.fileWatcher.close();
           this.fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), (eventType) => {
-            if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), activeFile), "utf8"))) return;
+            if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"))) return;
 
             this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"));
           });
@@ -1725,6 +1735,75 @@ class DiscordBotCreator {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/"/g, "&#039;");
+  };
+
+  setupNode() {
+    const childProcess = require("child_process");
+
+    try {
+      childProcess.execSync("node -v");
+    } catch {
+      const fs = require("fs");
+      const path = require("path");
+      const os = require("os");
+
+      const platform = os.platform();
+      const electronBinaryPath = process.execPath;
+      const globalBinPath = (platform === "win32") ? "C:\\Windows\\System32" : "/usr/local/bin";
+
+      try {
+        execSync((platform === "win32") ? "net session" : "sudo -v", { stdio: "ignore" });
+        
+        function createGlobalNodeScript() {
+          let nodeScriptContent = "";
+
+          if (platform === "win32") {
+            nodeScriptContent = `@echo off\n"${electronBinaryPath}" %*`;
+            fs.writeFileSync(path.join(process.cwd(), "node.bat"), nodeScriptContent);
+          } else {
+            nodeScriptContent = `#!/bin/bash\n"${electronBinaryPath}" "$@"`;
+            fs.writeFileSync(path.join(process.cwd(), "node"), nodeScriptContent, { mode: 0o755 });
+          };
+
+          moveToGlobalBin();
+        };
+
+        function moveToGlobalBin() {
+          const scriptName = (platform === "win32") ? "node.bat" : "node";
+          const scriptPath = path.join(process.cwd(), scriptName);
+
+          try {
+            if (platform === "win32") {
+              childProcess.execSync(`move /Y ${scriptPath} ${globalBinPath}`);
+            } else {
+              childProcess.execSync(`mv ${scriptPath} ${globalBinPath}`);
+            };
+          } catch {};
+        };
+
+        createGlobalNodeScript();
+      } catch {
+        this.relaunchAsAdmin();
+      };
+    };
+  };
+
+  relaunchAsAdmin() {
+    this.alert("Please open LocalBotify with administrator rights! This is needed to register our node onto your system globally and will only needed to be done once.");
+
+    /*const os = require("os");
+    const path = require("path");
+    const childProcess = require("child_process");
+    const executablePath = path.resolve(process.execPath);
+    const args = [executablePath].concat(process.argv.slice(1));
+
+    if (os.platform() === "win32") {
+      childProcess.execSync(`runas /user:Administrator "${executablePath} ${args.join(' ')}"`);
+    } else if ((os.platform() === "darwin") || (os.platform() === "linux")) {
+      childProcess.execSync(`osascript -e "do shell script \\"${executablePath} ${args.join(' ')}\\" with administrator privileges"`);
+    };
+
+    app.quit();*/
   };
 };
 

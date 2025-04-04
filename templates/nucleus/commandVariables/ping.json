@@ -1,0 +1,8 @@
+{
+  "ping": {
+    "responseMessage": [
+      "Response Message",
+      "This is pong! {Date.now}"
+    ]
+  }
+}

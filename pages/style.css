@@ -962,6 +962,35 @@ body {
   overflow-y: auto;
 }
 
+.workbench-section:hover {
+  background: rgba(0, 0, 0, 0.3) !important;
+}
+
+.add-command-btn {
+  position: fixed;
+  right: 25px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--discord-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.add-command-btn:hover {
+  background-color: #4752c4;
+}
+
+.add-command-btn i {
+  font-size: 0.9rem;
+}
+
 .code-editor-view {
   position: fixed;
   top: 35px;
@@ -1100,6 +1129,10 @@ body {
   border-radius: var(--radius-sm);
   transition: all 0.2s ease;
   z-index: 5;
+}
+
+.editor-play-btn.animationless {
+  transition: none;
 }
 
 .editor-play-btn:hover {

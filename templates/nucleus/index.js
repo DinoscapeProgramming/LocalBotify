@@ -1,6 +1,6 @@
-require("@teeny-tiny/dotenv").config();
-const { Client, GatewayIntentBits } = require("discord.js");
+require("../../node_modules/@teeny-tiny/dotenv/index.js").config();
 const fs = require("fs");
+const { Client, GatewayIntentBits } = require("../../node_modules/discord.js/src/index.js");
 const updateStatistics = require("./trackers/statistics.js");
 
 const client = new Client({
