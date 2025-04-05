@@ -23,7 +23,7 @@ client.on("messageCreate", (message) => {
   let commandName = command.substring(process.env.PREFIX.length);
 
   if (!fs.readdirSync("./commands").includes(`${commandName}.js`)) {
-    require(`./commands/${commandName}.js`)(client, message);
+    require(`./commands/${commandName}.js`).command(client, message);
   };
 });
 

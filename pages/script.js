@@ -605,7 +605,7 @@ class DiscordBotCreator {
       </button>
 
       <div class="workbench-view">
-        <div style="animation: slideUp 0.5s ease;">
+        <div id="workbenchMainView" style="animation: slideUp 0.5s ease;">
           <div class="bot-header" style="margin-bottom: 1.65rem;">
             <div class="bot-avatar" style="width: 60px; height: 60px;">
               <i class="fas fa-robot" style="font-size: 1.65rem;"></i>
@@ -669,6 +669,8 @@ class DiscordBotCreator {
             `).join("")}
           </div>
         </div>
+
+        <div id="workbenchEditorView" style="display: none; animation: slideUp 0.5s ease;"></div>
       </div>
 
       <div class="code-editor-view" style="visibility: hidden;">
@@ -735,6 +737,8 @@ class DiscordBotCreator {
     `;
 
     const workbenchView = workspaceView.querySelector(".workbench-view");
+    const workbenchMainView = workbenchView.querySelector("#workbenchMainView");
+    const workbenchEditorView = workbenchView.querySelector("#workbenchEditorView");
     const editorView = workspaceView.querySelector(".code-editor-view");
 
     workspaceView.querySelectorAll(".workspace-tabs button").forEach((tab) => {
@@ -748,6 +752,8 @@ class DiscordBotCreator {
           editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.add("animationless"));
           editorView.style.visibility = "hidden";
           workbenchView.style.display = "block";
+          workbenchEditorView.style.display = "none";
+          workbenchMainView.style.display = "block";
         } else if (tab.querySelector("i").className === "fas fa-code") {
           workbenchView.style.display = "none";
           editorView.style.visibility = "visible";
@@ -760,7 +766,7 @@ class DiscordBotCreator {
       });
     });
 
-    workbenchView.querySelectorAll("#botStatusSymbol, #botStatusMessage, #botFooter, #updateNotifications").forEach((botConfigItem) => {
+    workbenchMainView.querySelectorAll("#botStatusSymbol, #botStatusMessage, #botFooter, #updateNotifications").forEach((botConfigItem) => {
       botConfigItem.addEventListener("change", (e) => {
         let configFile = JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")) || `
           {
@@ -790,6 +796,49 @@ class DiscordBotCreator {
         };
 
         fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
+      });
+    });
+
+    workbenchMainView.querySelectorAll(".workbench-section .setting-item").forEach((command) => {
+      command.addEventListener("click", () => {
+        workbenchEditorView.innerHTML = `
+          <div class="command-header">
+            <h3><i class="fas fa-terminal"></i>${this.escapeHtml(command.textContent.trim())}</h3>
+            <button>
+              <i class="fas fa-code"></i>
+              Edit in code lab
+            </button>
+          </div>
+          ${Object.entries(require(path.join(process.cwd(), "bots", bot.id.toString(), "commands", command.textContent.trim() + ".js")).variables).map(([id, [name, description] = []] = []) => `
+            <div class="command-item setting-item" style="margin-bottom: 0.85rem;" data-id="${this.escapeHtml(id)}">
+              <label style="flex-direction: column;">
+                <span style="text-align: left; position: absolute; left: 0;">${this.escapeHtml(name)}</span>
+                <div class="setting-description" style="margin-top: 1.65rem; position: absolute; left: 0;">
+                  ${this.escapeHtml(description)}
+                </div>
+                <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); max-width: calc(100vw - 10rem - 2.5px); font-family: system-ui;" placeholder="Enter ${name.toLowerCase()}...">${require(path.join(process.cwd(), "bots", bot.id.toString(), "variables.json"))?.[command.textContent.trim()]?.[id] || ""}</textarea>
+              </label>
+            </div>
+          `).join("")}
+        `;
+
+        workbenchEditorView.querySelector(".command-header button").addEventListener("click", () => {
+          this.getFileTreeItem(editorView, "commands").click();
+          this.getFileTreeItem(editorView, `commands/${command.textContent.trim()}.js`).click();
+
+          Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).find((tab) => tab.querySelector("i").className === "fas fa-code").classList.add("active");
+          workbenchView.style.display = "none";
+          editorView.style.visibility = "visible";
+          editorView.style.animation = "slideUp 0.5s ease";
+          setTimeout(() => {
+            editorView.style.animation = "none";
+          }, 500);
+          editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.remove("animationless"));
+        });
+
+        workbenchMainView.style.display = "none";
+        workbenchEditorView.style.display = "block";
+        workspaceView.querySelectorAll(".workspace-tabs button").forEach((activeTab) => activeTab.classList.remove("active"));
       });
     });
 
@@ -1028,24 +1077,32 @@ class DiscordBotCreator {
     let parts = path.split("/");
     let container = view.querySelector(".file-tree") || view.querySelector(".help-tree");
 
-    for (let part of parts) {
-      let items = container.querySelectorAll(".file-tree-item");
-      let found = null;
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      let foundItem = null;
 
-      for (let item of items) {
-        if (item.dataset.filename && (item.dataset.filename === part)) {
-          found = item;
+      const items = Array.from(container.children).filter(el => el.classList.contains("file-tree-item"));
+      for (const item of items) {
+        const span = item.querySelector("span");
+        if (span && span.textContent.trim() === part) {
+          foundItem = item;
           break;
         };
       };
 
-      if (!found) return null;
+      if (!foundItem) return null;
 
-      container = found.nextElementSibling;
-      if (!container || !container.classList.contains("folder-content")) {
-        return found;
+      if (i === parts.length - 1) {
+        return foundItem;
+      } else {
+        const next = foundItem.nextElementSibling;
+        if (!next || !next.classList.contains("folder-content")) {
+          return null;
+        };
+        container = next;
       };
     };
+
     return null;
   };
 
