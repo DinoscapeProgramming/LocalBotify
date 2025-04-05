@@ -967,22 +967,18 @@ body {
 }
 
 .command-header {
-  display: flex;
-  flex-direction: row;
-}
-
-.command-header h3 {
   margin-bottom: 1.5rem;
   font-size: 1.25rem;
   color: var(--discord-primary);
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 0.75rem;
   position: relative;
   padding-bottom: 0.75rem;
 }
 
-.command-header h3::after {
+.command-header::after {
   content: "";
   position: absolute;
   bottom: 0;
@@ -994,34 +990,8 @@ body {
   transition: width 0.3s ease;
 }
 
-.command-header h3:hover::after {
+.command-header:hover::after {
   width: 100px;
-}
-
-.command-header button {
-  position: relative;
-  left: calc(100vw - 22.625rem);
-  height: 100%;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background-color: var(--discord-primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.command-header button:hover {
-  background-color: #4752c4;
-}
-
-.command-header button i {
-  font-size: 0.9rem;
 }
 
 .command-item:hover {
@@ -1243,6 +1213,10 @@ body {
 .editor-content .CodeMirror-linenumber {
   margin-left: -7.5px;
 }
+
+/*.editor-content .CodeMirror-line {
+  filter: hue-rotate(160deg);
+}*/
 
 .editor-content-missing {
   position: absolute;

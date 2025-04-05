@@ -1,9 +1,21 @@
 {
   "status": ["online", "Ready to assist!"],
-  "footer": "Created with LocalBotify.app • {Date.now}",
+  "footer": "Powered by LocalBotify.app",
   "notifications": false,
   "commands": {
     "initialization": "npm install",
-    "startup": "node . "
+    "startup": ".\\node . "
+  },
+  "variables": {
+    "commands": {
+      "ping": {
+        "responseMessage": "Pong!"
+      }
+    },
+    "events": {
+      "guildCreate": {
+        "responseMessage": "Test"
+      }
+    }
   }
 }

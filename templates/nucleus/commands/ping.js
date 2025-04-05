@@ -2,10 +2,13 @@ module.exports = {
   variables: {
     responseMessage: [
       "Response Message",
-      "The response after the user messages the ping command"
+      "The response after the user messages the ping command",
+      "input:text"
     ]
   },
-  command: (Client, message) => {
-    message.channel.send("Pong!");
+  command: ({
+    responseMessage
+  }, Client, message) => {
+    message.channel.send(responseMessage);
   }
 };

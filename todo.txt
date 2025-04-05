@@ -3,7 +3,7 @@
 - Fix the code editor (rename files, delete files, etc.)
 - Request admin permissions by itself
 - Move buttons in editor depending on scrollbar
-- Add files or folders inside others
+- Fix: Select folders in code editor
 - Pro Suite (Analytics, etc.)
 - Fix website
 - Command variable editor

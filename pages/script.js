@@ -203,13 +203,13 @@ class DiscordBotCreator {
             </div>
             <div class="form-group">
               <label for="feedbackUser">E-Mail / Discord Username</label>
-              <input type="text" id="feedbackEmail" placeholder="@JohnDoe123" required>
+              <input type="text" id="feedbackUser" placeholder="@JohnDoe123" required>
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 0.5rem;">
               <label for="feedbackComment">Comment (optional)</label>
               <textarea id="feedbackComment"></textarea>
             </div>
-            <div class="form-actions">
+            <div class="form-actions" style="margin-top: 0;">
               <button type="submit" class="submit-btn">
                 Send Feedback
               </button>
@@ -619,10 +619,16 @@ class DiscordBotCreator {
             <label data-tooltip="Choose the status for your bot">
               <span>Bot Status</span>
               <select id="botStatusSymbol" style="width: fit-content; border-top-right-radius: 0; border-bottom-right-radius: 0;">
-                <option value="online">🟢</option>
-                <option value="idle">🌙</option>
-                <option value="doNotDisturb">🔴</option>
-                <option value="invisible">🔘</option>
+                <option value="Online">🟢</option>
+                <option value="Idle">🌙</option>
+                <option value="DoNotDisturb">🔴</option>
+                <option value="Invisible">🔘</option>
+              </select>
+              <select id="botStatusActivity" style="width: fit-content; border-radius: 0; margin-left: -0.75rem;">
+                <option value="Playing">Playing</option>
+                <option value="Watching">Watching</option>
+                <option value="Listening">Listening</option>
+                <option value="Competing">Competing</option>
               </select>
               <input type="text" id="botStatusMessage" value="Ready to assist!" placeholder="Enter status message..." style="width: 9.05rem; margin-left: -0.75rem; border-top-left-radius: 0; border-bottom-left-radius: 0;" />
             </label>
@@ -633,7 +639,7 @@ class DiscordBotCreator {
           <div class="setting-item" style="margin-bottom: 0.85rem;">
             <label data-tooltip="Show yourself using the footer">
               <span>Bot Embed Footer</span>
-              <input type="text" id="botFooter" value="Created with LocalBotify.app • {Date.now}" placeholder="Enter footer..." style="width: 19.75rem;" />
+              <input type="text" id="botFooter" value="Created with LocalBotify.app • {Date.now}" placeholder="Enter footer..." style="width: 14rem;" />
             </label>
             <div class="setting-description">
               Customize your bot embed footer
@@ -664,9 +670,19 @@ class DiscordBotCreator {
                 Add Command
               </button>
             </h3>
-            ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).length) ? `<span style="color: grey;">No commands found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).map((command) => `
-              <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; padding: 0.5rem 1rem;">${command.substring(0, command.length - 3)}</div>
-            `).join("")}
+            ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).length) ? `<span style="color: grey;">No commands found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).map((command) => (command.endsWith(".js")) ? `
+              <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem;" data-category="commands">${command.substring(0, command.length - 3)}</div>
+            ` : "").join("")}
+            <h3 style="flex-direction: row; margin-bottom: 1rem; margin-top: 2rem;">
+              <i class="fas fa-calendar-days"></i>Events
+              <button class="add-command-btn">
+                <i class="fas fa-plus"></i>
+                Add Event
+              </button>
+            </h3>
+            ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).length) ? `<span style="color: grey;">No events found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).map((command) => (command.endsWith(".js")) ? `
+              <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem;" data-category="events">${command.substring(0, command.length - 3)}</div>
+            ` : "").join("")}
           </div>
         </div>
 
@@ -770,7 +786,7 @@ class DiscordBotCreator {
       botConfigItem.addEventListener("change", (e) => {
         let configFile = JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")) || `
           {
-            "status": ["online", "Ready to assist!"],
+            "status": ["online", "playing", "Ready to assist!"],
             "footer": "Created with LocalBotify.app • {Date.now}",
             "notifications": false,
             "commands": {
@@ -784,8 +800,11 @@ class DiscordBotCreator {
           case "botStatusSymbol":
             configFile.status[0] = e.target.value;
             break;
-          case "botStatusMessage":
+            case "botStatusActivity":
             configFile.status[1] = e.target.value;
+            break;
+          case "botStatusMessage":
+            configFile.status[2] = e.target.value;
             break;
           case "botFooter":
             configFile.footer = e.target.value;
@@ -802,29 +821,29 @@ class DiscordBotCreator {
     workbenchMainView.querySelectorAll(".workbench-section .setting-item").forEach((command) => {
       command.addEventListener("click", () => {
         workbenchEditorView.innerHTML = `
-          <div class="command-header">
-            <h3><i class="fas fa-terminal"></i>${this.escapeHtml(command.textContent.trim())}</h3>
-            <button>
-              <i class="fas fa-code"></i>
+          <h3 class="command-header">
+            <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i>${command.textContent.trim()}
+            <button class="add-command-btn" style="position: absolute; right: 0;">
+              <i class="fas fa-plus"></i>
               Edit in code lab
             </button>
-          </div>
-          ${Object.entries(require(path.join(process.cwd(), "bots", bot.id.toString(), "commands", command.textContent.trim() + ".js")).variables).map(([id, [name, description] = []] = []) => `
+          </h3>
+          ${Object.entries(require(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js")).variables).map(([id, [name, description] = []] = []) => `
             <div class="command-item setting-item" style="margin-bottom: 0.85rem;" data-id="${this.escapeHtml(id)}">
               <label style="flex-direction: column;">
                 <span style="text-align: left; position: absolute; left: 0;">${this.escapeHtml(name)}</span>
-                <div class="setting-description" style="margin-top: 1.65rem; position: absolute; left: 0;">
+                <div class="setting-description" style="margin-top: 1.675rem; position: absolute; left: 0;">
                   ${this.escapeHtml(description)}
                 </div>
-                <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); max-width: calc(100vw - 10rem - 2.5px); font-family: system-ui;" placeholder="Enter ${name.toLowerCase()}...">${require(path.join(process.cwd(), "bots", bot.id.toString(), "variables.json"))?.[command.textContent.trim()]?.[id] || ""}</textarea>
+                <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); max-width: calc(100vw - 10rem - 2.5px); font-family: system-ui; background-color: #00000030;" placeholder="Enter ${name.toLowerCase()}...">${require(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}</textarea>
               </label>
             </div>
           `).join("")}
         `;
 
         workbenchEditorView.querySelector(".command-header button").addEventListener("click", () => {
-          this.getFileTreeItem(editorView, "commands").click();
-          this.getFileTreeItem(editorView, `commands/${command.textContent.trim()}.js`).click();
+          this.getFileTreeItem(editorView, command.dataset.category).click();
+          this.getFileTreeItem(editorView, `${command.dataset.category}/${command.textContent.trim()}.js`).click();
 
           Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).find((tab) => tab.querySelector("i").className === "fas fa-code").classList.add("active");
           workbenchView.style.display = "none";
@@ -1084,7 +1103,7 @@ class DiscordBotCreator {
       const items = Array.from(container.children).filter(el => el.classList.contains("file-tree-item"));
       for (const item of items) {
         const span = item.querySelector("span");
-        if (span && span.textContent.trim() === part) {
+        if (span && ((span.textContent.trim() === part) || (span.parentElement?.dataset?.filename?.trim() === part))) {
           foundItem = item;
           break;
         };
@@ -1655,6 +1674,58 @@ class DiscordBotCreator {
       if (e.target.matches(".create-btn") || e.target.closest(".create-btn")) {
         this.showBotEditor();
       };
+    });
+  };
+
+  alert(title, message) {
+    return new Promise((resolve, reject) => {
+      const modal = document.createElement("div");
+      modal.className = "modal";
+
+      modal.innerHTML = `
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>${this.escapeHtml(title)}</h2>
+            <button class="close-btn"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="modal-body">
+            <form id="botForm">
+              <div class="form-group">
+                ${this.escapeHtml(message)}
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="submit-btn">
+                  Ok / Roger
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+      setTimeout(() => modal.classList.add("show"), 10);
+
+      const closeModal = () => {
+        modal.classList.remove("show");
+        setTimeout(() => modal.remove(), 300);
+        resolve();
+      };
+
+      modal.querySelector(".close-btn").addEventListener("click", closeModal);
+      modal.querySelector(".cancel-btn").addEventListener("click", closeModal);
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+      });
+
+      const form = modal.querySelector("#botForm");
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        modal.classList.remove("show");
+        setTimeout(() => modal.remove(), 300);
+        resolve();
+      });
     });
   };
   
