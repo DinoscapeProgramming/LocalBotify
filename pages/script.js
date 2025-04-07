@@ -584,6 +584,18 @@ class DiscordBotCreator {
     const workspaceView = document.createElement("div");
     workspaceView.className = "workspace-view";
 
+    let configFile = JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")) || `
+      {
+        "status": ["Online", "Playing", "Ready to assist!"],
+        "footer": "Powered by LocalBotify.app",
+        "notifications": false,
+        "commands": {
+          "initialization": "npm install",
+          "startup": "node . "
+        }
+      }
+    `);
+
     workspaceView.innerHTML = `
       <div class="workspace-tabs">
         <button class="active">
@@ -619,18 +631,18 @@ class DiscordBotCreator {
             <label data-tooltip="Choose the status for your bot">
               <span>Bot Status</span>
               <select id="botStatusSymbol" style="width: fit-content; border-top-right-radius: 0; border-bottom-right-radius: 0;">
-                <option value="Online">🟢</option>
-                <option value="Idle">🌙</option>
-                <option value="DoNotDisturb">🔴</option>
-                <option value="Invisible">🔘</option>
+                <option value="Online" ${(this.escapeHtml(configFile.status[0] || "Online") === "Online") ? "selected" : ""}>🟢</option>
+                <option value="Idle" ${(this.escapeHtml(configFile.status[0] || "Online") === "Idle") ? "selected" : ""}>🌙</option>
+                <option value="DoNotDisturb" ${(this.escapeHtml(configFile.status[0] || "Online") === "DoNotDisturb") ? "selected" : ""}>🔴</option>
+                <option value="Invisible" ${(this.escapeHtml(configFile.status[0] || "Online") === "Invisible") ? "selected" : ""}>🔘</option>
               </select>
               <select id="botStatusActivity" style="width: fit-content; border-radius: 0; margin-left: -0.75rem;">
-                <option value="Playing">Playing</option>
-                <option value="Watching">Watching</option>
-                <option value="Listening">Listening</option>
-                <option value="Competing">Competing</option>
+                <option value="Playing" ${(this.escapeHtml(configFile.status[1] || "Playing") === "Playing") ? "selected" : ""}>Playing</option>
+                <option value="Watching" ${(this.escapeHtml(configFile.status[1] || "Playing") === "Watching") ? "selected" : ""}>Watching</option>
+                <option value="Listening" ${(this.escapeHtml(configFile.status[1] || "Playing") === "Listening") ? "selected" : ""}>Listening</option>
+                <option value="Competing" ${(this.escapeHtml(configFile.status[1] || "Playing") === "Competing") ? "selected" : ""}>Competing</option>
               </select>
-              <input type="text" id="botStatusMessage" value="Ready to assist!" placeholder="Enter status message..." style="width: 9.05rem; margin-left: -0.75rem; border-top-left-radius: 0; border-bottom-left-radius: 0;" />
+              <input type="text" id="botStatusMessage" placeholder="Enter status message..." value="${this.escapeHtml(configFile.status[2] || "")}" style="width: 9.05rem; margin-left: -0.75rem; border-top-left-radius: 0; border-bottom-left-radius: 0;" />
             </label>
             <div class="setting-description">
               Give your bot a personality
@@ -639,7 +651,7 @@ class DiscordBotCreator {
           <div class="setting-item" style="margin-bottom: 0.85rem;">
             <label data-tooltip="Show yourself using the footer">
               <span>Bot Embed Footer</span>
-              <input type="text" id="botFooter" value="Created with LocalBotify.app • {Date.now}" placeholder="Enter footer..." style="width: 14rem;" />
+              <input type="text" id="botFooter" placeholder="Enter footer..."  value="${this.escapeHtml(configFile.footer || "")}" style="width: 14rem;" />
             </label>
             <div class="setting-description">
               Customize your bot embed footer
@@ -782,20 +794,8 @@ class DiscordBotCreator {
       });
     });
 
-    workbenchMainView.querySelectorAll("#botStatusSymbol, #botStatusMessage, #botFooter, #updateNotifications").forEach((botConfigItem) => {
+    workbenchMainView.querySelectorAll("#botStatusSymbol, #botStatusActivity, #botStatusMessage, #botFooter, #updateNotifications").forEach((botConfigItem) => {
       botConfigItem.addEventListener("change", (e) => {
-        let configFile = JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")) || `
-          {
-            "status": ["online", "playing", "Ready to assist!"],
-            "footer": "Created with LocalBotify.app • {Date.now}",
-            "notifications": false,
-            "commands": {
-              "initialization": "npm install",
-              "startup": "node . "
-            }
-          }
-        `);
-
         switch (e.target.id) {
           case "botStatusSymbol":
             configFile.status[0] = e.target.value;
@@ -1352,7 +1352,7 @@ class DiscordBotCreator {
         const options = Array.from(e.target.options).map((option) => [option.value, option.textContent]).filter(([option]) => option !== "git");
 
         e.target.parentElement.innerHTML = `
-          <input list="templateDatalist" id="botTemplate" placeholder="Enter GitHub Repository">
+          <input list="templateDatalist" id="botTemplate" placeholder="Enter GitHub Repository...">
           <datalist id="templateDatalist">
             ${options.map(([optionValue, optionName]) => `<option data-id="${this.escapeHtml(optionValue)}" value="${this.escapeHtml(optionName)}">`).join("\n")}
           </datalist>

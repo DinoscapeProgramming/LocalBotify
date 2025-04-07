@@ -1,5 +1,9 @@
 {
-  "status": ["online", "Ready to assist!"],
+  "status": [
+    "Online",
+    "Playing",
+    "Ready to assist!"
+  ],
   "footer": "Powered by LocalBotify.app",
   "notifications": false,
   "commands": {
