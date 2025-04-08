@@ -9,7 +9,10 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent
-  ] // --> remember to activate intents in developer portal settings too!
+  ], // --> remember to activate intents in developer portal settings too!
+  rest: {
+    requestTimeout: JSON.parse(fs.readFileSync("../../settings.json", "utf8") || "{}").apiTimeout || 5000
+  }
 });
 
 client.once("ready", () => {

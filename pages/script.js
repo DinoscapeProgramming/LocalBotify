@@ -14,7 +14,7 @@ class DiscordBotCreator {
     this.setupEventListeners();
     this.updateSettings();
     this.setupNode();
-    this.runBots();
+    // this.runBots();
   };
 
   initializeDemoData() {
@@ -90,23 +90,34 @@ class DiscordBotCreator {
   };
 
   createBotGrid() {
+    const path = require("path");
+
     const grid = document.createElement("div");
     grid.className = "bot-grid";
     grid.id = "botGrid";
+
+    const settings = JSON.parse(localStorage.getItem("settings") || "{}");
 
     this.bots.forEach((bot, index) => {
       const card = document.createElement("div");
       card.className = "bot-card";
       card.style.animationDelay = `${index * 0.1}s`;
 
-      const statusColor = bot.status === "online" ? "var(--discord-green)" : "var(--discord-red)";
+      const botStatus = this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "status.txt")) || "OFFLINE";
+      const botStatistics = Object.fromEntries(
+        (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "statistics.txt")) || "Servers: 0\nUsers: 0").split('\n').map((line) => {
+          const [key, value] = line.split(':').map(part => part.trim());
+          return [key.toLowerCase(), Number(value)];
+        })
+      );
+      const statusColor = (botStatus.toLowerCase() === "online") ? "var(--discord-green)" : "var(--discord-red)";
 
       card.innerHTML = `
-        <div class="bot-header">
+        <div class="bot-header" ${(settings.showStats ?? true) ? "" : `style="margin-bottom: 0;"`}>
           <div class="bot-avatar">
             <i class="fas fa-robot"></i>
           </div>
-          <div class="bot-info">
+          <div class="bot-info" >
             <h3${(!bot.description) ? ' style="font-size: 1.2rem; margin-left: 2.5px;"' : ""}>${this.escapeHtml(bot.name)}</h3>
             <p>${this.escapeHtml(bot.description)}</p>
           </div>
@@ -122,21 +133,21 @@ class DiscordBotCreator {
             </button>
           </div>
         </div>
-        <div class="bot-stats">
+        <div class="bot-stats" ${(settings.showStats ?? true) ? "" : `style="display: none;"`}>
           <div class="stat">
             <div class="stat-label">Status</div>
-            <div class="stat-value" style="color: ${statusColor}">
+            <div class="stat-value" style="color: ${statusColor};">
               <i class="fas fa-circle" style="font-size: 0.75rem; transform: translateY(-2.5px);"></i>
-              ${bot.status.charAt(0).toUpperCase() + bot.status.slice(1)}
+              ${botStatus.charAt(0).toUpperCase() + botStatus.slice(1).toLowerCase()}
             </div>
           </div>
           <div class="stat">
             <div class="stat-label">Servers</div>
-            <div class="stat-value">${this.formatNumber(bot.servers)}</div>
+            <div class="stat-value">${this.formatNumber(Number(botStatistics.servers))}</div>
           </div>
           <div class="stat">
             <div class="stat-label">Users</div>
-            <div class="stat-value">${this.formatNumber(bot.users)}</div>
+            <div class="stat-value">${this.formatNumber(Number(botStatistics.users))}</div>
           </div>
         </div>
       `;
@@ -306,15 +317,6 @@ class DiscordBotCreator {
           </div>
         </div>
         <div class="setting-item">
-          <label data-tooltip="Save space with a compact layout">
-            <span>Compact View</span>
-            <input type="checkbox" id="compactView" />
-          </label>
-          <div class="setting-description">
-            Reduce spacing and show more content at once
-          </div>
-        </div>
-        <div class="setting-item">
           <label data-tooltip="Show or hide bot statistics">
             <span>Show Statistics</span>
             <input type="checkbox" id="showStats" checked />
@@ -334,27 +336,6 @@ class DiscordBotCreator {
           </label>
           <div class="setting-description">
             Set the default command prefix for newly created bots
-          </div>
-        </div>
-        <div class="setting-item">
-          <label data-tooltip="Timeout for API requests">
-            API Request Timeout
-            <input type="number" id="apiTimeout" value="5000" min="1000" step="1000" />
-            <div class="setting-item-spinner-buttons">
-              <button aria-label="Increment" onclick="this.parentElement.previousElementSibling.value++;">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="18 15 12 9 6 15"></polyline>
-                </svg>
-              </button>
-              <button aria-label="Decrement" onclick="this.parentElement.previousElementSibling.value--;">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </button>
-            </div>
-          </label>
-          <div class="setting-description">
-            Maximum time to wait for API responses (in milliseconds)
           </div>
         </div>
         <div class="setting-item">
@@ -407,7 +388,10 @@ class DiscordBotCreator {
 
     const saveBtn = settings.querySelector(".settings-save-btn");
     saveBtn.addEventListener("click", () => {
-      localStorage.setItem("settings", JSON.stringify({
+      const fs = require("fs");
+      const path = require("path");
+
+      const updatedSettings = JSON.stringify({
         theme: document.getElementById("themeSelect").value,
         compactView: document.getElementById("compactView").checked,
         showStats: document.getElementById("showStats").checked,
@@ -417,7 +401,10 @@ class DiscordBotCreator {
         errorNotifications: document.getElementById("errorNotifications").checked,
         statusNotifications: document.getElementById("statusNotifications").checked,
         updateNotifications: document.getElementById("updateNotifications").checked
-      }));
+      });
+
+      localStorage.setItem("settings", updatedSettings);
+      fs.writeFileSync(path.join(process.cwd(), "settings.json"), updatedSettings, "utf8");
       this.updateSettings();
 
       saveBtn.innerHTML = `<i class="fas fa-check"></i>Saved!`;
@@ -658,12 +645,12 @@ class DiscordBotCreator {
             </div>
           </div>
           <div class="setting-item" style="margin-bottom: 0.85rem;">
-            <label data-tooltip="Be ready when something goes wrong">
-              <span>Update Notifications</span>
-              <input type="checkbox" id="updateNotifications" />
+            <label data-tooltip="Enable Discord-style slash commands with autocomplete">
+              <span>Slash Commands</span>
+              <input type="checkbox" id="slashCommands" />
             </label>
             <div class="setting-description">
-              Receive notifications when your bot goes up or down
+              Let users interact with your bot using modern slash commands in Discord's chat input.
             </div>
           </div>
           <div class="workbench-section settings-section" style="
@@ -835,7 +822,7 @@ class DiscordBotCreator {
                 <div class="setting-description" style="margin-top: 1.675rem; position: absolute; left: 0;">
                   ${this.escapeHtml(description)}
                 </div>
-                <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); max-width: calc(100vw - 10rem - 2.5px); font-family: system-ui; background-color: #00000030;" placeholder="Enter ${name.toLowerCase()}...">${require(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}</textarea>
+                <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); max-width: calc(100vw - 10rem - 2.5px); font-family: system-ui; background-color: #00000030;" placeholder="Enter ${name.toLowerCase()}...">${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}</textarea>
               </label>
             </div>
           `).join("")}
@@ -1308,14 +1295,6 @@ class DiscordBotCreator {
               <label for="botToken">Bot Token (optional)</label>
               <input type="text" id="botToken" value="${(bot) ? this.escapeHtml(bot.token) : ""}">
             </div>
-            <div class="form-group">
-              <label for="botPrefix">Command Prefix (optional)</label>
-              <input type="text" id="botPrefix" value="${(bot) ? this.escapeHtml(bot.prefix) : "!"}" required>
-            </div>
-            <div class="form-group">
-              <label for="botCommands">Commands (comma-separated)</label>
-              <input type="text" id="botCommands" value="${(bot) ? this.escapeHtml(bot.commands.join(", ")) : ""}">
-            </div>
             <div class="form-actions">
               <button type="submit" class="submit-btn">
                 ${(bot) ? "Update Bot" : "Create Bot"}
@@ -1391,15 +1370,10 @@ class DiscordBotCreator {
       e.preventDefault();
       
       const newBot = {
-        id: bot ? bot.id : Date.now(),
+        id: (bot) ? bot.id : Date.now(),
         name: form.querySelector("#botName").value,
         description: form.querySelector("#botDescription").value,
         token: form.querySelector("#botToken").value,
-        prefix: form.querySelector("#botPrefix").value,
-        commands: form.querySelector("#botCommands").value.split(",").map(cmd => cmd.trim()),
-        status: bot ? bot.status : "offline",
-        servers: bot ? bot.servers : 0,
-        users: bot ? bot.users : 0,
         initialized: false
       };
 
