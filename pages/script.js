@@ -573,6 +573,8 @@ class DiscordBotCreator {
 
     let configFile = JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")) || `
       {
+        "prefix": "!",
+        "slashCommands": "true",
         "status": ["Online", "Playing", "Ready to assist!"],
         "footer": "Powered by LocalBotify.app",
         "notifications": false,
@@ -615,15 +617,14 @@ class DiscordBotCreator {
             </div>
           </div>
           <div class="setting-item" style="margin-bottom: 0.85rem;">
-            <label data-tooltip="Enable Discord-style slash commands with autocomplete" style="">
+            <label data-tooltip="Enable classic !commands and modern /commands with autocomplete">
               <span>Prefix</span>
-              <input type="text" id="botFooter" placeholder="Enter footer..." value="Powered by LocalBotify.app" style="width: 3.5rem;"><span style="
-margin-left: 0.75rem;
-">Slash Commands</span><input type="checkbox" id="slashCommands">
+              <input type="text" id="botFooter" placeholder="Enter footer..." value="Powered by LocalBotify.app" style="width: 3.5rem;">
+              <span style="margin-left: 0.75rem;">Slash Commands</span>
+              <input type="checkbox" id="slashCommands">
             </label>
-            <label data-tooltip="Enable Discord-style slash commands with autocomplete">
-            </label><div class="setting-description">
-              Let users interact with your bot using modern slash commands in Discord's chat input.
+            <div class="setting-description">
+              Personalize how your bot talks
             </div>
           </div>
           <div class="setting-item" style="margin-bottom: 0.85rem;">
