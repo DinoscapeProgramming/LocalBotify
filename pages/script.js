@@ -615,6 +615,18 @@ class DiscordBotCreator {
             </div>
           </div>
           <div class="setting-item" style="margin-bottom: 0.85rem;">
+            <label data-tooltip="Enable Discord-style slash commands with autocomplete" style="">
+              <span>Prefix</span>
+              <input type="text" id="botFooter" placeholder="Enter footer..." value="Powered by LocalBotify.app" style="width: 3.5rem;"><span style="
+margin-left: 0.75rem;
+">Slash Commands</span><input type="checkbox" id="slashCommands">
+            </label>
+            <label data-tooltip="Enable Discord-style slash commands with autocomplete">
+            </label><div class="setting-description">
+              Let users interact with your bot using modern slash commands in Discord's chat input.
+            </div>
+          </div>
+          <div class="setting-item" style="margin-bottom: 0.85rem;">
             <label data-tooltip="Choose the status for your bot">
               <span>Bot Status</span>
               <select id="botStatusSymbol" style="width: fit-content; border-top-right-radius: 0; border-bottom-right-radius: 0;">
@@ -642,15 +654,6 @@ class DiscordBotCreator {
             </label>
             <div class="setting-description">
               Customize your bot embed footer
-            </div>
-          </div>
-          <div class="setting-item" style="margin-bottom: 0.85rem;">
-            <label data-tooltip="Enable Discord-style slash commands with autocomplete">
-              <span>Slash Commands</span>
-              <input type="checkbox" id="slashCommands" />
-            </label>
-            <div class="setting-description">
-              Let users interact with your bot using modern slash commands in Discord's chat input.
             </div>
           </div>
           <div class="workbench-section settings-section" style="
@@ -884,6 +887,15 @@ class DiscordBotCreator {
     closeBtn.addEventListener("click", () => {
       workspaceView.classList.remove("show");
       setTimeout(() => workspaceView.remove(), 300);
+    });
+
+    editorView.querySelector(".editor-play-btn").addEventListener("click", () => {
+      ipcRenderer.send("terminalData", [
+        bot.id,
+        (editorView.querySelector(".editor-play-btn").children[0].className === "fas fa-circle-stop") ? "\x03" : (((bot.initialized) ? "" : (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"))).commands.initialization + ";")) + "node . \r\n")
+      ]);
+      
+      editorView.querySelector(".editor-play-btn").children[0].className = (editorView.querySelector(".editor-play-btn").children[0].className === "fas fa-circle-stop") ? "fas fa-play" : "fas fa-circle-stop";
     });
 
     const addFileBtn = editorView.querySelector(`.file-explorer-btn[title="New File"]`);
