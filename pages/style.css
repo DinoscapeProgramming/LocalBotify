@@ -574,7 +574,7 @@ body {
   cursor: pointer;
 }
 
-.setting-item input[type="text"], .setting-item input[type="number"], .setting-item textarea, .setting-item select {
+.setting-item input, .setting-item textarea, .setting-item select {
   background-color: var(--discord-darker);
   border: 2px solid transparent;
   padding: 0.75rem 1rem;
@@ -587,7 +587,7 @@ body {
   margin-top: -2.5px;
 }
 
-.setting-item input[type="text"]:focus, .setting-item input[type="number"]:focus, .setting-item textarea:focus, .setting-item select:focus {
+.setting-item input:focus, .setting-item textarea:focus, .setting-item select:focus {
   outline: none;
   border-color: var(--discord-primary);
   box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.2);
@@ -598,7 +598,7 @@ body {
   -moz-appearance: textfield;
 }
 
-.setting-item input[type="number"]::-webkit-inner-spin-button, .setting-item input[type="number"]::-webkit-outer-spin-button {
+.setting-item input::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
@@ -653,6 +653,7 @@ body {
   height: 26px;
   background-color: var(--discord-darker);
   border-radius: 13px;
+  border: none;
   position: relative;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -668,6 +669,10 @@ body {
   left: 3px;
   background-color: var(--discord-text);
   transition: all 0.3s ease;
+}
+
+.setting-item input[type="checkbox"]:focus {
+  box-shadow: none;
 }
 
 .setting-item input[type="checkbox"]:checked {

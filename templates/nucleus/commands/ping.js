@@ -1,14 +1,18 @@
 module.exports = {
   variables: {
-    responseMessage: [
-      "Response Message",
-      "The response after the user messages the ping command",
-      "input:text"
-    ]
+    responseMessage: {
+      title: "Response Message",
+      description: "The response after the user messages the ping command",
+      type: "slider",
+      properties: {
+        min: "0",
+        max: "100"
+      }
+    }
   },
   command: ({
     responseMessage
-  }, Client, message) => {
+  }, client, message) => {
     message.channel.send(responseMessage);
   }
 };

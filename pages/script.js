@@ -619,7 +619,7 @@ class DiscordBotCreator {
           <div class="setting-item" style="margin-bottom: 0.85rem;">
             <label data-tooltip="Enable classic !commands and modern /commands with autocomplete">
               <span>Prefix</span>
-              <input type="text" id="botFooter" placeholder="Enter footer..." value="Powered by LocalBotify.app" style="width: 3.5rem;">
+              <input type="text" id="botPrefix" placeholder="Enter prefix..." value="${this.escapeHtml(configFile.prefix)}" style="width: ${(2.75 + ((configFile.prefix.length - 1) * 0.5)).toString()}rem; text-align: center;">
               <span style="margin-left: 0.75rem;">Slash Commands</span>
               <input type="checkbox" id="slashCommands">
             </label>
@@ -642,7 +642,7 @@ class DiscordBotCreator {
                 <option value="Listening" ${(this.escapeHtml(configFile.status[1] || "Playing") === "Listening") ? "selected" : ""}>Listening</option>
                 <option value="Competing" ${(this.escapeHtml(configFile.status[1] || "Playing") === "Competing") ? "selected" : ""}>Competing</option>
               </select>
-              <input type="text" id="botStatusMessage" placeholder="Enter status message..." value="${this.escapeHtml(configFile.status[2] || "")}" style="width: 9.05rem; margin-left: -0.75rem; border-top-left-radius: 0; border-bottom-left-radius: 0;" />
+              <input type="text" id="botStatusMessage" placeholder="Enter status..." value="${this.escapeHtml(configFile.status[2] || "")}" style="width: 9.05rem; margin-left: -0.75rem; border-top-left-radius: 0; border-bottom-left-radius: 0;" />
             </label>
             <div class="setting-description">
               Give your bot a personality
@@ -785,7 +785,11 @@ class DiscordBotCreator {
       });
     });
 
-    workbenchMainView.querySelectorAll("#botStatusSymbol, #botStatusActivity, #botStatusMessage, #botFooter, #updateNotifications").forEach((botConfigItem) => {
+    workbenchMainView.querySelector("#botPrefix").addEventListener("input", (e) => {
+      e.target.style.width = (2.75 + ((e.target.value.length - 1) * 0.5)).toString() + "rem";
+    });
+
+    workbenchMainView.querySelectorAll("#botPrefix, #slashCommands, #botStatusSymbol, #botStatusActivity, #botStatusMessage, #botFooter").forEach((botConfigItem) => {
       botConfigItem.addEventListener("change", (e) => {
         switch (e.target.id) {
           case "botStatusSymbol":
@@ -819,15 +823,43 @@ class DiscordBotCreator {
               Edit in code lab
             </button>
           </h3>
-          ${Object.entries(require(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js")).variables).map(([id, [name, description] = []] = []) => `
+          ${Object.entries(require(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js")).variables).map(([id, { title = "", description = "", type = "text", datalist = [], options = {}, properties = {} } = {}] = []) => `
             <div class="command-item setting-item" style="margin-bottom: 0.85rem;" data-id="${this.escapeHtml(id)}">
-              <label style="flex-direction: column;">
-                <span style="text-align: left; position: absolute; left: 0;">${this.escapeHtml(name)}</span>
-                <div class="setting-description" style="margin-top: 1.675rem; position: absolute; left: 0;">
-                  ${this.escapeHtml(description)}
-                </div>
-                <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); max-width: calc(100vw - 10rem - 2.5px); font-family: system-ui; background-color: #00000030;" placeholder="Enter ${name.toLowerCase()}...">${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}</textarea>
-              </label>
+              ${(type === "textarea") ? `
+                <label style="flex-direction: column;">
+                  <span style="text-align: left; position: absolute; left: 0;">${this.escapeHtml(title)}</span>
+                  ${
+                    (description) ? `
+                      <div class="setting-description" style="margin-top: 1.675rem; position: absolute; left: 0;">
+                        ${this.escapeHtml(description)}
+                      </div>
+                    ` : ""
+                  }
+                  <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}</textarea>
+                </label>
+              ` : `
+                <label>
+                  <span>${this.escapeHtml(title)}</span>
+                  ${
+                    (type === "select") ? `
+                      <select style="height: 2.5rem; font-size: 0.85rem; width: fit-content;" ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                        ${Object.entries(options).map(([optionId, optionName]) => `
+                          <option value="${optionId}">${optionName}</option>
+                        `)}
+                      </select>
+                    ` : `
+                      <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" style="height: 2.5rem;" ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}></input>
+                    `
+                  }
+                </label>
+                ${
+                  (description) ? `
+                    <div class="setting-description">
+                      ${this.escapeHtml(description)}
+                    </div>
+                  ` : ""
+                }
+              `}
             </div>
           `).join("")}
         `;
@@ -893,10 +925,10 @@ class DiscordBotCreator {
     editorView.querySelector(".editor-play-btn").addEventListener("click", () => {
       ipcRenderer.send("terminalData", [
         bot.id,
-        (editorView.querySelector(".editor-play-btn").children[0].className === "fas fa-circle-stop") ? "\x03" : (((bot.initialized) ? "" : (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"))).commands.initialization + ";")) + "node . \r\n")
+        (editorView.querySelector(".editor-play-btn").children[0].className === "fas fa-stop") ? "\x03" : (((bot.initialized) ? "" : (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"))).commands.initialization + ";")) + "node . \r\n")
       ]);
       
-      editorView.querySelector(".editor-play-btn").children[0].className = (editorView.querySelector(".editor-play-btn").children[0].className === "fas fa-circle-stop") ? "fas fa-play" : "fas fa-circle-stop";
+      editorView.querySelector(".editor-play-btn").children[0].className = (editorView.querySelector(".editor-play-btn").children[0].className === "fas fa-stop") ? "fas fa-play" : "fas fa-stop";
     });
 
     const addFileBtn = editorView.querySelector(`.file-explorer-btn[title="New File"]`);
