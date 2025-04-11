@@ -1,18 +1,34 @@
+const { EmbedBuilder } = require("discord.js");
+const { commandType } = require("localbotify");
+
 module.exports = {
   variables: {
-    responseMessage: {
-      title: "Response Message",
-      description: "The response after the user messages the ping command",
-      type: "slider",
-      properties: {
-        min: "0",
-        max: "100"
-      }
+    header: {
+      title: "Header",
+      description: "The header of the response embed",
+      type: "text"
     }
   },
-  command: ({
-    responseMessage
-  }, client, message) => {
-    message.channel.send(responseMessage);
+  command: async ({
+    header,
+    footer
+  }, client, event) => {
+    if (event.content.trim().toLowerCase() === "!ping") {
+      const sent = await ((commandType(event) === "message") ? event.channel.send : event.reply)("Pinging...");
+      const latency = sent.createdTimestamp - event.createdTimestamp;
+      const apiLatency = Math.round(client.ws.ping); 
+
+      const embed = new EmbedBuilder()
+        .setColor(0x00bfff)
+        .setTitle(header || "🏓 Pong!")
+        .addFields(
+          { name: "Bot Latency", value: `${latency}ms`, inline: true },
+          { name: "API Latency", value: `${apiLatency}ms`, inline: true }
+        )
+        .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
+        .setTimestamp();
+
+      await sent.edit({ content: null, embeds: [embed] });
+    };
   }
 };

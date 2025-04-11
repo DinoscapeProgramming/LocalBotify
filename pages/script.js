@@ -449,11 +449,11 @@ class DiscordBotCreator {
       <div class="help-container"></div>
     `;
 
-    this.getFileTreeItem(helpView, "README.md").classList.add("active");
+    //this.getFileTreeItem(helpView, "README.md").classList.add("active");
 
-    fetch(`https://raw.githubusercontent.com/DinoscapeProgramming/Remote-Control/refs/heads/main/README.md`)
+    /*fetch(`https://raw.githubusercontent.com/DinoscapeProgramming/LocalBotify/refs/heads/main/commandTutorial.md`)
     .then((response) => response.text())
-    .then((response) => {
+    .then((response) => {*/require("fs").readFile("./docs/commandTutorial.md", "utf8", (err, response) => {
       ipcRenderer.invoke("parseMarkdown", response).then((parsedMarkdown) => {
         helpView.querySelector(".help-container").innerHTML = parsedMarkdown;
         this.loadCodeHighlighter();
@@ -469,7 +469,7 @@ class DiscordBotCreator {
     return [
       {
         name: "Introduction",
-        path: "README.md"
+        path: "commandTutorial.md"
       }
     ];
   };
@@ -575,12 +575,19 @@ class DiscordBotCreator {
       {
         "prefix": "!",
         "slashCommands": "true",
-        "status": ["Online", "Playing", "Ready to assist!"],
+        "status": [
+          "Online",
+          "Custom",
+          "Powered by LocalBotify.app"
+        ],
         "footer": "Powered by LocalBotify.app",
-        "notifications": false,
         "commands": {
           "initialization": "npm install",
-          "startup": "node . "
+          "startup": ".\\node . "
+        },
+        "variables": {
+          "commands": {},
+          "events": {}
         }
       }
     `);
@@ -621,7 +628,7 @@ class DiscordBotCreator {
               <span>Prefix</span>
               <input type="text" id="botPrefix" placeholder="Enter prefix..." value="${this.escapeHtml(configFile.prefix)}" style="width: ${(2.75 + ((configFile.prefix.length - 1) * 0.5)).toString()}rem; text-align: center;">
               <span style="margin-left: 0.75rem;">Slash Commands</span>
-              <input type="checkbox" id="slashCommands">
+              <input type="checkbox" id="slashCommands"${configFile.slashCommands ? " checked" : ""}>
             </label>
             <div class="setting-description">
               Personalize how your bot talks
@@ -641,8 +648,10 @@ class DiscordBotCreator {
                 <option value="Watching" ${(this.escapeHtml(configFile.status[1] || "Playing") === "Watching") ? "selected" : ""}>Watching</option>
                 <option value="Listening" ${(this.escapeHtml(configFile.status[1] || "Playing") === "Listening") ? "selected" : ""}>Listening</option>
                 <option value="Competing" ${(this.escapeHtml(configFile.status[1] || "Playing") === "Competing") ? "selected" : ""}>Competing</option>
+                <option value="Streaming" ${(this.escapeHtml(configFile.status[1] || "Playing") === "Streaming") ? "selected" : ""}>Streaming</option>
+                <option value="Custom" ${(this.escapeHtml(configFile.status[1] || "Playing") === "Custom") ? "selected" : ""}>Custom</option>
               </select>
-              <input type="text" id="botStatusMessage" placeholder="Enter status..." value="${this.escapeHtml(configFile.status[2] || "")}" style="width: 9.05rem; margin-left: -0.75rem; border-top-left-radius: 0; border-bottom-left-radius: 0;" />
+              <input type="text" id="botStatusMessage" placeholder="Enter status..." value="${this.escapeHtml(configFile.status[2] || "")}" style="width: 14rem; margin-left: -0.75rem; border-top-left-radius: 0; border-bottom-left-radius: 0;" />
             </label>
             <div class="setting-description">
               Give your bot a personality
@@ -792,6 +801,12 @@ class DiscordBotCreator {
     workbenchMainView.querySelectorAll("#botPrefix, #slashCommands, #botStatusSymbol, #botStatusActivity, #botStatusMessage, #botFooter").forEach((botConfigItem) => {
       botConfigItem.addEventListener("change", (e) => {
         switch (e.target.id) {
+          case "botPrefix":
+            configFile.prefix = e.target.value;
+            break;
+          case "slashCommands":
+            configFile.slashCommands = e.target.checked;
+            break;
           case "botStatusSymbol":
             configFile.status[0] = e.target.value;
             break;
@@ -803,9 +818,6 @@ class DiscordBotCreator {
             break;
           case "botFooter":
             configFile.footer = e.target.value;
-            break;
-          case "updateNotifications":
-            configFile.notifications = e.target.checked;
             break;
         };
 
@@ -1443,6 +1455,12 @@ class DiscordBotCreator {
 
     if (!fs.readdirSync(process.cwd()).includes("bots")) fs.mkdirSync(path.join(process.cwd(), "bots"));
     if (!fs.readdirSync(path.join(process.cwd(), "bots")).includes(newBot.id.toString())) fs.mkdirSync(path.join(process.cwd(), "bots", newBot.id.toString()));
+
+    if (process.platform === "win32") {
+      fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), "node.bat"), `@echo off\n"${process.execPath}" %*`);
+    } else {
+      fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), "node"), `#!/bin/bash\n"${process.execPath}" "$@"`, { mode: 0o755 });
+    };
 
     if (template === "none") return;
     

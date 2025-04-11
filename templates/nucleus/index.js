@@ -38,14 +38,13 @@ client.once("ready", () => {
 });
 
 client.on("messageCreate", (message) => {
-  if (message.author.bot || !message.content.startsWith(process.env.PREFIX)) return;
+  config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
+  if (message.author.bot || !message.content.startsWith(config.prefix)) return;
 
   let command = message.content.toLowerCase();
-  let commandName = command.substring(process.env.PREFIX.length);
+  let commandName = command.substring(config.prefix.length);
 
   if (fs.readdirSync("./commands").includes(`${commandName}.js`)) {
-    config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
-
     const commandFile = require(`./commands/${commandName}.js`);
     commandFile.command({
       ...{
