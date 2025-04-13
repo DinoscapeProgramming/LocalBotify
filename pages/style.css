@@ -600,6 +600,11 @@ body {
   -moz-appearance: textfield;
 }
 
+.setting-item input[type="number"]::-webkit-outer-spin-button, .setting-item input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .setting-item input[type="color"] {
   appearance: none;
   -webkit-appearance: none;

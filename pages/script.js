@@ -623,6 +623,18 @@ class DiscordBotCreator {
               <h3 style="font-size: 1.5rem; margin-left: 2.5px;">${this.escapeHtml(bot.name)}</h3>
               <p style="font-size: 0.95rem; margin-left: 2.5px; margin-top: -2.5px;">${(bot.description) ? this.escapeHtml(bot.description) : ""}</p>
             </div>
+            <div id="botActions" style="
+              position: absolute;
+              right: 4rem;
+              display: flex;
+            ">
+              <button class="create-btn" style="margin-right: 7.5px;">
+                <i class="fas fa-play"></i>Run
+              </button>
+              <button class="create-btn" style="padding: 0.5rem 0.65rem;">
+                <i class="fas fa-upload"></i>
+              </button>
+            </div>
           </div>
           <div class="setting-item" style="margin-bottom: 0.85rem;">
             <label data-tooltip="Enable classic !commands and modern /commands with autocomplete">
@@ -900,13 +912,13 @@ class DiscordBotCreator {
           editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.remove("animationless"));
         });
 
-        workbenchEditorView.querySelector(".command-item.setting-item").forEach((commandItem) => {
+        workbenchEditorView.querySelectorAll(".command-item.setting-item").forEach((commandItem) => {
           commandItem.querySelector("input, textarea, select").addEventListener("change", (e) => {
             if (!configFile) (configFile = {});
             if (!configFile.variables) (configFile.variables = {});
             if (!configFile.variables[command.dataset.category]) (configFile.variables[command.dataset.category] = {});
             if (!configFile.variables[command.dataset.category][command.textContent.trim()]) (configFile.variables[command.dataset.category][command.textContent.trim()] = {});
-            configFile.variables[command.dataset.category][command.textContent.trim()][commandItem.dataset.id] = ((e.target.tagName === "INPUT") && (e.target.type === "checkbox")) ? e.target.checked : e.target.value;
+            configFile.variables[command.dataset.category][command.textContent.trim()][commandItem.dataset.id] = ((e.target.tagName === "INPUT") && (e.target.type === "checkbox")) ? e.target.checked : ((["number", "range"].includes(e.target.type)) ? parseInt(e.target.value) : e.target.value);
 
             fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
           });
