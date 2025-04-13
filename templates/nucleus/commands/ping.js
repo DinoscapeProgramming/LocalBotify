@@ -1,7 +1,8 @@
-const { EmbedBuilder } = require("discord.js");
-const { commandType } = require("localbotify");
+const { EmbedBuilder, SlashCommandBuilder } = require("../../../node_modules/discord.js/src/index.js");
+const { commandType } = require("../../../node_modules/localbotify/index.js");
 
 module.exports = {
+  description: "Check the bot's response time",
   variables: {
     header: {
       title: "Header",
@@ -9,26 +10,32 @@ module.exports = {
       type: "text"
     }
   },
+  slashCommand: new SlashCommandBuilder()
+    .setName("ping")
+    .setDescription("Check the bot's response time"),
   command: async ({
     header,
     footer
   }, client, event) => {
-    if (event.content.trim().toLowerCase() === "!ping") {
-      const sent = await ((commandType(event) === "message") ? event.channel.send : event.reply)("Pinging...");
-      const latency = sent.createdTimestamp - event.createdTimestamp;
-      const apiLatency = Math.round(client.ws.ping); 
+    const start = Date.now();
 
-      const embed = new EmbedBuilder()
-        .setColor(0x00bfff)
-        .setTitle(header || "🏓 Pong!")
-        .addFields(
-          { name: "Bot Latency", value: `${latency}ms`, inline: true },
-          { name: "API Latency", value: `${apiLatency}ms`, inline: true }
-        )
-        .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
-        .setTimestamp();
+    const sent = await ((commandType(event) === "message") ? event.channel.send("Pinging...") : event.reply("Pinging..."));
 
-      await sent.edit({ content: null, embeds: [embed] });
-    };
+    const end = Date.now();
+
+    const latency = (commandType(event)  === "message") ? (sent.createdTimestamp - event.createdTimestamp) : (end - start);
+    const apiLatency = (client.ws.ping >= 0) ? Math.round(client.ws.ping) : "N/A";
+
+    const embed = new EmbedBuilder()
+      .setColor(0x00bfff)
+      .setTitle(header || "🏓  Pong!")
+      .addFields(
+        { name: "Bot Latency", value: `${latency}ms`, inline: true },
+        { name: "API Latency", value: `${apiLatency}ms`, inline: true }
+      )
+      .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
+      .setTimestamp();
+
+    await sent.edit({ content: null, embeds: [embed] });
   }
 };

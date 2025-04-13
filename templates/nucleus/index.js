@@ -1,6 +1,7 @@
 require("../../node_modules/@teeny-tiny/dotenv/index.js").config();
 const fs = require("fs");
-const { Client, GatewayIntentBits, PresenceUpdateStatus, ActivityType } = require("../../node_modules/discord.js/src/index.js");
+const { REST, Routes, Client, GatewayIntentBits, PresenceUpdateStatus, ActivityType } = require("../../node_modules/discord.js/src/index.js");
+const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 const updateStatistics = require("./trackers/statistics.js");
 let config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
 
@@ -20,20 +21,39 @@ client.once("ready", () => {
 
   require("./trackers/status.js");
   updateStatistics(client);
+
   client.user.setStatus(PresenceUpdateStatus[config?.status?.[0] || "Online"]);
-  if (config?.status?.[1]) client.user.setActivity(config?.status?.[2], ((config?.status?.[1] === "Playing")) ? {} : {
+  if (config?.status?.[1]) client.user.setActivity(config?.status?.[2].replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), ((config?.status?.[1] === "Playing")) ? {} : {
     type: ActivityType[config?.status?.[1]]
   });
 
+  rest.put(
+    Routes.applicationCommands(client.user.id),
+    { body: (config.slashCommands ?? true) ? fs.readdirSync("./commands").map((command) => require("./commands/" + command)).filter(({ slashCommand }) => slashCommand).map(({ slashCommand }) => slashCommand) : [] }
+  );
+
   fs.watch("./config.json", (eventType) => {
-    if ((eventType !== "change") || (JSON.stringify(config.status) === JSON.stringify(JSON.parse(fs.readFileSync("./config.json", "utf8")).status))) return;
+    if (eventType !== "change") return;
 
     config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
 
-    client.user.setStatus(PresenceUpdateStatus[config?.status?.[0] || "Online"]);
-    if (config?.status?.[1]) client.user.setActivity(config?.status?.[2], ((config?.status?.[1] === "Playing")) ? {} : {
-      type: ActivityType[config?.status?.[1]]
-    });
+    if (JSON.stringify(config.status) !== JSON.stringify(JSON.parse(fs.readFileSync("./config.json", "utf8")).status)) {
+      client.user.setStatus(PresenceUpdateStatus[config?.status?.[0] || "Online"]);
+      if (config?.status?.[1]) client.user.setActivity(config?.status?.[2].replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), ((config?.status?.[1] === "Playing")) ? {} : {
+        type: ActivityType[config?.status?.[1]]
+      });
+    };
+
+    if (JSON.stringify(config.status) !== JSON.stringify(JSON.parse(fs.readFileSync("./config.json", "utf8")).status)) {
+      fs.readdirSync("./commands").forEach((command) => {
+        delete require.cache[require.resolve("./bots/" + command)];
+      });
+
+      rest.put(
+        Routes.applicationCommands(client.user.id),
+        { body: (config.slashCommands ?? true) ? fs.readdirSync("./commands").map((command) => require("./commands/" + command)).filter(({ slashCommand }) => slashCommand).map(({ slashCommand }) => slashCommand) : [] }
+      );
+    };
   });
 });
 
@@ -45,10 +65,12 @@ client.on("messageCreate", (message) => {
   let commandName = command.substring(config.prefix.length);
 
   if (fs.readdirSync("./commands").includes(`${commandName}.js`)) {
+    delete require.cache[require.resolve(`./commands/${commandName}.js`)];
     const commandFile = require(`./commands/${commandName}.js`);
+
     commandFile.command({
       ...{
-        footer: config.footer
+        footer: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression))
       },
       ...Object.entries(commandFile.variables).map(([variableName]) => [
         variableName,
@@ -63,15 +85,45 @@ client.on("messageCreate", (message) => {
   };
 });
 
+client.on("interactionCreate", (interaction) => {
+  if (interaction.user.bot) return;
+
+  config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
+
+  let commandName = interaction.commandName;
+
+  if (fs.readdirSync("./commands").includes(`${commandName}.js`)) {
+    delete require.cache[require.resolve(`./commands/${commandName}.js`)];
+    const commandFile = require(`./commands/${commandName}.js`);
+
+    commandFile.command({
+      ...{
+        footer: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression))
+      },
+      ...Object.entries(commandFile.variables).map(([variableName]) => [
+        variableName,
+        config?.variables?.commands?.[commandName]?.[variableName] || null
+      ]).reduce((accumulator, [variableName, variableValue]) => ({
+        ...accumulator,
+        ...{
+          [variableName]: variableValue
+        }
+      }), {})
+    }, client, interaction);
+  };
+});
+
 client.on("guildCreate", () => updateStatistics(client));
 client.on("guildMemberAdd", () => updateStatistics(client));
 
 fs.readdirSync("./events").forEach((event) => {
   if (!event.endsWith(".js"))
-  client.on(event.substring(0, event.length - 3), (...args) => {
+  client.on(event.substring(0, event.length - 3).replace(/[^A-Za-z]/g, ""), (...args) => {
     config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
 
+    delete require.cache[require.resolve(`./commands/${event}.js`)];
     const eventFile = require(`./events/${event}`);
+
     eventFile.event({
       ...{
         footer: config.footer

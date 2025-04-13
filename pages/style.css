@@ -83,6 +83,7 @@ body {
   background: transparent;
   cursor: ew-resize;
   height: 100%;
+  z-index: 1;
 }
 
 .nav-item {
@@ -595,7 +596,73 @@ body {
 
 .setting-item input[type="number"] {
   appearance: textfield;
+  -webkit-appearance: textfield;
   -moz-appearance: textfield;
+}
+
+.setting-item input[type="color"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding: 0;
+  min-height: 3.15rem;
+  width: calc(100vw - 10rem + 2.5px);
+  background-color: transparent;
+  border: none;
+  transform: translateX(-2.5px);
+  margin-bottom: -2.5px;
+}
+
+.setting-item input[type="color"]:hover {
+  opacity: 0.8;
+}
+
+.setting-item input[type="color"]:focus {
+  opacity: 1 !important;
+}
+
+.setting-item input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: var(--radius-md);
+}
+
+.setting-item input[type="color"]::-moz-color-swatch {
+  border: none;
+  border-radius: var(--radius-md);
+}
+
+.setting-item input[type="range"] {
+  width: calc((100vw - 10rem) - 2.5px);
+  min-height: 3.15rem;
+  font-family: system-ui;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  margin-bottom: -16.5px;
+}
+
+.setting-item input[type="file"] {
+  font-size: 0.9rem;
+}
+
+.setting-item input[type="file"]::file-selector-button {
+  background-color: var(--discord-primary);
+  color: white;
+  padding: 10px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 10px;
+  margin-right: 13px;
+  transition: all 0.2s ease;
+}
+
+.setting-item input[type="file"]::file-selector-button:hover {
+  opacity: 0.8;
+}
+
+.setting-item input[type="file"]::file-selector-button:focus {
+  opacity: 1 !important;
 }
 
 .setting-item input::-webkit-outer-spin-button {
@@ -963,6 +1030,7 @@ body {
   position: relative;
   left: 0;
   top: 35.5px;
+  height: 100%;
   border-top: 1.35px solid #ffffff26;
   overflow-y: auto;
 }
@@ -1432,9 +1500,8 @@ body {
 .help-container {
   font-family: system-ui, sans-serif;
   line-height: 1.6;
-  color: #1a1a1a;
-  background: #fff;
-  padding: 1rem;
+  color: #fff;
+  padding: 1rem 2.5rem;
 }
 
 .help-container h1,
@@ -1478,20 +1545,20 @@ body {
 .help-container blockquote {
   border-left: 4px solid #ccc;
   padding-left: 1rem;
-  color: #555;
+  color: #ffffff85;
   margin: 1rem 0;
   font-style: italic;
 }
 
 .help-container code {
-  background: #f5f5f5;
+  background: #2c2c2c;
   font-family: monospace;
   padding: 0.2rem 0.4rem;
   border-radius: 4px;
 }
 .help-container pre {
-  background: #f5f5f5;
-  padding: 1rem;
+  /* background: #f5f5f5; */
+  /* padding: 1rem; */
   overflow-x: auto;
   border-radius: 6px;
 }
@@ -1502,7 +1569,7 @@ body {
 
 .help-container hr {
   border: none;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid #dddddd21;
   margin: 2rem 0;
 }
 

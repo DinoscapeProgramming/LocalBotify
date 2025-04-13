@@ -13,8 +13,10 @@
   "dependencies": {
     "@lydell/node-pty": "^1.1.0",
     "@teeny-tiny/dotenv": "^1.0.10",
+    "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
     "discord.js": "^14.18.0",
+    "localbotify": "^1.1.0",
     "markdown-wasm": "^1.2.0",
     "request": "^2.88.2",
     "unzipper": "^0.12.3"

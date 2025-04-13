@@ -297,6 +297,8 @@ class DiscordBotCreator {
   };
 
   createSettingsPanel() {
+    const storedSettings = JSON.parse(localStorage.getItem("settings") || "{}");
+
     const settings = document.createElement("div");
     settings.className = "settings-panel";
     
@@ -307,9 +309,10 @@ class DiscordBotCreator {
           <label data-tooltip="Choose between dark and light theme">
             Theme
             <select id="themeSelect">
-              <option value="discord">Discord</option>
-              <option value="serenity">Serenity</option>
-              <option value="monokai">Monokai</option>
+              <option value="discord" ${((storedSettings.theme || "discord") === "discord") ? "selected" : ""}>Discord</option>
+              <option value="serenity" ${((storedSettings.theme || "discord") === "serenity") ? "selected" : ""}>Serenity</option>
+              <option value="monokai" ${((storedSettings.theme || "discord") === "monokai") ? "selected" : ""}>Monokai</option>
+              <option value="celestial" ${((storedSettings.theme || "discord") === "celestial") ? "selected" : ""}>Celestial</option>
             </select>
           </label>
           <div class="setting-description">
@@ -319,7 +322,7 @@ class DiscordBotCreator {
         <div class="setting-item">
           <label data-tooltip="Show or hide bot statistics">
             <span>Show Statistics</span>
-            <input type="checkbox" id="showStats" checked />
+            <input type="checkbox" id="showStats" ${((storedSettings.showStats ?? true) ? "checked" : "")}/>
           </label>
           <div class="setting-description">
             Display server count and user statistics on bot cards
@@ -332,7 +335,7 @@ class DiscordBotCreator {
         <div class="setting-item">
           <label data-tooltip="Default prefix for new bots">
             Default Bot Prefix
-            <input type="text" id="defaultPrefix" value="!" placeholder="Enter prefix..." />
+            <input type="text" id="defaultPrefix" value="${storedSettings.defaultPrefix ?? "!"}" placeholder="Enter prefix..." />
           </label>
           <div class="setting-description">
             Set the default command prefix for newly created bots
@@ -341,7 +344,7 @@ class DiscordBotCreator {
         <div class="setting-item">
           <label data-tooltip="Enable development mode">
             <span>Developer Mode</span>
-            <input type="checkbox" id="devMode" />
+            <input type="checkbox" id="devMode" ${(storedSettings.devMode) ? "checked" : ""}/>
           </label>
           <div class="setting-description">
             Show additional debugging information and developer tools
@@ -354,7 +357,7 @@ class DiscordBotCreator {
         <div class="setting-item">
           <label data-tooltip="Get notified about errors">
             <span>Error Notifications</span>
-            <input type="checkbox" id="errorNotifications" checked />
+            <input type="checkbox" id="errorNotifications" ${(storedSettings.errorNotifications ?? true) ? "checked" : ""}/>
           </label>
           <div class="setting-description">
             Receive notifications when errors occur
@@ -363,7 +366,7 @@ class DiscordBotCreator {
         <div class="setting-item">
           <label data-tooltip="Get notified about status changes">
             <span>Status Notifications</span>
-            <input type="checkbox" id="statusNotifications" checked />
+            <input type="checkbox" id="statusNotifications" ${(storedSettings.statusNotifications ?? true) ? "checked" : ""}/>
           </label>
           <div class="setting-description">
             Receive notifications when bot status changes
@@ -372,7 +375,7 @@ class DiscordBotCreator {
         <div class="setting-item">
           <label data-tooltip="Get notified about updates">
             <span>Update Notifications</span>
-            <input type="checkbox" id="updateNotifications" checked />
+            <input type="checkbox" id="updateNotifications" ${(storedSettings.updateNotifications ?? true) ? "checked" : ""}/>
           </label>
           <div class="setting-description">
             Receive notifications about new features and updates
@@ -393,10 +396,8 @@ class DiscordBotCreator {
 
       const updatedSettings = JSON.stringify({
         theme: document.getElementById("themeSelect").value,
-        compactView: document.getElementById("compactView").checked,
         showStats: document.getElementById("showStats").checked,
         defaultPrefix: document.getElementById("defaultPrefix").value,
-        apiTimeout: Number(document.getElementById("apiTimeout").value),
         devMode: document.getElementById("devMode").checked,
         errorNotifications: document.getElementById("errorNotifications").checked,
         statusNotifications: document.getElementById("statusNotifications").checked,
@@ -638,18 +639,18 @@ class DiscordBotCreator {
             <label data-tooltip="Choose the status for your bot">
               <span>Bot Status</span>
               <select id="botStatusSymbol" style="width: fit-content; border-top-right-radius: 0; border-bottom-right-radius: 0;">
-                <option value="Online" ${(this.escapeHtml(configFile.status[0] || "Online") === "Online") ? "selected" : ""}>🟢</option>
-                <option value="Idle" ${(this.escapeHtml(configFile.status[0] || "Online") === "Idle") ? "selected" : ""}>🌙</option>
-                <option value="DoNotDisturb" ${(this.escapeHtml(configFile.status[0] || "Online") === "DoNotDisturb") ? "selected" : ""}>🔴</option>
-                <option value="Invisible" ${(this.escapeHtml(configFile.status[0] || "Online") === "Invisible") ? "selected" : ""}>🔘</option>
+                <option value="Online" ${((configFile.status[0] || "Online") === "Online") ? "selected" : ""}>🟢</option>
+                <option value="Idle" ${((configFile.status[0] || "Online") === "Idle") ? "selected" : ""}>🌙</option>
+                <option value="DoNotDisturb" ${((configFile.status[0] || "Online") === "DoNotDisturb") ? "selected" : ""}>🔴</option>
+                <option value="Invisible" ${((configFile.status[0] || "Online") === "Invisible") ? "selected" : ""}>🔘</option>
               </select>
               <select id="botStatusActivity" style="width: fit-content; border-radius: 0; margin-left: -0.75rem;">
-                <option value="Playing" ${(this.escapeHtml(configFile.status[1] || "Playing") === "Playing") ? "selected" : ""}>Playing</option>
-                <option value="Watching" ${(this.escapeHtml(configFile.status[1] || "Playing") === "Watching") ? "selected" : ""}>Watching</option>
-                <option value="Listening" ${(this.escapeHtml(configFile.status[1] || "Playing") === "Listening") ? "selected" : ""}>Listening</option>
-                <option value="Competing" ${(this.escapeHtml(configFile.status[1] || "Playing") === "Competing") ? "selected" : ""}>Competing</option>
-                <option value="Streaming" ${(this.escapeHtml(configFile.status[1] || "Playing") === "Streaming") ? "selected" : ""}>Streaming</option>
-                <option value="Custom" ${(this.escapeHtml(configFile.status[1] || "Playing") === "Custom") ? "selected" : ""}>Custom</option>
+                <option value="Playing" ${((configFile.status[1] || "Playing") === "Playing") ? "selected" : ""}>Playing</option>
+                <option value="Watching" ${((configFile.status[1] || "Playing") === "Watching") ? "selected" : ""}>Watching</option>
+                <option value="Listening" ${((configFile.status[1] || "Playing") === "Listening") ? "selected" : ""}>Listening</option>
+                <option value="Competing" ${((configFile.status[1] || "Playing") === "Competing") ? "selected" : ""}>Competing</option>
+                <option value="Streaming" ${((configFile.status[1] || "Playing") === "Streaming") ? "selected" : ""}>Streaming</option>
+                <option value="Custom" ${((configFile.status[1] || "Playing") === "Custom") ? "selected" : ""}>Custom</option>
               </select>
               <input type="text" id="botStatusMessage" placeholder="Enter status..." value="${this.escapeHtml(configFile.status[2] || "")}" style="width: 14rem; margin-left: -0.75rem; border-top-left-radius: 0; border-bottom-left-radius: 0;" />
             </label>
@@ -827,6 +828,8 @@ class DiscordBotCreator {
 
     workbenchMainView.querySelectorAll(".workbench-section .setting-item").forEach((command) => {
       command.addEventListener("click", () => {
+        delete require.cache[require.resolve(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js"))];
+
         workbenchEditorView.innerHTML = `
           <h3 class="command-header">
             <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i>${command.textContent.trim()}
@@ -835,9 +838,21 @@ class DiscordBotCreator {
               Edit in code lab
             </button>
           </h3>
-          ${Object.entries(require(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js")).variables).map(([id, { title = "", description = "", type = "text", datalist = [], options = {}, properties = {} } = {}] = []) => `
-            <div class="command-item setting-item" style="margin-bottom: 0.85rem;" data-id="${this.escapeHtml(id)}">
-              ${(type === "textarea") ? `
+          ${Object.entries(require(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js")).variables).map(([id, { title = "", description = "", type = "text", datalist = null, options = {}, properties = {} } = {}] = [], index) => `
+            <div class="command-item setting-item" style="margin-bottom: 1rem;" data-id="${this.escapeHtml(id)}">
+              ${(type === "switch") ? `
+                <label>
+                  <span>${this.escapeHtml(title)}</span>
+                  <input type="checkbox" ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}/>
+                </label>
+                ${
+                  (description) ? `
+                    <div class="setting-description">
+                      ${this.escapeHtml(description)}
+                    </div>
+                  ` : ""
+                }
+              ` : `
                 <label style="flex-direction: column;">
                   <span style="text-align: left; position: absolute; left: 0;">${this.escapeHtml(title)}</span>
                   ${
@@ -847,31 +862,26 @@ class DiscordBotCreator {
                       </div>
                     ` : ""
                   }
-                  <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}</textarea>
+                  ${(type === "textarea") ? `
+                    <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}</textarea>
+                  ` : ((type === "select") ? `
+                    <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                      ${Object.entries(options).map(([optionId, optionName]) => `
+                        <option value="${optionId}">${optionName}</option>
+                      `)}
+                    </select>
+                  ` : `
+                    <input type="${type.replace("switch", "checkbox").replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                  `)}
                 </label>
-              ` : `
-                <label>
-                  <span>${this.escapeHtml(title)}</span>
-                  ${
-                    (type === "select") ? `
-                      <select style="height: 2.5rem; font-size: 0.85rem; width: fit-content;" ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
-                        ${Object.entries(options).map(([optionId, optionName]) => `
-                          <option value="${optionId}">${optionName}</option>
-                        `)}
-                      </select>
-                    ` : `
-                      <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" style="height: 2.5rem;" ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}></input>
-                    `
-                  }
-                </label>
-                ${
-                  (description) ? `
-                    <div class="setting-description">
-                      ${this.escapeHtml(description)}
-                    </div>
-                  ` : ""
-                }
               `}
+              ${(datalist) ? `
+                <datalist id="workbench-datalist-${index}">
+                  ${datalist.map((value) => `
+                    <option value="${value}"></option>
+                  `)}
+                </datalist>
+              ` : ""}
             </div>
           `).join("")}
         `;
@@ -888,6 +898,18 @@ class DiscordBotCreator {
             editorView.style.animation = "none";
           }, 500);
           editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.remove("animationless"));
+        });
+
+        workbenchEditorView.querySelector(".command-item.setting-item").forEach((commandItem) => {
+          commandItem.querySelector("input, textarea, select").addEventListener("change", (e) => {
+            if (!configFile) (configFile = {});
+            if (!configFile.variables) (configFile.variables = {});
+            if (!configFile.variables[command.dataset.category]) (configFile.variables[command.dataset.category] = {});
+            if (!configFile.variables[command.dataset.category][command.textContent.trim()]) (configFile.variables[command.dataset.category][command.textContent.trim()] = {});
+            configFile.variables[command.dataset.category][command.textContent.trim()][commandItem.dataset.id] = ((e.target.tagName === "INPUT") && (e.target.type === "checkbox")) ? e.target.checked : e.target.value;
+
+            fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
+          });
         });
 
         workbenchMainView.style.display = "none";
@@ -968,6 +990,7 @@ class DiscordBotCreator {
           newFileTreeItem.style.removeProperty("cursor");
           newFileTreeItem.querySelector("i").className = `fas ${(newFileTreeItem.querySelector("span").textContent.endsWith(".json")) ? "fa-file" : "fa-file-code"}`;
           newFileTreeItem.querySelector("span").contentEditable = false;
+          newFileTreeItem.dataset.filename = newFileTreeItem.querySelector("span").textContent;
 
           const path = require("path");
           fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "", "utf8");
@@ -1200,7 +1223,7 @@ class DiscordBotCreator {
         if (item.classList.contains("folder")) {
           item.nextElementSibling.style.display = (item.nextElementSibling.style.display === "none") ? "block" : "none";
         } else {
-          fileItems.forEach(i => i.classList.remove("active"));
+          editorView.querySelectorAll(".file-tree-item").forEach(i => i.classList.remove("active"));
           item.classList.add("active");
 
           this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"));
@@ -1350,7 +1373,12 @@ class DiscordBotCreator {
             </div>` : ""}
             <div class="form-group">
               <label for="botToken">Bot Token (optional)</label>
-              <input type="text" id="botToken" value="${(bot) ? this.escapeHtml(bot.token) : ""}">
+              <input type="text" id="botToken" value="${(bot) ? this.escapeHtml(require("fs").readFileSync(require("path").join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8").split("\n").filter((line) => !line.startsWith("#") && (line.split("=").length > 1)).map((line) => line.trim().split(/\/\/|#/)[0].split("=")).reduce((data, accumulator) => ({
+                ...data,
+                ...{
+                  [accumulator[0]]: JSON.parse(accumulator[1].trim())
+                }
+              }), {}).TOKEN || "") : ""}">
             </div>
             <div class="form-actions">
               <button type="submit" class="submit-btn">
@@ -1430,13 +1458,28 @@ class DiscordBotCreator {
         id: (bot) ? bot.id : Date.now(),
         name: form.querySelector("#botName").value,
         description: form.querySelector("#botDescription").value,
-        token: form.querySelector("#botToken").value,
         initialized: false
       };
 
       if (bot) {
+        const fs = require("fs");
+        const path = require("path");
+
         const index = this.bots.findIndex((b) => b.id === bot.id);
         this.bots[index] = newBot;
+
+        let replacedToken = false;
+
+        fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "utf8").split("\n").map((line) => {
+          if (replacedToken) return line;
+
+          if (line.split(/#|\/\//)[0].match(/^\s*TOKEN\s*=/)) {
+            replacedToken = true;
+            return line.replace(/^\s*TOKEN\s*=.*?(#|\/\/|$)/, `TOKEN="${form.querySelector("#botToken").value}" $1`).trim();
+          };
+
+          return line;
+        }).join("\n"), "utf8");
       } else {
         this.bots.push(newBot);
         this.initializeTemplate(newBot, ((form.querySelector("#botTemplate").tagName === "INPUT") ? "git:" : "") + form.querySelector("#botTemplate").value);
@@ -1711,6 +1754,15 @@ class DiscordBotCreator {
       if (e.target.matches(".create-btn") || e.target.closest(".create-btn")) {
         this.showBotEditor();
       };
+    });
+
+    window.addEventListener("beforeunload", () => {
+      const fs = require("fs");
+      const path = require("path");
+
+      fs.readdirSync(path.join(process.cwd(), "bots")).forEach((botId) => {
+        fs.writeFileSync(path.join(process.cwd(), "bots", botId, "STATUS.txt"), "OFFLINE", "utf8");
+      });
     });
   };
 
