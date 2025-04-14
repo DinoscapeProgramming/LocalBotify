@@ -2,10 +2,11 @@
   "name": "localbotify",
   "productName": "LocalBotify",
   "version": "1.3.0",
-  "description": "",
+  "description": "Because bot creation has never been easier.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "electron-builder"
   },
   "keywords": [],
   "author": "",
