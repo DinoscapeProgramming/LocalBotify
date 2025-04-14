@@ -91,11 +91,17 @@ class DiscordBotCreator {
     const content = document.createElement("div");
     content.className = "content";
 
+    if (this.currentView === "help") {
+      content.style.overflowY = "hidden";
+    };
+
     switch (this.currentView) {
       case "bots":
+        document.body.style.removeProperty("background-color");
         content.appendChild(this.createBotGrid());
         break;
       case "settings":
+        document.body.style.removeProperty("background-color");
         content.appendChild(this.createSettingsPanel());
         break;
       case "help":
@@ -512,21 +518,23 @@ class DiscordBotCreator {
         <div class="help-tree">${this.renderFileTree(this.getHelpFileTree())}</div>
       </div>
 
-      <div class="help-container"></div>
+      <div class="markdown-body" style="padding: 50px; overflow-y: auto;"></div>
     `;
 
-    //this.getFileTreeItem(helpView, "README.md").classList.add("active");
+    document.body.style.backgroundColor = "#0d1117";
 
-    /*fetch(`https://raw.githubusercontent.com/DinoscapeProgramming/LocalBotify/refs/heads/main/commandTutorial.md`)
-    .then((response) => response.text())
-    .then((response) => {*/require("fs").readFile("./docs/commandTutorial.md", "utf8", (err, response) => {
-      ipcRenderer.invoke("parseMarkdown", response).then((parsedMarkdown) => {
-        helpView.querySelector(".help-container").innerHTML = parsedMarkdown;
-        this.loadCodeHighlighter();
-      });
+    ipcRenderer.invoke("parseMarkdown", fs.readFileSync("./docs/commandTutorial.md", "utf8")).then((parsedMarkdown) => {
+      helpView.querySelector(".markdown-body").innerHTML = parsedMarkdown;
+      //this.loadCodeHighlighter();
     });
     
     this.setupHelpFileTreeListeners(helpView);
+
+    const markdownStylesheet = document.createElement("link");
+    markdownStylesheet.rel = "stylesheet";
+    markdownStylesheet.href = "../packages/github-markdown/github-markdown-dark.css";
+
+    document.head.appendChild(markdownStylesheet);
 
     return helpView;
   };
@@ -766,7 +774,7 @@ class DiscordBotCreator {
               </button>
             </h3>
             ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).length) ? `<span style="color: grey;">No commands found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).map((command) => (command.endsWith(".js")) ? `
-              <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem;" data-category="commands">${command.substring(0, command.length - 3)}</div>
+              <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem; cursor: pointer;" data-category="commands">${this.escapeHtml(command.substring(0, command.length - 3))}</div>
             ` : "").join("")}
             <h3 style="flex-direction: row; margin-bottom: 1rem; margin-top: 2rem;">
               <i class="fas fa-calendar-days"></i>Events
@@ -776,7 +784,7 @@ class DiscordBotCreator {
               </button>
             </h3>
             ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).length) ? `<span style="color: grey;">No events found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).map((command) => (command.endsWith(".js")) ? `
-              <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem;" data-category="events">${command.substring(0, command.length - 3)}</div>
+              <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem; cursor: pointer;" data-category="events">${this.escapeHtml(command.substring(0, command.length - 3).replace(/[^a-zA-Z]+$/, "")) + ((command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/)}</code>` : "")}</div>
             ` : "").join("")}
           </div>
         </div>
@@ -915,16 +923,23 @@ class DiscordBotCreator {
     workbenchMainView.querySelectorAll(".workbench-section .setting-item").forEach((command) => {
       command.addEventListener("click", () => {
         delete require.cache[require.resolve(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js"))];
+        const variables = Object.entries(require(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js")).variables);
 
         workbenchEditorView.innerHTML = `
           <h3 class="command-header">
-            <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i>${command.textContent.trim()}
+            <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i>${command.textContent.trim().replace(/[^A-Za-z]/g, "")}
             <button class="add-command-btn" style="position: absolute; right: 0;">
               <i class="fas fa-plus"></i>
               Edit in code lab
             </button>
           </h3>
-          ${Object.entries(require(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js")).variables).map(([id, { title = "", description = "", type = "text", datalist = null, options = {}, properties = {} } = {}] = [], index) => `
+          ${(!variables.length) ? `
+              <div class="command-item setting-item">
+                <label style="color: grey; cursor: text;">
+                  No variables found
+                </label>
+              </div>
+            ` : variables.map(([id, { title = "", description = "", type = "text", datalist = null, options = {}, properties = {} } = {}] = [], index) => `
             <div class="command-item setting-item" style="margin-bottom: 1rem;" data-id="${this.escapeHtml(id)}">
               ${(type === "switch") ? `
                 <label>
@@ -987,6 +1002,8 @@ class DiscordBotCreator {
         });
 
         workbenchEditorView.querySelectorAll(".command-item.setting-item").forEach((commandItem) => {
+          if (!commandItem.dataset.id) return;
+
           commandItem.querySelector("input, textarea, select").addEventListener("change", (e) => {
             if (!configFile) (configFile = {});
             if (!configFile.variables) (configFile.variables = {});
@@ -1057,7 +1074,7 @@ class DiscordBotCreator {
       playBtn.addEventListener("click", () => {
         ipcRenderer.send("terminalData", [
           bot.id,
-          (playBtn.children[0].className === "fas fa-stop") ? "\x03" : (((bot.initialized) ? "" : (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"))).commands.initialization + ";")) + "node . \r\n")
+          (playBtn.children[0].className === "fas fa-stop") ? "\x03" : (((bot.initialized) ? "" : (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"))).commands.initialization + ";")) + `${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"))).commands.startup}\r\n`)
         ]);
 
         playBtn.children[0].className = (playBtn.children[0].className === "fas fa-stop") ? "fas fa-play" : "fas fa-stop";

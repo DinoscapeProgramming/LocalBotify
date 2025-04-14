@@ -127,7 +127,6 @@ body {
 .main-header {
   height: var(--header-height);
   padding: 1.75rem 1.5rem;
-  background-color: var(--discord-bg);
   border-bottom: 1px solid var(--discord-darker);
   display: flex;
   align-items: center;
@@ -1498,6 +1497,7 @@ body {
   display: grid;
   grid-template-columns: 240px 1fr;
   grid-template-rows: 1fr 200px;
+  height: 100%;
   opacity: 0;
   transform: scale(0.98);
   transition: all 0.3s ease;
@@ -1510,9 +1510,11 @@ body {
 }
 
 .help-explorer {
-  padding: 1rem;
+  padding: 1.25rem 1rem;
   overflow-y: auto;
   height: calc(100vh - var(--header-height));
+  border-right: 1px solid var(--discord-darker);
+  background-color: #0d1117;
 }
 
 .help-explorer-header {
@@ -1550,176 +1552,10 @@ body {
   background-color: var(--discord-hover);
 }
 
-.help-container {
-  padding: 15px 30px 22.5px;
-  margin-bottom: -200px;
-  font-family: system-ui;
-  border-left: 1px solid var(--discord-darker);
-  overflow-x: hidden;
+.help-tree div:hover {
+  background-color: #42464d75;
 }
 
-.help-container {
-  font-family: system-ui, sans-serif;
-  line-height: 1.6;
-  color: #fff;
-  padding: 1rem 2.5rem;
-}
-
-.help-container h1,
-.help-container h2,
-.help-container h3,
-.help-container h4,
-.help-container h5,
-.help-container h6 {
-  font-weight: 600;
-  line-height: 1.25;
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-}
-.help-container h1 { font-size: 2.25rem; }
-.help-container h2 { font-size: 1.75rem; }
-.help-container h3 { font-size: 1.5rem; }
-.help-container h4 { font-size: 1.25rem; }
-.help-container h5 { font-size: 1rem; }
-.help-container h6 { font-size: 0.875rem; }
-
-.help-container p {
-  margin: 1rem 0;
-}
-
-.help-container a {
-  color: #1e88e5;
-  text-decoration: none;
-}
-.help-container a:hover {
-  text-decoration: underline;
-}
-
-.help-container ul, .help-container ol {
-  margin: 1rem 0;
-  padding-left: 2rem;
-}
-.help-container li {
-  margin: 0.25rem 0;
-}
-
-.help-container blockquote {
-  border-left: 4px solid #ccc;
-  padding-left: 1rem;
-  color: #ffffff85;
-  margin: 1rem 0;
-  font-style: italic;
-}
-
-.help-container code {
-  background: #2c2c2c;
-  font-family: monospace;
-  padding: 0.2rem 0.4rem;
-  border-radius: 4px;
-}
-.help-container pre {
-  /* background: #f5f5f5; */
-  /* padding: 1rem; */
-  overflow-x: auto;
-  border-radius: 6px;
-}
-.help-container pre code {
-  padding: 0;
-  background: none;
-}
-
-.help-container hr {
-  border: none;
-  border-top: 1px solid #dddddd21;
-  margin: 2rem 0;
-}
-
-.help-container img {
-  max-width: 100%;
-  display: block;
-  margin: 1rem 0;
-}
-
-.help-container input[type="checkbox"] {
-  transform: scale(1.2);
-  margin-right: 0.5rem;
-}
-
-.help-container img {
-  margin-top: 10px;
-  max-width: 100%;
-  border-radius: 7.5px;
-}
-
-.help-container a:hover {
-  opacity: 0.8;
-}
-
-.help-container hr {
-  margin: 10px 0;
-}
-
-.help-container ul, .help-container ol {
-  margin-left: 17.5px;
-}
-
-.help-container h2, .help-container h3, .help-container h4 {
-  margin: 15px 0 2.5px;
-}
-
-.help-container h5, .help-container h6 {
-  margin-top: 2.5px;
-}
-
-.help-container pre code {
-  margin-top: 10px;
-  margin-bottom: 5px;
-  font-family: Consolas;
-  border-radius: 7.5px;
-  background-color: #f7f7f7;
-  filter: invert(95%) hue-rotate(180deg);
-}
-
-.help-container table {
-  color: black;
-  background-color: white;
-  border-collapse: collapse;
-  margin: 25px 0;
-  font-size: 0.9em;
-  font-family: sans-serif;
-  min-width: 400px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-  border-radius: 7.5px;
-  overflow: hidden;
-}
-
-.help-container table thead tr {
-  background-color: #009879;
-  color: #ffffff;
-  text-align: left;
-}
-
-.help-container table th, .help-container table td {
-    padding: 12px 15px;
-}
-
-.help-container table tbody tr {
-  border-bottom: 1px solid #dddddd;
-}
-
-.help-container table tbody tr:nth-of-type(even) {
-  background-color: #f3f3f3;
-}
-
-.help-container table tbody tr:last-of-type {
-  border-bottom: 2px solid #009879;
-}
-
-.help-container table tbody tr.active-row {
-  font-weight: bold;
-  color: #009879;
-}
-
-.help-container table code {
-  color: white;
+.help-tree div.active {
+  background-color: rgb(45 102 187 / 75%) !important;
 }

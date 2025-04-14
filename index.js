@@ -18,6 +18,13 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { parse } = require("markdown-wasm");
+const shiki = require("shiki");
+let highlighter;
+
+shiki.getHighlighter({ theme: "github-dark" }).then((highlighterInstance) => {
+  highlighter = highlighterInstance;
+});
+
 let tray;
 let ptyProcesses = [];
 
@@ -148,7 +155,9 @@ const createWindow = () => {
     };
   });
 
-  ipcMain.handle("parseMarkdown", (_, markdown) => parse(markdown));
+  ipcMain.handle("parseMarkdown", (_, markdown) => parse(markdown, {
+    onCodeBlock: (language, code) => highlighter.codeToHtml(code, { language })
+  }));
 };
 
 app.whenReady().then(() => {
