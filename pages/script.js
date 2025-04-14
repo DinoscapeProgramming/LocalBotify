@@ -352,17 +352,41 @@ class DiscordBotCreator {
     form.addEventListener("submit", (e) => {
       e.preventDefault();
 
-      fetch(`${process.env.SERVER}/api/v1/feedback/send`, {
+      fetch(process.env.FEEDBACK_WEBHOOK, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          stars: modal.querySelectorAll(".selected-feedback-star").length,
-          user: modal.querySelector("#feedbackUser").value,
-          comment: modal.querySelector("#feedbackComment").value
+          embeds: [
+            {
+              title: "📝 Feedback",
+              color: 0x00b0f4,
+              fields: [
+                ...[
+                  {
+                    name: "Rating",
+                    value: `${"⭐".repeat(modal.querySelectorAll(".selected-feedback-star").length)} (${modal.querySelectorAll(".selected-feedback-star").length}/5)`,
+                    inline: true
+                  },
+                  {
+                    name: "User",
+                    value: modal.querySelector("#feedbackUser").value || "Anonymous",
+                    inline: true
+                  }
+                ],
+                ...(modal.querySelector("#feedbackComment").value) ? [
+                  {
+                    name: "Comment",
+                    value: modal.querySelector("#feedbackComment").value
+                  }
+                ] : []
+              ],
+              timestamp: new Date().toISOString()
+            }
+          ]
         })
-      });
+      }).catch(() => {});
 
       closeModal();
     });
