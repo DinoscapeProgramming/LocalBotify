@@ -10,7 +10,6 @@
 - Add bot store
 - Add command store
 - Write documentation
-- More aesthetic help section
 - Working feedback system
 - Working LocalBotify server
 - Add developer portal

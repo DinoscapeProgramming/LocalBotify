@@ -510,6 +510,8 @@ class DiscordBotCreator {
   };
 
   createHelpView() {
+    const childProcess = require("child_process");
+
     const helpView = document.createElement("div");
     helpView.className = "help-view show";
     
@@ -525,8 +527,17 @@ class DiscordBotCreator {
 
     ipcRenderer.invoke("parseMarkdown", fs.readFileSync("./docs/commandTutorial.md", "utf8")).then((parsedMarkdown) => {
       helpView.querySelector(".markdown-body").innerHTML = parsedMarkdown;
-      //this.loadCodeHighlighter();
+
+      helpView.querySelectorAll(".markdown-body a").forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+
+          childProcess.exec(((process.platform === "win32") ? "start " : ((process.platform === "darwin") ? "open " : "xdg-open ")) + e.target.href);
+        });
+      });
     });
+
+    this.getFileTreeItem(helpView, "commandTutorial.md").classList.add("active");
     
     this.setupHelpFileTreeListeners(helpView);
 
