@@ -17,12 +17,26 @@ Navigate to the bot’s `commands/` directory and create a new file.
 
 ---
 
-## 🧩 2. Define Your Variables
+## 🎨 2. Write Your Description
+
+Descriptions are necessary for the help command, but aren't required. This is how to provide one:
+
+```js
+module.exports = {
+  description: "Check the bot's response time"
+};
+```
+
+---
+
+## 🧩 3. Define Your Variables
 
 Variables are used to make the command customizable from the dashboard or config. Here's the full structure:
 
 ```js
 module.exports = {
+  description: "Check the bot's response time",
+
   variables: {
     responseMessage: {
       title: "Response Message",
@@ -87,12 +101,17 @@ You can enhance each variable using a `properties` object.
 
 ---
 
-## 🧠 3. Define the Command Logic
+## 🧠 4. Define the Command Logic
 
 Here’s the full structure again for clarity:
 
 ```js
+const Discord = require("../../../node_modules/discord.js/src/index.js");
+const { commandType } = require("../../../node_modules/localbotify/index.js");
+
 module.exports = {
+  description: "Check the bot's response time",
+
   variables: {
     responseMessage: {
       title: "Response Message",
@@ -103,9 +122,48 @@ module.exports = {
     }
   },
 
-  command: (variables, client, message) => {
-    message.channel.send(variables.responseMessage);
+  command: (variables, client, event) => {
+    if (commandType(event) === "message") {
+      event.channel.send(variables.responseMessage);
+    } else if (commandType(event) === "interaction") {
+      event.reply(variables.responseMessage)
+    };
   }
+};
+```
+
+## 🔧 5. Register the Slash Command
+
+Define the `slashCommand` property like this:
+
+```js
+const Discord = require("../../../node_modules/discord.js/src/index.js");
+const { commandType } = require("../../../node_modules/localbotify/index.js");
+
+module.exports = {
+  description: "Check the bot's response time",
+
+  variables: {
+    responseMessage: {
+      title: "Response Message",
+      type: "text",
+      properties: {
+        placeholder: "Hey there!"
+      }
+    }
+  },
+
+  command: (variables, client, event) => {
+    if (commandType(event) === "message") {
+      event.channel.send(variables.responseMessage);
+    } else if (commandType(event) === "interaction") {
+      event.reply(variables.responseMessage)
+    };
+  },
+
+  slashCommand: new Discord.SlashCommandBuilder()
+    .setName("ping")
+    .setDescription("Check the bot's response time")
 };
 ```
 

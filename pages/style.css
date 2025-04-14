@@ -1072,6 +1072,29 @@ body {
   width: 100px;
 }
 
+.workbench-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--discord-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.workbench-action-btn:hover {
+  background-color: #4752c4;
+}
+
+.workbench-action-btn i {
+  font-size: 0.9rem;
+}
+
 .command-item:hover {
   border-color: transparent !important;
   transform: none !important;
@@ -1196,6 +1219,38 @@ body {
   font-size: 1rem;
   width: 20px;
   text-align: center;
+}
+
+.file-tree-context-menu {
+  position: absolute;
+  background-color: var(--discord-darker);
+  border: 1px solid #50505052;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  border-radius: var(--radius-md);
+  width: 113.75px;
+  font-family: system-ui;
+}
+
+.file-tree-context-menu div {
+  padding: 8px 15px;
+  cursor: pointer;
+}
+
+.file-tree-context-menu div:first-child {
+  border-top-left-radius: var(--radius-md);
+  border-top-right-radius: var(--radius-md);
+  border-bottom: 1px solid #50505052;
+}
+
+.file-tree-context-menu div:last-child {
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+  transform: translateY(-1px);
+}
+
+.file-tree-context-menu div:hover {
+  background-color: #27292c;
 }
 
 .editor-container {
@@ -1446,6 +1501,7 @@ body {
   opacity: 0;
   transform: scale(0.98);
   transition: all 0.3s ease;
+  animation: slideUp 0.5s ease;
 }
 
 .help-view.show {
@@ -1584,20 +1640,6 @@ body {
   margin: 1rem 0;
 }
 
-.help-container table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1rem 0;
-}
-.help-container th, .help-container td {
-  border: 1px solid #ddd;
-  padding: 0.5rem 1rem;
-  text-align: left;
-}
-.help-container th {
-  background-color: #f0f0f0;
-}
-
 .help-container input[type="checkbox"] {
   transform: scale(1.2);
   margin-right: 0.5rem;
@@ -1607,11 +1649,6 @@ body {
   margin-top: 10px;
   max-width: 100%;
   border-radius: 7.5px;
-}
-
-.help-container a {
-  color: var(--discord-primary);
-  text-decoration: none;
 }
 
 .help-container a:hover {
@@ -1681,4 +1718,8 @@ body {
 .help-container table tbody tr.active-row {
   font-weight: bold;
   color: #009879;
+}
+
+.help-container table code {
+  color: white;
 }

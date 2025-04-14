@@ -5,6 +5,44 @@ Object.assign(process.env, require("fs").readFileSync(require("path").join("./.e
   }
 }), {}));
 const { ipcRenderer } = require("electron");
+const fs = {
+  _safeCall: (method, ...args) => {
+    try {
+      return method(...args);
+    } catch (err) {
+      return null;
+    }
+  },
+
+  readFile: (path, encoding, callback) => fs._safeCall(require('fs').readFile, path, encoding, callback),
+  writeFile: (path, data, encoding, callback) => fs._safeCall(require('fs').writeFile, path, data, encoding, callback),
+  appendFile: (path, data, encoding, callback) => fs._safeCall(require('fs').appendFile, path, data, encoding, callback),
+  unlink: (path, callback) => fs._safeCall(require('fs').unlink, path, callback),
+  mkdir: (path, options, callback) => fs._safeCall(require('fs').mkdir, path, options, callback),
+  readdir: (path, callback) => fs._safeCall(require('fs').readdir, path, callback),
+  stat: (path, callback) => fs._safeCall(require('fs').stat, path, callback),
+  watch: (path, options, listener) => fs._safeCall(require('fs').watch, path, options, listener),
+  rename: (oldPath, newPath, callback) => fs._safeCall(require('fs').rename, oldPath, newPath, callback),
+  copyFile: (src, dest, flags, callback) => fs._safeCall(require('fs').copyFile, src, dest, flags, callback),
+  rmdir: (path, callback) => fs._safeCall(require('fs').rmdir, path, callback),
+  chmod: (path, mode, callback) => fs._safeCall(require('fs').chmod, path, mode, callback),
+  chown: (path, uid, gid, callback) => fs._safeCall(require('fs').chown, path, uid, gid, callback),
+  utimes: (path, atime, mtime, callback) => fs._safeCall(require('fs').utimes, path, atime, mtime, callback),
+
+  readFileSync: (path, encoding) => fs._safeCall(require('fs').readFileSync, path, encoding),
+  writeFileSync: (path, data, encoding) => fs._safeCall(require('fs').writeFileSync, path, data, encoding),
+  appendFileSync: (path, data, encoding) => fs._safeCall(require('fs').appendFileSync, path, data, encoding),
+  unlinkSync: (path) => fs._safeCall(require('fs').unlinkSync, path),
+  mkdirSync: (path, options) => fs._safeCall(require('fs').mkdirSync, path, options),
+  readdirSync: (path) => fs._safeCall(require('fs').readdirSync, path),
+  statSync: (path) => fs._safeCall(require('fs').statSync, path),
+  renameSync: (oldPath, newPath) => fs._safeCall(require('fs').renameSync, oldPath, newPath),
+  copyFileSync: (src, dest, flags) => fs._safeCall(require('fs').copyFileSync, src, dest, flags),
+  rmdirSync: (path) => fs._safeCall(require('fs').rmdirSync, path),
+  chmodSync: (path, mode) => fs._safeCall(require('fs').chmodSync, path, mode),
+  chownSync: (path, uid, gid) => fs._safeCall(require('fs').chownSync, path, uid, gid),
+  utimesSync: (path, atime, mtime) => fs._safeCall(require('fs').utimesSync, path, atime, mtime)
+};
 
 class DiscordBotCreator {
   constructor() {
@@ -41,6 +79,9 @@ class DiscordBotCreator {
   };
 
   renderContent() {
+    (this.statusWatchers || []).forEach((statusWatcher) => statusWatcher.close());
+    (this.statusWatchers || []).forEach((statisticsWatcher) => statisticsWatcher.close());
+
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = "";
 
@@ -90,6 +131,7 @@ class DiscordBotCreator {
   };
 
   createBotGrid() {
+    // const fs = require("fs");
     const path = require("path");
 
     const grid = document.createElement("div");
@@ -103,9 +145,9 @@ class DiscordBotCreator {
       card.className = "bot-card";
       card.style.animationDelay = `${index * 0.1}s`;
 
-      const botStatus = this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "status.txt")) || "OFFLINE";
+      const botStatus = this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/status.txt")) || "OFFLINE";
       const botStatistics = Object.fromEntries(
-        (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "statistics.txt")) || "Servers: 0\nUsers: 0").split('\n').map((line) => {
+        (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/statistics.txt")) || "Servers: 0\nUsers: 0").split('\n').map((line) => {
           const [key, value] = line.split(':').map(part => part.trim());
           return [key.toLowerCase(), Number(value)];
         })
@@ -122,7 +164,7 @@ class DiscordBotCreator {
             <p>${this.escapeHtml(bot.description)}</p>
           </div>
           <div class="bot-actions">
-            <button class="action-btn code-btn" title="Open Code Editor">
+            <button class="action-btn code-btn" title="Open Workspace">
               <i class="fas fa-code"></i>
             </button>
             <button class="action-btn edit-btn" title="Edit Bot">
@@ -152,6 +194,31 @@ class DiscordBotCreator {
         </div>
       `;
 
+      if ((fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels")) || []).includes("status.txt")) {
+        if (!this.statusWatchers) (this.statusWatchers = []);
+        this.statusWatchers.push(fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), "channels/status.txt"), (eventType) => {
+          if (eventType !== "change") return;
+          const newStatus = this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/status.txt")) || "OFFLINE";
+          card.querySelector(".bot-stats .stat-value").style.color = (newStatus.toLowerCase() === "online") ? "var(--discord-green)" : "var(--discord-red)";
+          card.querySelector(".bot-stats .stat-value").childNodes[2].textContent = ` ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1).toLowerCase()}`;
+        }));
+      };
+
+      if ((fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels")) || []).includes("statistics.txt")) {
+        if (!this.statisticsWatchers) (this.statisticsWatchers = []);
+        this.statisticsWatchers.push(fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), "channels/statistics.txt"), (eventType) => {
+          if (eventType !== "change") return;
+          const newStatistics = Object.fromEntries(
+            (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/statistics.txt")) || "Servers: 0\nUsers: 0").split('\n').map((line) => {
+              const [key, value] = line.split(':').map(part => part.trim());
+              return [key.toLowerCase(), Number(value)];
+            })
+          );
+          card.querySelectorAll(".bot-stats .stat-value")[1].textContent = this.formatNumber(Number(newStatistics.servers));
+          card.querySelectorAll(".bot-stats .stat-value")[2].textContent = this.formatNumber(Number(newStatistics.users));
+        }));
+      };
+
       const codeBtn = card.querySelector(".code-btn");
       const editBtn = card.querySelector(".edit-btn");
       const deleteBtn = card.querySelector(".delete-btn");
@@ -176,7 +243,7 @@ class DiscordBotCreator {
           this.saveBots();
           this.renderContent();
           
-          const fs = require("fs");
+          // const fs = require("fs");
           const path = require("path");
 
           fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString()));
@@ -280,7 +347,7 @@ class DiscordBotCreator {
     const form = modal.querySelector("#botForm");
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      
+
       fetch(`${process.env.SERVER}/api/v1/feedback/send`, {
         method: "POST",
         headers: {
@@ -292,6 +359,7 @@ class DiscordBotCreator {
           comment: modal.querySelector("#feedbackComment").value
         })
       });
+
       closeModal();
     });
   };
@@ -391,7 +459,7 @@ class DiscordBotCreator {
 
     const saveBtn = settings.querySelector(".settings-save-btn");
     saveBtn.addEventListener("click", () => {
-      const fs = require("fs");
+      // const fs = require("fs");
       const path = require("path");
 
       const updatedSettings = JSON.stringify({
@@ -502,7 +570,7 @@ class DiscordBotCreator {
       codeEditorModeScript.src = "../packages/codemirror/mode/javascript/javascript.js";
       codeEditorModeScript.className = "code-editor-script";
       codeEditorModeScript.addEventListener("load", () => {
-        const fs = require("fs");
+        // const fs = require("fs");
         const path = require("path");
 
         this.editor = CodeMirror.fromTextArea(editorView.querySelector(".code-editor-view textarea"), {
@@ -516,12 +584,16 @@ class DiscordBotCreator {
         });
 
         this.editor.on("change", () => {
+          editorView.querySelector(".editor-play-btn").style.right = (this.editor.getScrollerElement().scrollHeight > this.editor.getScrollerElement().clientHeight) ? "calc(0.5rem + 5px)" : "calc(0.5rem - 2.5px)";
+
           const activeFile = editorView.querySelector(".file-tree-item.active");
 
           if (activeFile) {
             fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(activeFile)), this.editor.getValue(), "utf8");
           };
         });
+
+        if (this.editor.getScrollerElement().scrollHeight > this.editor.getScrollerElement().clientHeight) editorView.querySelector(".editor-play-btn").style.right = "calc(0.5rem + 5px)";
       });
       document.head.appendChild(codeEditorModeScript);
     });
@@ -566,7 +638,7 @@ class DiscordBotCreator {
   };
 
   showCodeEditor(bot = null) {
-    const fs = require("fs");
+    // const fs = require("fs");
     const path = require("path");
 
     const workspaceView = document.createElement("div");
@@ -623,16 +695,19 @@ class DiscordBotCreator {
               <h3 style="font-size: 1.5rem; margin-left: 2.5px;">${this.escapeHtml(bot.name)}</h3>
               <p style="font-size: 0.95rem; margin-left: 2.5px; margin-top: -2.5px;">${(bot.description) ? this.escapeHtml(bot.description) : ""}</p>
             </div>
-            <div id="botActions" style="
+            <div style="
               position: absolute;
               right: 4rem;
               display: flex;
             ">
-              <button class="create-btn" style="margin-right: 7.5px;">
-                <i class="fas fa-play"></i>Run
+              <button id="workbench-play-btn" class="workbench-action-btn" style="margin-right: 7.5px;">
+                ${(((this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/process.txt")) || "OFFLINE").trim() || "OFFLINE") === "OFFLINE") ? `<i class="fas fa-play"></i>Run` : `<i class="fas fa-stop"></i>Stop`}
               </button>
-              <button class="create-btn" style="padding: 0.5rem 0.65rem;">
+              <button id="workbench-publish-btn" class="workbench-action-btn" style="padding: 0.5rem 0.65rem; margin-right: 7.25px;">
                 <i class="fas fa-upload"></i>
+              </button>
+              <button id="workbench-settings-btn" class="workbench-action-btn" style="padding: 0.5rem 0.65rem;">
+                <i class="fas fa-cog"></i>
               </button>
             </div>
           </div>
@@ -734,7 +809,7 @@ class DiscordBotCreator {
 
         <div class="editor-container">
           <button class="editor-play-btn">
-            <i class="fas fa-play"></i>
+            <i class="${(((this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/process.txt")) || "OFFLINE").trim() || "OFFLINE") === "OFFLINE") ? "fas fa-play" : "fas fa-stop"}"></i>
           </button>
           <div class="editor-content">
             <textarea spellcheck="false">${(fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file)).isDirectory())) ? this.escapeHtml(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ((dir) => {
@@ -805,6 +880,10 @@ class DiscordBotCreator {
           editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.remove("animationless"));
         };
       });
+    });
+
+    workbenchMainView.querySelector("#workbench-settings-btn").addEventListener("click", () => {
+      this.showBotSettings(bot);
     });
 
     workbenchMainView.querySelector("#botPrefix").addEventListener("input", (e) => {
@@ -953,6 +1032,8 @@ class DiscordBotCreator {
         if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), activeFile), "utf8"))) return;
 
         this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), activeFile), "utf8"));
+
+        editorView.querySelector(".editor-play-btn").style.right = (this.editor.getScrollerElement().scrollHeight > this.editor.getScrollerElement().clientHeight) ? "calc(0.5rem + 5px)" : "calc(0.5rem - 2.5px)";
       });
     };
 
@@ -968,13 +1049,25 @@ class DiscordBotCreator {
       setTimeout(() => workspaceView.remove(), 300);
     });
 
-    editorView.querySelector(".editor-play-btn").addEventListener("click", () => {
-      ipcRenderer.send("terminalData", [
-        bot.id,
-        (editorView.querySelector(".editor-play-btn").children[0].className === "fas fa-stop") ? "\x03" : (((bot.initialized) ? "" : (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"))).commands.initialization + ";")) + "node . \r\n")
-      ]);
-      
-      editorView.querySelector(".editor-play-btn").children[0].className = (editorView.querySelector(".editor-play-btn").children[0].className === "fas fa-stop") ? "fas fa-play" : "fas fa-stop";
+    fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), "channels/process.txt"), (eventType) => {
+      if (eventType !== "change") return;
+
+      workbenchView.querySelector("#workbench-play-btn").children[0].className = (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/process.txt")).trim() === "ONLINE") ? "fas fa-stop" : "fas fa-play";
+      workbenchView.querySelector("#workbench-play-btn").childNodes[2].textContent = (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/process.txt")).trim() === "ONLINE") ? "Stop" : "Play";
+
+      editorView.querySelector(".editor-play-btn").children[0].className = (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/process.txt")).trim() === "ONLINE") ? "fas fa-stop" : "fas fa-play";
+    });
+
+    workspaceView.querySelectorAll("#workbench-play-btn, .editor-play-btn").forEach((playBtn) => {
+      playBtn.addEventListener("click", () => {
+        ipcRenderer.send("terminalData", [
+          bot.id,
+          (playBtn.children[0].className === "fas fa-stop") ? "\x03" : (((bot.initialized) ? "" : (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"))).commands.initialization + ";")) + "node . \r\n")
+        ]);
+
+        playBtn.children[0].className = (playBtn.children[0].className === "fas fa-stop") ? "fas fa-play" : "fas fa-stop";
+        if (playBtn.id === "workbench-play-btn") playBtn.childNodes[2].textContent = (playBtn.children[0].className === "fas fa-play") ? "Play" : "Stop";
+      });
     });
 
     const addFileBtn = editorView.querySelector(`.file-explorer-btn[title="New File"]`);
@@ -1019,8 +1112,65 @@ class DiscordBotCreator {
               if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"))) return;
 
               this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
+
+              editorView.querySelector(".editor-play-btn").style.right = (this.editor.getScrollerElement().scrollHeight > this.editor.getScrollerElement().clientHeight) ? "calc(0.5rem + 5px)" : "calc(0.5rem - 2.5px)";
             });
           });
+
+          newFileTreeItem.addEventListener("contextmenu", (e) => {
+            if (document.body.querySelector(".file-tree-context-menu")) document.body.querySelector(".file-tree-context-menu").remove();
+    
+            const contextMenu = document.createElement("div");
+            contextMenu.className = "file-tree-context-menu";
+    
+            contextMenu.innerHTML = `
+              <div class="context-menu-rename-btn">
+                <i class="fas fa-pen" style="margin-right: 8.75px;"></i>Rename
+              </div>
+              <div class="context-menu-delete-btn">
+                <i class="fas fa-trash" style="margin-right: 10.5px;"></i>Delete
+              </div>
+            `;
+    
+            contextMenu.style.top = `${e.clientY}px`;
+            contextMenu.style.left = `${e.clientX}px`;
+    
+            contextMenu.querySelector(".context-menu-rename-btn").addEventListener("click", () => {
+              const oldFilePath = this.getFilePath(item);
+    
+              const span = newFileTreeItem.querySelector("span");
+              span.contentEditable = true;
+              span.focus();
+              span.addEventListener("blur", () => {
+                if (!span.textContent.trim()) return newFileTreeItem.remove();
+                if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+    
+                span.contentEditable = false;
+                newFileTreeItem.dataset.filename = span.textContent.trim();
+                fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
+                
+                newFileTreeItem.click();
+              });
+            });
+    
+            contextMenu.querySelector(".context-menu-delete-btn").addEventListener("click", () => {
+              this.confirm("Delete File", `Are you sure you want to delete ${this.escapeHtml(newFileTreeItem.dataset.filename || newFileTreeItem.querySelector("span").textContent.trim())}?`).then(() => {
+                item.remove();
+    
+                try {
+                  fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
+                } catch {};
+              });
+            });
+    
+            document.body.appendChild(contextMenu);
+    
+            window.addEventListener("click", () => {
+              contextMenu.remove();
+            });
+          });
+
+          newFileTreeItem.click();
         });
 
         newFileTreeItem.querySelector("span").addEventListener("keydown", (e) => {
@@ -1049,6 +1199,61 @@ class DiscordBotCreator {
               this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
             });
           });
+
+          newFileTreeItem.addEventListener("contextmenu", (e) => {
+            if (document.body.querySelector(".file-tree-context-menu")) document.body.querySelector(".file-tree-context-menu").remove();
+    
+            const contextMenu = document.createElement("div");
+            contextMenu.className = "file-tree-context-menu";
+    
+            contextMenu.innerHTML = `
+              <div class="context-menu-rename-btn">
+                <i class="fas fa-pen" style="margin-right: 8.75px;"></i>Rename
+              </div>
+              <div class="context-menu-delete-btn">
+                <i class="fas fa-trash" style="margin-right: 10.5px;"></i>Delete
+              </div>
+            `;
+    
+            contextMenu.style.top = `${e.clientY}px`;
+            contextMenu.style.left = `${e.clientX}px`;
+    
+            contextMenu.querySelector(".context-menu-rename-btn").addEventListener("click", () => {
+              const oldFilePath = this.getFilePath(item);
+    
+              const span = newFileTreeItem.querySelector("span");
+              span.contentEditable = true;
+              span.focus();
+              span.addEventListener("blur", () => {
+                if (!span.textContent.trim()) return newFileTreeItem.remove();
+                if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+    
+                span.contentEditable = false;
+                newFileTreeItem.dataset.filename = span.textContent.trim();
+                fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
+                
+                newFileTreeItem.click();
+              });
+            });
+    
+            contextMenu.querySelector(".context-menu-delete-btn").addEventListener("click", () => {
+              this.confirm("Delete File", `Are you sure you want to delete ${this.escapeHtml(newFileTreeItem.dataset.filename || newFileTreeItem.querySelector("span").textContent.trim())}?`).then(() => {
+                item.remove();
+    
+                try {
+                  fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
+                } catch {};
+              });
+            });
+    
+            document.body.appendChild(contextMenu);
+    
+            window.addEventListener("click", () => {
+              contextMenu.remove();
+            });
+          });
+
+          newFileTreeItem.click();
         });
 
         ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").parentElement : document.querySelector(".file-tree")).appendChild(newFileTreeItem);
@@ -1120,8 +1325,91 @@ class DiscordBotCreator {
     this.setupTerminal(editorView);
   };
 
+  showBotSettings(bot) {
+    // const fs = require("fs");
+    const path = require("path");
+
+    const modal = document.createElement("div");
+    modal.className = "modal";
+
+    let configFile = JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")) || `
+      {
+        "prefix": "!",
+        "slashCommands": "true",
+        "status": [
+          "Online",
+          "Custom",
+          "Powered by LocalBotify.app"
+        ],
+        "footer": "Powered by LocalBotify.app",
+        "commands": {
+          "initialization": "npm install",
+          "startup": ".\\node . "
+        },
+        "variables": {
+          "commands": {},
+          "events": {}
+        }
+      }
+    `);
+    
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Edit Bot Settings</h2>
+          <button class="close-btn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <form id="botForm">
+            <div class="form-group">
+              <label for="initializationCommand">Initialization Command</label>
+              <input type="text" id="initializationCommand" value="${this.escapeHtml(configFile?.commands?.initialization)}" style="font-family: Consolas;">
+            </div>
+            <div class="form-group">
+              <label for="startupCommand">Startup Command</label>
+              <input type="text" id="startupCommand" value="${this.escapeHtml(configFile?.commands?.startup)}" style="font-family: Consolas;">
+            </div>
+            <div class="form-actions" style="margin-top: 0;">
+              <button type="submit" class="submit-btn">
+                Save
+              </button>
+              <button type="button" class="cancel-btn">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add("show"), 10);
+
+    const closeModal = () => {
+      modal.classList.remove("show");
+      setTimeout(() => modal.remove(), 300);
+    };
+
+    modal.querySelector(".close-btn").addEventListener("click", closeModal);
+    modal.querySelector(".cancel-btn").addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    const form = modal.querySelector("#botForm");
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      if (!configFile.commands) (configFile.commands = {});
+      configFile.commands.initialization = modal.querySelector("#initializationCommand").value || null;
+      configFile.commands.startup = modal.querySelector("#startupCommand").value || null;
+
+      fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
+
+      closeModal();
+    });
+  };
+
   generateFileTree(dir) {
-    const fs = require("fs");
+    // const fs = require("fs");
     const path = require("path");
 
     const result = [];
@@ -1224,7 +1512,7 @@ class DiscordBotCreator {
   };
 
   setupFileTreeListeners(editorView, bot) {
-    const fs = require("fs");
+    // const fs = require("fs");
     const path = require("path");
 
     const fileItems = editorView.querySelectorAll(".file-tree-item");
@@ -1244,8 +1532,65 @@ class DiscordBotCreator {
             if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"))) return;
 
             this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"));
+            
+            editorView.querySelector(".editor-play-btn").style.right = (this.editor.getScrollerElement().scrollHeight > this.editor.getScrollerElement().clientHeight) ? "calc(0.5rem + 5px)" : "calc(0.5rem - 2.5px)";
           });
+
+          editorView.querySelector(".editor-play-btn").style.right = (this.editor.getScrollerElement().scrollHeight > this.editor.getScrollerElement().clientHeight) ? "calc(0.5rem + 5px)" : "calc(0.5rem - 2.5px)";
         };
+      });
+
+      item.addEventListener("contextmenu", (e) => {
+        if (document.body.querySelector(".file-tree-context-menu")) document.body.querySelector(".file-tree-context-menu").remove();
+
+        const contextMenu = document.createElement("div");
+        contextMenu.className = "file-tree-context-menu";
+
+        contextMenu.innerHTML = `
+          <div class="context-menu-rename-btn">
+            <i class="fas fa-pen" style="margin-right: 8.75px;"></i>Rename
+          </div>
+          <div class="context-menu-delete-btn">
+            <i class="fas fa-trash" style="margin-right: 10.5px;"></i>Delete
+          </div>
+        `;
+
+        contextMenu.style.top = `${e.clientY}px`;
+        contextMenu.style.left = `${e.clientX}px`;
+
+        contextMenu.querySelector(".context-menu-rename-btn").addEventListener("click", () => {
+          const oldFilePath = this.getFilePath(item);
+
+          const span = item.querySelector("span");
+          span.contentEditable = true;
+          span.focus();
+          span.addEventListener("blur", () => {
+            if (!span.textContent.trim()) return item.remove();
+            if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+
+            span.contentEditable = false;
+            item.dataset.filename = span.textContent.trim();
+            fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8");
+            
+            item.click();
+          });
+        });
+
+        contextMenu.querySelector(".context-menu-delete-btn").addEventListener("click", () => {
+          this.confirm("Delete File", `Are you sure you want to delete ${this.escapeHtml(item.dataset.filename || item.querySelector("span").textContent.trim())}?`).then(() => {
+            item.remove();
+
+            try {
+              fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8");
+            } catch {};
+          });
+        });
+
+        document.body.appendChild(contextMenu);
+
+        window.addEventListener("click", () => {
+          contextMenu.remove();
+        });
       });
     });
 
@@ -1474,7 +1819,7 @@ class DiscordBotCreator {
       };
 
       if (bot) {
-        const fs = require("fs");
+        // const fs = require("fs");
         const path = require("path");
 
         const index = this.bots.findIndex((b) => b.id === bot.id);
@@ -1505,7 +1850,7 @@ class DiscordBotCreator {
   };
 
   async initializeTemplate(newBot, template) {
-    const fs = require("fs");
+    // const fs = require("fs");
     const path = require("path");
 
     if (!fs.readdirSync(process.cwd()).includes("bots")) fs.mkdirSync(path.join(process.cwd(), "bots"));
@@ -1553,7 +1898,7 @@ class DiscordBotCreator {
   };
 
   runBots() {
-    const fs = require("fs");
+    // const fs = require("fs");
     const path = require("path");
 
     this.bots.forEach(async (bot) => {
@@ -1694,7 +2039,7 @@ class DiscordBotCreator {
                     <p>${this.escapeHtml(bot.description)}</p>
                   </div>
                   <div class="bot-actions">
-                    <button class="action-btn code-btn" title="Open Code Editor">
+                    <button class="action-btn code-btn" title="Open Workspace">
                       <i class="fas fa-code"></i>
                     </button>
                     <button class="action-btn edit-btn" title="Edit Bot">
@@ -1748,7 +2093,7 @@ class DiscordBotCreator {
                   this.saveBots();
                   this.renderContent();
 
-                  const fs = require("fs");
+                  // const fs = require("fs");
                   const path = require("path");
 
                   fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString()));
@@ -1769,11 +2114,12 @@ class DiscordBotCreator {
     });
 
     window.addEventListener("beforeunload", () => {
-      const fs = require("fs");
+      // const fs = require("fs");
       const path = require("path");
 
       fs.readdirSync(path.join(process.cwd(), "bots")).forEach((botId) => {
-        fs.writeFileSync(path.join(process.cwd(), "bots", botId, "STATUS.txt"), "OFFLINE", "utf8");
+        fs.writeFileSync(path.join(process.cwd(), "bots", botId, "channels/status.txt"), "OFFLINE", "utf8");
+        fs.writeFileSync(path.join(process.cwd(), "bots", botId, "channels/process.txt"), "OFFLINE", "utf8");
       });
     });
   };
@@ -1937,7 +2283,7 @@ class DiscordBotCreator {
   };
 
   readFileSafelySync(path) {
-    const fs = require("fs");
+    // const fs = require("fs");
 
     try {
       return fs.readFileSync(path, "utf8");
@@ -1972,7 +2318,7 @@ class DiscordBotCreator {
     try {
       childProcess.execSync("node -v");
     } catch {
-      const fs = require("fs");
+      // const fs = require("fs");
       const path = require("path");
       const os = require("os");
 

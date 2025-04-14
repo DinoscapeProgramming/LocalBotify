@@ -15,6 +15,7 @@
     "@teeny-tiny/dotenv": "^1.0.10",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
+    "chokidar": "^4.0.3",
     "discord.js": "^14.18.0",
     "localbotify": "^1.1.0",
     "markdown-wasm": "^1.2.0",

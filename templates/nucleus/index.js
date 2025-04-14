@@ -1,8 +1,9 @@
+const updateStatus = require("./trackers/status.js");
+const updateStatistics = require("./trackers/statistics.js");
 require("../../node_modules/@teeny-tiny/dotenv/index.js").config();
 const fs = require("fs");
 const { REST, Routes, Client, GatewayIntentBits, PresenceUpdateStatus, ActivityType } = require("../../node_modules/discord.js/src/index.js");
 const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
-const updateStatistics = require("./trackers/statistics.js");
 let config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
 
 const client = new Client({
@@ -19,7 +20,7 @@ const client = new Client({
 client.once("ready", () => {
   console.log("Bot is Online!");
 
-  require("./trackers/status.js");
+  updateStatus("online");
   updateStatistics(client);
 
   client.user.setStatus(PresenceUpdateStatus[config?.status?.[0] || "Online"]);
@@ -100,7 +101,7 @@ client.on("interactionCreate", (interaction) => {
       ...{
         footer: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression))
       },
-      ...Object.entries(commandFile.variables).map(([variableName]) => [
+      ...Object.entries(commandFile.variables || {}).map(([variableName]) => [
         variableName,
         config?.variables?.commands?.[commandName]?.[variableName] || null
       ]).reduce((accumulator, [variableName, variableValue]) => ({
@@ -117,18 +118,18 @@ client.on("guildCreate", () => updateStatistics(client));
 client.on("guildMemberAdd", () => updateStatistics(client));
 
 fs.readdirSync("./events").forEach((event) => {
-  if (!event.endsWith(".js"))
+  if (!event.endsWith(".js")) return;
   client.on(event.substring(0, event.length - 3).replace(/[^A-Za-z]/g, ""), (...args) => {
     config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
 
-    delete require.cache[require.resolve(`./commands/${event}.js`)];
+    delete require.cache[require.resolve(`./events/${event}`)];
     const eventFile = require(`./events/${event}`);
 
     eventFile.event({
       ...{
         footer: config.footer
       },
-      ...Object.entries(eventFile.variables).map(([variableName]) => [
+      ...Object.entries(eventFile.variables || {}).map(([variableName]) => [
         variableName,
         config?.variables?.events?.[event]?.[variableName] || null
       ]).reduce((accumulator, [variableName, variableValue]) => ({
