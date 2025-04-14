@@ -131,7 +131,6 @@ class DiscordBotCreator {
   };
 
   createBotGrid() {
-    // const fs = require("fs");
     const path = require("path");
 
     const grid = document.createElement("div");
@@ -242,8 +241,7 @@ class DiscordBotCreator {
 
           this.saveBots();
           this.renderContent();
-          
-          // const fs = require("fs");
+
           const path = require("path");
 
           fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString()));
@@ -459,7 +457,6 @@ class DiscordBotCreator {
 
     const saveBtn = settings.querySelector(".settings-save-btn");
     saveBtn.addEventListener("click", () => {
-      // const fs = require("fs");
       const path = require("path");
 
       const updatedSettings = JSON.stringify({
@@ -570,7 +567,6 @@ class DiscordBotCreator {
       codeEditorModeScript.src = "../packages/codemirror/mode/javascript/javascript.js";
       codeEditorModeScript.className = "code-editor-script";
       codeEditorModeScript.addEventListener("load", () => {
-        // const fs = require("fs");
         const path = require("path");
 
         this.editor = CodeMirror.fromTextArea(editorView.querySelector(".code-editor-view textarea"), {
@@ -638,7 +634,6 @@ class DiscordBotCreator {
   };
 
   showCodeEditor(bot = null) {
-    // const fs = require("fs");
     const path = require("path");
 
     const workspaceView = document.createElement("div");
@@ -1326,7 +1321,6 @@ class DiscordBotCreator {
   };
 
   showBotSettings(bot) {
-    // const fs = require("fs");
     const path = require("path");
 
     const modal = document.createElement("div");
@@ -1409,7 +1403,6 @@ class DiscordBotCreator {
   };
 
   generateFileTree(dir) {
-    // const fs = require("fs");
     const path = require("path");
 
     const result = [];
@@ -1512,7 +1505,6 @@ class DiscordBotCreator {
   };
 
   setupFileTreeListeners(editorView, bot) {
-    // const fs = require("fs");
     const path = require("path");
 
     const fileItems = editorView.querySelectorAll(".file-tree-item");
@@ -1819,7 +1811,6 @@ class DiscordBotCreator {
       };
 
       if (bot) {
-        // const fs = require("fs");
         const path = require("path");
 
         const index = this.bots.findIndex((b) => b.id === bot.id);
@@ -1850,7 +1841,6 @@ class DiscordBotCreator {
   };
 
   async initializeTemplate(newBot, template) {
-    // const fs = require("fs");
     const path = require("path");
 
     if (!fs.readdirSync(process.cwd()).includes("bots")) fs.mkdirSync(path.join(process.cwd(), "bots"));
@@ -1898,7 +1888,6 @@ class DiscordBotCreator {
   };
 
   runBots() {
-    // const fs = require("fs");
     const path = require("path");
 
     this.bots.forEach(async (bot) => {
@@ -2093,7 +2082,6 @@ class DiscordBotCreator {
                   this.saveBots();
                   this.renderContent();
 
-                  // const fs = require("fs");
                   const path = require("path");
 
                   fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString()));
@@ -2114,7 +2102,6 @@ class DiscordBotCreator {
     });
 
     window.addEventListener("beforeunload", () => {
-      // const fs = require("fs");
       const path = require("path");
 
       fs.readdirSync(path.join(process.cwd(), "bots")).forEach((botId) => {
@@ -2283,8 +2270,6 @@ class DiscordBotCreator {
   };
 
   readFileSafelySync(path) {
-    // const fs = require("fs");
-
     try {
       return fs.readFileSync(path, "utf8");
     } catch (err) {
@@ -2318,7 +2303,6 @@ class DiscordBotCreator {
     try {
       childProcess.execSync("node -v");
     } catch {
-      // const fs = require("fs");
       const path = require("path");
       const os = require("os");
 
