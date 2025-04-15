@@ -1,4 +1,4 @@
-Object.assign(process.env, require("fs").readFileSync(require("path").join("./.env"), "utf8").split("\n").filter((line) => !line.startsWith("#") && (line.split("=").length > 1)).map((line) => line.trim().split("#")[0].split("=")).reduce((data, accumulator) => ({
+Object.assign(process.env, require("fs").readFileSync(require("path").join(__dirname, "../.env"), "utf8").split("\n").filter((line) => !line.startsWith("#") && (line.split("=").length > 1)).map((line) => line.trim().split("#")[0].split("=")).reduce((data, accumulator) => ({
   ...data,
   ...{
     [accumulator[0]]: JSON.parse(accumulator[1].trim().replace(/\{([^}]+)\}/g, (_, expression) => eval(expression)))
@@ -14,34 +14,36 @@ const fs = {
     }
   },
 
-  readFile: (path, encoding, callback) => fs._safeCall(require('fs').readFile, path, encoding, callback),
-  writeFile: (path, data, encoding, callback) => fs._safeCall(require('fs').writeFile, path, data, encoding, callback),
-  appendFile: (path, data, encoding, callback) => fs._safeCall(require('fs').appendFile, path, data, encoding, callback),
-  unlink: (path, callback) => fs._safeCall(require('fs').unlink, path, callback),
-  mkdir: (path, options, callback) => fs._safeCall(require('fs').mkdir, path, options, callback),
-  readdir: (path, callback) => fs._safeCall(require('fs').readdir, path, callback),
-  stat: (path, callback) => fs._safeCall(require('fs').stat, path, callback),
-  watch: (path, options, listener) => fs._safeCall(require('fs').watch, path, options, listener),
-  rename: (oldPath, newPath, callback) => fs._safeCall(require('fs').rename, oldPath, newPath, callback),
-  copyFile: (src, dest, flags, callback) => fs._safeCall(require('fs').copyFile, src, dest, flags, callback),
-  rmdir: (path, callback) => fs._safeCall(require('fs').rmdir, path, callback),
-  chmod: (path, mode, callback) => fs._safeCall(require('fs').chmod, path, mode, callback),
-  chown: (path, uid, gid, callback) => fs._safeCall(require('fs').chown, path, uid, gid, callback),
-  utimes: (path, atime, mtime, callback) => fs._safeCall(require('fs').utimes, path, atime, mtime, callback),
+  readFile: (...args) => fs._safeCall(require('fs').readFile, ...args),
+  writeFile: (...args) => fs._safeCall(require('fs').writeFile, ...args),
+  appendFile: (...args) => fs._safeCall(require('fs').appendFile, ...args),
+  unlink: (...args) => fs._safeCall(require('fs').unlink, ...args),
+  mkdir: (...args) => fs._safeCall(require('fs').mkdir, ...args),
+  readdir: (...args) => fs._safeCall(require('fs').readdir, ...args),
+  stat: (...args) => fs._safeCall(require('fs').stat, ...args),
+  watch: (...args) => fs._safeCall(require('fs').watch, ...args),
+  rename: (...args) => fs._safeCall(require('fs').rename, ...args),
+  copyFile: (...args) => fs._safeCall(require('fs').copyFile, ...args),
+  rmdir: (...args) => fs._safeCall(require('fs').rmdir, ...args),
+  chmod: (...args) => fs._safeCall(require('fs').chmod, ...args),
+  chown: (...args) => fs._safeCall(require('fs').chown, ...args),
+  utimes: (...args) => fs._safeCall(require('fs').utimes, ...args),
+  cp: (...args) => fs._safeCall(require('fs').cp, ...args),
 
-  readFileSync: (path, encoding) => fs._safeCall(require('fs').readFileSync, path, encoding),
-  writeFileSync: (path, data, encoding) => fs._safeCall(require('fs').writeFileSync, path, data, encoding),
-  appendFileSync: (path, data, encoding) => fs._safeCall(require('fs').appendFileSync, path, data, encoding),
-  unlinkSync: (path) => fs._safeCall(require('fs').unlinkSync, path),
-  mkdirSync: (path, options) => fs._safeCall(require('fs').mkdirSync, path, options),
-  readdirSync: (path) => fs._safeCall(require('fs').readdirSync, path),
-  statSync: (path) => fs._safeCall(require('fs').statSync, path),
-  renameSync: (oldPath, newPath) => fs._safeCall(require('fs').renameSync, oldPath, newPath),
-  copyFileSync: (src, dest, flags) => fs._safeCall(require('fs').copyFileSync, src, dest, flags),
-  rmdirSync: (path) => fs._safeCall(require('fs').rmdirSync, path),
-  chmodSync: (path, mode) => fs._safeCall(require('fs').chmodSync, path, mode),
-  chownSync: (path, uid, gid) => fs._safeCall(require('fs').chownSync, path, uid, gid),
-  utimesSync: (path, atime, mtime) => fs._safeCall(require('fs').utimesSync, path, atime, mtime)
+  readFileSync: (...args) => fs._safeCall(require('fs').readFileSync, ...args),
+  writeFileSync: (...args) => fs._safeCall(require('fs').writeFileSync, ...args),
+  appendFileSync: (...args) => fs._safeCall(require('fs').appendFileSync, ...args),
+  unlinkSync: (...args) => fs._safeCall(require('fs').unlinkSync, ...args),
+  mkdirSync: (...args) => fs._safeCall(require('fs').mkdirSync, ...args),
+  readdirSync: (...args) => fs._safeCall(require('fs').readdirSync, ...args),
+  statSync: (...args) => fs._safeCall(require('fs').statSync, ...args),
+  renameSync: (...args) => fs._safeCall(require('fs').renameSync, ...args),
+  copyFileSync: (...args) => fs._safeCall(require('fs').copyFileSync, ...args),
+  rmdirSync: (...args) => fs._safeCall(require('fs').rmdirSync, ...args),
+  chmodSync: (...args) => fs._safeCall(require('fs').chmodSync, ...args),
+  chownSync: (...args) => fs._safeCall(require('fs').chownSync, ...args),
+  utimesSync: (...args) => fs._safeCall(require('fs').utimesSync, ...args),
+  cpSync: (...args) => fs._safeCall(require('fs').cpSync, ...args)
 };
 
 class DiscordBotCreator {
