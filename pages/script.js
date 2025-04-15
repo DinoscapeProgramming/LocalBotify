@@ -1935,7 +1935,7 @@ class DiscordBotCreator {
         });
       };
     } else {
-      const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
+      const nodeFetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
       const path = require("path");
       const unzipper = require("unzipper");
 
@@ -1947,7 +1947,7 @@ class DiscordBotCreator {
           fs.mkdirSync(outputDirectory);
         };
 
-        const response = await fetch(url);
+        const response = await nodeFetch(url);
         if (response.ok) {
           response.body.pipe(unzipper.Parse()).on("entry", (entry) => {
             const entryPath = entry.path;
