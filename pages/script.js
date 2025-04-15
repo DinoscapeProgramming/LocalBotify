@@ -1923,6 +1923,12 @@ class DiscordBotCreator {
     if (template === "none") return;
     
     if (!template.startsWith("git:")) {
+<<<<<<< HEAD
+=======
+      /*fs.readdirSync(path.join(path.dirname(__dirname), "templates", template)).forEach((file) => {
+        fs.cpSync(path.join(path.join(path.dirname(__dirname), "templates", template), file), path.join(process.cwd(), "bots", newBot.id.toString(), file), { recursive: true });
+      });*/
+>>>>>>> af6a899fd9911c3a9ea56d496c4ff4c9ffca6459
       this.copyRecursiveSync(path.join(__dirname, "../templates", template), path.join(process.cwd(), "bots", newBot.id.toString()));
 
       if (fs.readdirSync(path.join(path.dirname(__dirname), "templates", template)).includes("files.config") && fs.statSync(path.join(path.dirname(__dirname), "templates", template, "files.config")).isFile()) {
