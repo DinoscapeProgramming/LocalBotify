@@ -14,36 +14,40 @@ const fs = {
     }
   },
 
-  readFile: (...args) => fs._safeCall(require('fs').readFile, ...args),
-  writeFile: (...args) => fs._safeCall(require('fs').writeFile, ...args),
-  appendFile: (...args) => fs._safeCall(require('fs').appendFile, ...args),
-  unlink: (...args) => fs._safeCall(require('fs').unlink, ...args),
-  mkdir: (...args) => fs._safeCall(require('fs').mkdir, ...args),
-  readdir: (...args) => fs._safeCall(require('fs').readdir, ...args),
-  stat: (...args) => fs._safeCall(require('fs').stat, ...args),
-  watch: (...args) => fs._safeCall(require('fs').watch, ...args),
-  rename: (...args) => fs._safeCall(require('fs').rename, ...args),
-  copyFile: (...args) => fs._safeCall(require('fs').copyFile, ...args),
-  rmdir: (...args) => fs._safeCall(require('fs').rmdir, ...args),
-  chmod: (...args) => fs._safeCall(require('fs').chmod, ...args),
-  chown: (...args) => fs._safeCall(require('fs').chown, ...args),
-  utimes: (...args) => fs._safeCall(require('fs').utimes, ...args),
-  cp: (...args) => fs._safeCall(require('fs').cp, ...args),
+  readFile: (...args) => fs._safeCall(require("fs").readFile, ...args),
+  writeFile: (...args) => fs._safeCall(require("fs").writeFile, ...args),
+  appendFile: (...args) => fs._safeCall(require("fs").appendFile, ...args),
+  unlink: (...args) => fs._safeCall(require("fs").unlink, ...args),
+  mkdir: (...args) => fs._safeCall(require("fs").mkdir, ...args),
+  readdir: (...args) => fs._safeCall(require("fs").readdir, ...args),
+  stat: (...args) => fs._safeCall(require("fs").stat, ...args),
+  watch: (...args) => fs._safeCall(require("fs").watch, ...args),
+  rename: (...args) => fs._safeCall(require("fs").rename, ...args),
+  copyFile: (...args) => fs._safeCall(require("fs").copyFile, ...args),
+  rmdir: (...args) => fs._safeCall(require("fs").rmdir, ...args),
+  chmod: (...args) => fs._safeCall(require("fs").chmod, ...args),
+  chown: (...args) => fs._safeCall(require("fs").chown, ...args),
+  utimes: (...args) => fs._safeCall(require("fs").utimes, ...args),
+  cp: (...args) => fs._safeCall(require("fs").cp, ...args),
+  exists: (...args) => fs._safeCall(require("fs").exists, ...args),
+  access: (...args) => fs._safeCall(require("fs").access, ...args),
 
-  readFileSync: (...args) => fs._safeCall(require('fs').readFileSync, ...args),
-  writeFileSync: (...args) => fs._safeCall(require('fs').writeFileSync, ...args),
-  appendFileSync: (...args) => fs._safeCall(require('fs').appendFileSync, ...args),
-  unlinkSync: (...args) => fs._safeCall(require('fs').unlinkSync, ...args),
-  mkdirSync: (...args) => fs._safeCall(require('fs').mkdirSync, ...args),
-  readdirSync: (...args) => fs._safeCall(require('fs').readdirSync, ...args),
-  statSync: (...args) => fs._safeCall(require('fs').statSync, ...args),
-  renameSync: (...args) => fs._safeCall(require('fs').renameSync, ...args),
-  copyFileSync: (...args) => fs._safeCall(require('fs').copyFileSync, ...args),
-  rmdirSync: (...args) => fs._safeCall(require('fs').rmdirSync, ...args),
-  chmodSync: (...args) => fs._safeCall(require('fs').chmodSync, ...args),
-  chownSync: (...args) => fs._safeCall(require('fs').chownSync, ...args),
-  utimesSync: (...args) => fs._safeCall(require('fs').utimesSync, ...args),
-  cpSync: (...args) => fs._safeCall(require('fs').cpSync, ...args)
+  readFileSync: (...args) => fs._safeCall(require("fs").readFileSync, ...args),
+  writeFileSync: (...args) => fs._safeCall(require("fs").writeFileSync, ...args),
+  appendFileSync: (...args) => fs._safeCall(require("fs").appendFileSync, ...args),
+  unlinkSync: (...args) => fs._safeCall(require("fs").unlinkSync, ...args),
+  mkdirSync: (...args) => fs._safeCall(require("fs").mkdirSync, ...args),
+  readdirSync: (...args) => fs._safeCall(require("fs").readdirSync, ...args),
+  statSync: (...args) => fs._safeCall(require("fs").statSync, ...args),
+  renameSync: (...args) => fs._safeCall(require("fs").renameSync, ...args),
+  copyFileSync: (...args) => fs._safeCall(require("fs").copyFileSync, ...args),
+  rmdirSync: (...args) => fs._safeCall(require("fs").rmdirSync, ...args),
+  chmodSync: (...args) => fs._safeCall(require("fs").chmodSync, ...args),
+  chownSync: (...args) => fs._safeCall(require("fs").chownSync, ...args),
+  utimesSync: (...args) => fs._safeCall(require("fs").utimesSync, ...args),
+  cpSync: (...args) => fs._safeCall(require("fs").cpSync, ...args),
+  existsSync: (...args) => fs._safeCall(require("fs").existsSync, ...args),
+  accessSync: (...args) => fs._safeCall(require("fs").accessSync, ...args)
 };
 
 class DiscordBotCreator {
@@ -53,7 +57,7 @@ class DiscordBotCreator {
     this.renderContent();
     this.setupEventListeners();
     this.updateSettings();
-    this.setupNode();
+    // this.setupNode();
     // this.runBots();
   };
 
@@ -536,6 +540,7 @@ class DiscordBotCreator {
   };
 
   createHelpView() {
+    const path = require("path");
     const childProcess = require("child_process");
 
     const helpView = document.createElement("div");
@@ -551,7 +556,7 @@ class DiscordBotCreator {
 
     document.body.style.backgroundColor = "#0d1117";
 
-    ipcRenderer.invoke("parseMarkdown", fs.readFileSync("./docs/commandTutorial.md", "utf8")).then((parsedMarkdown) => {
+    ipcRenderer.invoke("parseMarkdown", fs.readFileSync(path.join(__dirname, "../docs/commandTutorial.md"), "utf8")).then((parsedMarkdown) => {
       helpView.querySelector(".markdown-body").innerHTML = parsedMarkdown;
 
       helpView.querySelectorAll(".markdown-body a").forEach((link) => {
@@ -1909,12 +1914,13 @@ class DiscordBotCreator {
     if (template === "none") return;
     
     if (!template.startsWith("git:")) {
-      fs.readdirSync(path.join(process.cwd(), "templates", template)).forEach((file) => {
-        fs.cpSync(path.join(path.join(process.cwd(), "templates", template), file), path.join(process.cwd(), "bots", newBot.id.toString(), file), { recursive: true });
-      });
+      /*fs.readdirSync(path.join(path.dirname(__dirname), "templates", template)).forEach((file) => {
+        fs.cpSync(path.join(path.join(path.dirname(__dirname), "templates", template), file), path.join(process.cwd(), "bots", newBot.id.toString(), file), { recursive: true });
+      });*/
+      this.copyRecursiveSync(path.join(__dirname, "../templates", template), path.join(process.cwd(), "bots", newBot.id.toString()));
 
-      if (fs.readdirSync(path.join(process.cwd(), "templates", template)).includes("files.config") && fs.statSync(path.join(process.cwd(), "templates", template, "files.config")).isFile()) {
-        fs.readFileSync(path.join(process.cwd(), "templates", template, "files.config"), "utf8").split("```").filter((_, index) => (index % 2)).forEach((configFile) => {
+      if (fs.readdirSync(path.join(path.dirname(__dirname), "templates", template)).includes("files.config") && fs.statSync(path.join(path.dirname(__dirname), "templates", template, "files.config")).isFile()) {
+        fs.readFileSync(path.join(path.dirname(__dirname), "templates", template, "files.config"), "utf8").split("```").filter((_, index) => (index % 2)).forEach((configFile) => {
           fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), configFile.split("\n")[0].trim()), configFile.split("\n").slice(1).join("\n").trim().replace(/\$\{([^}]+)\}/g, (_, code) => {
             try {
               return eval(code);
@@ -2333,6 +2339,28 @@ class DiscordBotCreator {
         throw err;
       };
     };
+  };
+
+  copyRecursiveSync(source, destination) {
+    const path = require("path");
+
+    try {
+      const stat = fs.statSync(source);
+      if (stat.isDirectory()) {
+        if (!fs.existsSync(destination)) {
+          fs.mkdirSync(destination, { recursive: true });
+        };
+
+        const entries = fs.readdirSync(source);
+        for (const entry of entries) {
+          const sourcePath = path.join(source, entry);
+          const destinationPath = path.join(destination, entry);
+          this.copyRecursiveSync(sourcePath, destinationPath);
+        }
+      } else {
+        fs.copyFileSync(source, destination);
+      };
+    } catch {};
   };
 
   formatNumber(num) {

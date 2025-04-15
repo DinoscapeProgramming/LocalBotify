@@ -40,14 +40,13 @@
     "files": [
       "**/*",
       "!./bin/**",
-      "!**/*.md",
       "!**/test/**",
       "!**/example/**",
+      "!**/playground/**",
       "!**/LICENSE",
       "!**/license",
       "!**/.github/**",
       "!**/*.bak",
-      "!**/*.txt",
       "!**/.vscode/**"
     ],
     "nsis": {
