@@ -1133,6 +1133,56 @@ class DiscordBotCreator {
       });
     });
 
+    let watchedSubDirs = new Set();
+
+    fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).forEach((file) => {
+      const filePath = path.join(dir, file);
+      const stat = fs.statSync(filePath);
+
+      if (stat.isDirectory()) {
+        if (!watchedSubDirs.has(filePath)) {
+          fs.watch(filePath, (eventType) => {
+            if (eventType !== "rename") return;
+
+            if (!this.getFlatFileList(path.join(process.cwd(), "bots", bot.id.toString())).includes(this.getFilePath(editorView.querySelector(".file-tree-item.active")))) {
+              const newFile = this.getFlatFileList(path.join(process.cwd(), "bots", bot.id.toString())).filter((file) => !this.parseFileTree(editorView.querySelector(".file-tree")).includes(file));
+
+              editorView.querySelector(".file-tree").innerHTML = this.renderFileTree(this.generateFileTree(path.join(process.cwd(), "bots", bot.id.toString())));
+
+              this.getFileTreeItem(newFile).classList.add("active");
+              this.getFileTreeItem(newFile).click();
+            } else {
+              editorView.querySelector(".file-tree").innerHTML = this.renderFileTree(this.generateFileTree(path.join(process.cwd(), "bots", bot.id.toString())));
+
+              const activeFile = ((dir) => {
+                const files = fs.readdirSync(dir);
+                if (files.includes("index.js")) return "index.js";
+                if (files.includes("package.json")) {
+                  try {
+                    const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+                    if (packageJson.main) return packageJson.main;
+                  } catch {};
+                  return "package.json";
+                };
+                const firstJsFile = files.find((file) => file.endsWith(".js"));
+                if (firstJsFile) return firstJsFile;
+                const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
+                if (firstNonFolder) return firstNonFolder;
+                return null;
+              })(path.join(process.cwd(), "bots", bot.id.toString()))
+              
+              activeFile.classList.add("active");
+              activeFile.click();
+            };
+          });
+
+          watchedSubDirs.add(filePath);
+        };
+
+        watchDirRecursive(filePath);
+      };
+    });
+
     const addFileBtn = editorView.querySelector(`.file-explorer-btn[title="New File"]`);
     [
       ...[
@@ -1251,7 +1301,7 @@ class DiscordBotCreator {
           newFileTreeItem.addEventListener("click", () => {
             const fileItems = editorView.querySelectorAll(".file-tree-item");
 
-            fileItems.forEach(i => i.classList.remove("active"));
+            fileItems.forEach((i) => i.classList.remove("active"));
             newFileTreeItem.classList.add("active");
 
             this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
@@ -1570,6 +1620,35 @@ class DiscordBotCreator {
       };
     };
     return path.join("/");
+  };
+
+  parseFileTree(fileTree) {
+    const result = [];
+    const stack = [{ node: fileTree, path: "." }];
+
+    while (stack.length > 0) {
+      const { node, path } = stack.pop();
+
+      for (let i = 0; i < node.children.length; i++) {
+        const el = node.children[i];
+
+        if (el.classList.contains("file-tree-item") && el.classList.contains("folder")) {
+          const folderName = el.querySelector("span").textContent.trim();
+          const folderPath = `${path}/${folderName}`;
+
+          result.push(folderPath);
+
+          const next = el.nextElementSibling;
+          if (next && next.classList.contains("folder-content")) {
+            stack.push({ node: next, path: folderPath });
+          };
+        } else if (el.classList.contains("file-tree-item") && el.dataset.filename) {
+          result.push(`${path}/${el.dataset.filename}`);
+        };
+      };
+    };
+
+    return result;
   };
 
   setupFileTreeListeners(editorView, bot) {
@@ -1923,12 +2002,6 @@ class DiscordBotCreator {
     if (template === "none") return;
     
     if (!template.startsWith("git:")) {
-<<<<<<< HEAD
-=======
-      /*fs.readdirSync(path.join(path.dirname(__dirname), "templates", template)).forEach((file) => {
-        fs.cpSync(path.join(path.join(path.dirname(__dirname), "templates", template), file), path.join(process.cwd(), "bots", newBot.id.toString(), file), { recursive: true });
-      });*/
->>>>>>> af6a899fd9911c3a9ea56d496c4ff4c9ffca6459
       this.copyRecursiveSync(path.join(__dirname, "../templates", template), path.join(process.cwd(), "bots", newBot.id.toString()));
 
       if (fs.readdirSync(path.join(path.dirname(__dirname), "templates", template)).includes("files.config") && fs.statSync(path.join(path.dirname(__dirname), "templates", template, "files.config")).isFile()) {
@@ -1941,32 +2014,10 @@ class DiscordBotCreator {
         });
       };
     } else {
-      const nodeFetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
-      const path = require("path");
-      const unzipper = require("unzipper");
-
-      const url = `${template.substring(4)}/archive/refs/heads/main.zip`;
-      const outputDirectory = path.join(process.cwd(), "bots", newBot.id.toString());
-
-      try {
-        if (!fs.existsSync(outputDirectory)) {
-          fs.mkdirSync(outputDirectory);
-        };
-
-        const response = await nodeFetch(url);
-        if (response.ok) {
-          response.body.pipe(unzipper.Parse()).on("entry", (entry) => {
-            const entryPath = entry.path;
-            const outputPath = path.join(outputDir, entryPath.replace(`${repo}-main/`, ''));
-
-            if (entry.type === "Directory") {
-              fs.mkdirSync(outputPath, { recursive: true });
-            } else {
-              entry.pipe(fs.createWriteStream(outputPath));
-            };
-          });
-        };
-      } catch {};
+      ipcRenderer.send("importGitHubRepo", [
+        newBot.id,
+        template.substring(4)
+      ]);
     };
   };
 
@@ -2384,6 +2435,25 @@ class DiscordBotCreator {
         fs.copyFileSync(source, destination);
       };
     } catch {};
+  };
+
+  getFlatFileList(directory) {
+    const path = require("path");
+
+    let results = [];
+
+    fs.readdirSync(directory).forEach((file) => {
+      const filePath = path.join(directory, file);
+      const stat = fs.statSync(filePath);
+
+      if (stat && stat.isDirectory()) {
+        results = results.concat(getFlatFileList(filePath));
+      } else {
+        results.push(filePath);
+      };
+    });
+
+    return results;
   };
 
   formatNumber(num) {

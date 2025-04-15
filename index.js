@@ -18,6 +18,8 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { parse } = require("markdown-wasm");
+const unzipper = require("unzipper");
+const nodeFetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
 let highlighter;
 
 let tray;
@@ -148,6 +150,31 @@ const createWindow = () => {
     } finally {
       return true;
     };
+  });
+
+  ipcMain.on("importGitHubRepo", async (_, [botId, repo]) => {
+    const url = `${repo}/archive/refs/heads/main.zip`;
+    const outputDirectory = path.join(process.cwd(), "bots", botId.toString());
+
+    try {
+      if (!fs.existsSync(outputDirectory)) {
+        fs.mkdirSync(outputDirectory);
+      };
+
+      const response = await nodeFetch(url);
+      if (response.ok) {
+        response.body.pipe(unzipper.Parse()).on("entry", (entry) => {
+          const entryPath = entry.path;
+          const outputPath = path.join(outputDirectory, entryPath.replace(`${repo.match(/github\.com[:\/](.+?)\/(.+?)(?:\.git)?$/)[2]}-main/`, ""));
+
+          if (entry.type === "Directory") {
+            fs.mkdirSync(outputPath, { recursive: true });
+          } else {
+            entry.pipe(fs.createWriteStream(outputPath));
+          };
+        });
+      };
+    } catch {};
   });
 
   ipcMain.handle("parseMarkdown", (_, markdown) => {
