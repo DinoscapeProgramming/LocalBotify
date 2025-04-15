@@ -1,8 +1,9 @@
 const updateStatus = require("./trackers/status.js");
 const updateStatistics = require("./trackers/statistics.js");
-require("../../node_modules/@teeny-tiny/dotenv/index.js").config();
 const fs = require("fs");
-const { REST, Routes, Client, GatewayIntentBits, PresenceUpdateStatus, ActivityType } = require("../../node_modules/discord.js/src/index.js");
+const path = require("path");
+require(`../../${fs.readdirSync(path.dirname(path.dirname(__dirname))).includes("LocalBotify.exe") ? "resources/app.asar.unpacked/" : ""}node_modules/@teeny-tiny/dotenv/index.js`).config();
+const { REST, Routes, Client, GatewayIntentBits, PresenceUpdateStatus, ActivityType } = require(`../../${fs.readdirSync(path.dirname(path.dirname(__dirname))).includes("LocalBotify.exe") ? "resources/app.asar.unpacked/" : ""}node_modules/discord.js/src/index.js`);
 const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 let config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
 
@@ -12,9 +13,6 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent
   ], // --> remember to activate intents in developer portal settings too!
-  rest: {
-    requestTimeout: JSON.parse(fs.readFileSync("../../settings.json", "utf8") || "{}").apiTimeout || 5000
-  }
 });
 
 client.once("ready", () => {

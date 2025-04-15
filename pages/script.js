@@ -14,36 +14,40 @@ const fs = {
     }
   },
 
-  readFile: (...args) => fs._safeCall(require('fs').readFile, ...args),
-  writeFile: (...args) => fs._safeCall(require('fs').writeFile, ...args),
-  appendFile: (...args) => fs._safeCall(require('fs').appendFile, ...args),
-  unlink: (...args) => fs._safeCall(require('fs').unlink, ...args),
-  mkdir: (...args) => fs._safeCall(require('fs').mkdir, ...args),
-  readdir: (...args) => fs._safeCall(require('fs').readdir, ...args),
-  stat: (...args) => fs._safeCall(require('fs').stat, ...args),
-  watch: (...args) => fs._safeCall(require('fs').watch, ...args),
-  rename: (...args) => fs._safeCall(require('fs').rename, ...args),
-  copyFile: (...args) => fs._safeCall(require('fs').copyFile, ...args),
-  rmdir: (...args) => fs._safeCall(require('fs').rmdir, ...args),
-  chmod: (...args) => fs._safeCall(require('fs').chmod, ...args),
-  chown: (...args) => fs._safeCall(require('fs').chown, ...args),
-  utimes: (...args) => fs._safeCall(require('fs').utimes, ...args),
-  cp: (...args) => fs._safeCall(require('fs').cp, ...args),
+  readFile: (...args) => fs._safeCall(require("fs").readFile, ...args),
+  writeFile: (...args) => fs._safeCall(require("fs").writeFile, ...args),
+  appendFile: (...args) => fs._safeCall(require("fs").appendFile, ...args),
+  unlink: (...args) => fs._safeCall(require("fs").unlink, ...args),
+  mkdir: (...args) => fs._safeCall(require("fs").mkdir, ...args),
+  readdir: (...args) => fs._safeCall(require("fs").readdir, ...args),
+  stat: (...args) => fs._safeCall(require("fs").stat, ...args),
+  watch: (...args) => fs._safeCall(require("fs").watch, ...args),
+  rename: (...args) => fs._safeCall(require("fs").rename, ...args),
+  copyFile: (...args) => fs._safeCall(require("fs").copyFile, ...args),
+  rmdir: (...args) => fs._safeCall(require("fs").rmdir, ...args),
+  chmod: (...args) => fs._safeCall(require("fs").chmod, ...args),
+  chown: (...args) => fs._safeCall(require("fs").chown, ...args),
+  utimes: (...args) => fs._safeCall(require("fs").utimes, ...args),
+  cp: (...args) => fs._safeCall(require("fs").cp, ...args),
+  exists: (...args) => fs._safeCall(require("fs").exists, ...args),
+  access: (...args) => fs._safeCall(require("fs").access, ...args),
 
-  readFileSync: (...args) => fs._safeCall(require('fs').readFileSync, ...args),
-  writeFileSync: (...args) => fs._safeCall(require('fs').writeFileSync, ...args),
-  appendFileSync: (...args) => fs._safeCall(require('fs').appendFileSync, ...args),
-  unlinkSync: (...args) => fs._safeCall(require('fs').unlinkSync, ...args),
-  mkdirSync: (...args) => fs._safeCall(require('fs').mkdirSync, ...args),
-  readdirSync: (...args) => fs._safeCall(require('fs').readdirSync, ...args),
-  statSync: (...args) => fs._safeCall(require('fs').statSync, ...args),
-  renameSync: (...args) => fs._safeCall(require('fs').renameSync, ...args),
-  copyFileSync: (...args) => fs._safeCall(require('fs').copyFileSync, ...args),
-  rmdirSync: (...args) => fs._safeCall(require('fs').rmdirSync, ...args),
-  chmodSync: (...args) => fs._safeCall(require('fs').chmodSync, ...args),
-  chownSync: (...args) => fs._safeCall(require('fs').chownSync, ...args),
-  utimesSync: (...args) => fs._safeCall(require('fs').utimesSync, ...args),
-  cpSync: (...args) => fs._safeCall(require('fs').cpSync, ...args)
+  readFileSync: (...args) => fs._safeCall(require("fs").readFileSync, ...args),
+  writeFileSync: (...args) => fs._safeCall(require("fs").writeFileSync, ...args),
+  appendFileSync: (...args) => fs._safeCall(require("fs").appendFileSync, ...args),
+  unlinkSync: (...args) => fs._safeCall(require("fs").unlinkSync, ...args),
+  mkdirSync: (...args) => fs._safeCall(require("fs").mkdirSync, ...args),
+  readdirSync: (...args) => fs._safeCall(require("fs").readdirSync, ...args),
+  statSync: (...args) => fs._safeCall(require("fs").statSync, ...args),
+  renameSync: (...args) => fs._safeCall(require("fs").renameSync, ...args),
+  copyFileSync: (...args) => fs._safeCall(require("fs").copyFileSync, ...args),
+  rmdirSync: (...args) => fs._safeCall(require("fs").rmdirSync, ...args),
+  chmodSync: (...args) => fs._safeCall(require("fs").chmodSync, ...args),
+  chownSync: (...args) => fs._safeCall(require("fs").chownSync, ...args),
+  utimesSync: (...args) => fs._safeCall(require("fs").utimesSync, ...args),
+  cpSync: (...args) => fs._safeCall(require("fs").cpSync, ...args),
+  existsSync: (...args) => fs._safeCall(require("fs").existsSync, ...args),
+  accessSync: (...args) => fs._safeCall(require("fs").accessSync, ...args)
 };
 
 class DiscordBotCreator {
@@ -53,8 +57,10 @@ class DiscordBotCreator {
     this.renderContent();
     this.setupEventListeners();
     this.updateSettings();
-    this.setupNode();
+    // this.setupNode();
     // this.runBots();
+
+    this.isPackaged = require("path").basename(process.execPath) !== "electron.exe";
   };
 
   initializeDemoData() {
@@ -502,7 +508,6 @@ class DiscordBotCreator {
       });
 
       localStorage.setItem("settings", updatedSettings);
-      fs.writeFileSync(path.join(process.cwd(), "settings.json"), updatedSettings, "utf8");
       this.updateSettings();
 
       saveBtn.innerHTML = `<i class="fas fa-check"></i>Saved!`;
@@ -536,6 +541,7 @@ class DiscordBotCreator {
   };
 
   createHelpView() {
+    const path = require("path");
     const childProcess = require("child_process");
 
     const helpView = document.createElement("div");
@@ -551,7 +557,7 @@ class DiscordBotCreator {
 
     document.body.style.backgroundColor = "#0d1117";
 
-    ipcRenderer.invoke("parseMarkdown", fs.readFileSync("./docs/commandTutorial.md", "utf8")).then((parsedMarkdown) => {
+    ipcRenderer.invoke("parseMarkdown", fs.readFileSync(path.join(__dirname, "../docs/commandTutorial.md"), "utf8")).then((parsedMarkdown) => {
       helpView.querySelector(".markdown-body").innerHTML = parsedMarkdown;
 
       helpView.querySelectorAll(".markdown-body a").forEach((link) => {
@@ -561,6 +567,12 @@ class DiscordBotCreator {
           childProcess.exec(((process.platform === "win32") ? "start " : ((process.platform === "darwin") ? "open " : "xdg-open ")) + e.target.href);
         });
       });
+
+      if (parsedMarkdown.match(/<pre><code class="(language-[^"]+)">([\s\S]*?)<\/code><\/pre>/gs)) {
+        ipcRenderer.invoke("highlightSyntax", parsedMarkdown).then((syntaxHighlightedMarkdown) => {
+          helpView.querySelector(".markdown-body").innerHTML = syntaxHighlightedMarkdown;
+        });
+      };
     });
 
     this.getFileTreeItem(helpView, "commandTutorial.md").classList.add("active");
@@ -1111,11 +1123,13 @@ class DiscordBotCreator {
       playBtn.addEventListener("click", () => {
         ipcRenderer.send("terminalData", [
           bot.id,
-          (playBtn.children[0].className === "fas fa-stop") ? "\x03" : (((bot.initialized) ? "" : (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"))).commands.initialization + ";")) + `${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"))).commands.startup}\r\n`)
+          (playBtn.children[0].className === "fas fa-stop") ? "\x03" : (((bot.initialized) ? "" : (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"))).commands.initialization + "; ")) + `${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"))).commands.startup}\r\n`)
         ]);
 
-        playBtn.children[0].className = (playBtn.children[0].className === "fas fa-stop") ? "fas fa-play" : "fas fa-stop";
-        if (playBtn.id === "workbench-play-btn") playBtn.childNodes[2].textContent = (playBtn.children[0].className === "fas fa-play") ? "Play" : "Stop";
+        workspaceView.querySelectorAll("#workbench-play-btn, .editor-play-btn").forEach((changedPlayBtn) => {
+          changedPlayBtn.children[0].className = (changedPlayBtn.children[0].className === "fas fa-stop") ? "fas fa-play" : "fas fa-stop";
+          if (changedPlayBtn.id === "workbench-play-btn") changedPlayBtn.childNodes[2].textContent = (changedPlayBtn.children[0].className === "fas fa-play") ? "Play" : "Stop";
+        });
       });
     });
 
@@ -1901,20 +1915,18 @@ class DiscordBotCreator {
     if (!fs.readdirSync(path.join(process.cwd(), "bots")).includes(newBot.id.toString())) fs.mkdirSync(path.join(process.cwd(), "bots", newBot.id.toString()));
 
     if (process.platform === "win32") {
-      fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), "node.bat"), `@echo off\n"${process.execPath}" %*`);
+      fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), "node.bat"), `@echo off\n"${path.resolve((this.isPackaged) ? path.join(process.resourcesPath, "app.asar.unpacked/tools/node/win32/node.exe") : "./tools/node/win32/node.exe")}" %*`);
     } else {
-      fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), "node"), `#!/bin/bash\n"${process.execPath}" "$@"`, { mode: 0o755 });
+      fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), "node"), `#!/bin/bash\n"${path.resolve((this.isPackaged) ? path.join(process.resourcesPath, `app.asar.unpacked/tools/node/${(process.platform === "linux") ? "linux" : "darwin"}/node`) : `./tools/node/${(process.platform === "linux") ? "linux" : "darwin"}/node`)}" "$@"`, { mode: 0o755 });
     };
 
     if (template === "none") return;
     
     if (!template.startsWith("git:")) {
-      fs.readdirSync(path.join(process.cwd(), "templates", template)).forEach((file) => {
-        fs.cpSync(path.join(path.join(process.cwd(), "templates", template), file), path.join(process.cwd(), "bots", newBot.id.toString(), file), { recursive: true });
-      });
+      this.copyRecursiveSync(path.join(__dirname, "../templates", template), path.join(process.cwd(), "bots", newBot.id.toString()));
 
-      if (fs.readdirSync(path.join(process.cwd(), "templates", template)).includes("files.config") && fs.statSync(path.join(process.cwd(), "templates", template, "files.config")).isFile()) {
-        fs.readFileSync(path.join(process.cwd(), "templates", template, "files.config"), "utf8").split("```").filter((_, index) => (index % 2)).forEach((configFile) => {
+      if (fs.readdirSync(path.join(path.dirname(__dirname), "templates", template)).includes("files.config") && fs.statSync(path.join(path.dirname(__dirname), "templates", template, "files.config")).isFile()) {
+        fs.readFileSync(path.join(path.dirname(__dirname), "templates", template, "files.config"), "utf8").split("```").filter((_, index) => (index % 2)).forEach((configFile) => {
           fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), configFile.split("\n")[0].trim()), configFile.split("\n").slice(1).join("\n").trim().replace(/\$\{([^}]+)\}/g, (_, code) => {
             try {
               return eval(code);
@@ -1923,21 +1935,32 @@ class DiscordBotCreator {
         });
       };
     } else {
+      const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
+      const path = require("path");
+      const unzipper = require("unzipper");
+
       const url = `${template.substring(4)}/archive/refs/heads/main.zip`;
+      const outputDirectory = path.join(process.cwd(), "bots", newBot.id.toString());
 
-      /*try {
+      try {
+        if (!fs.existsSync(outputDirectory)) {
+          fs.mkdirSync(outputDirectory);
+        };
+
         const response = await fetch(url);
-        response.body.pipeTo(require("unzipper").Extract({ path: path.join(process.cwd(), "bots", newBot.id.toString()) }));
-      } catch (err) { console.log(err); };*/
+        if (response.ok) {
+          response.body.pipe(unzipper.Parse()).on("entry", (entry) => {
+            const entryPath = entry.path;
+            const outputPath = path.join(outputDir, entryPath.replace(`${repo}-main/`, ''));
 
-      const directory = await require("unzipper").Open.url(require("request"), url);
-      return new Promise((resolve, reject) => {
-        directory.files[0]
-        .stream()
-        .pipe(fs.createWriteStream(path.join(process.cwd(), "bots", newBot.id.toString())))
-        .on("error", reject)
-        .on("finish", resolve)
-      });
+            if (entry.type === "Directory") {
+              fs.mkdirSync(outputPath, { recursive: true });
+            } else {
+              entry.pipe(fs.createWriteStream(outputPath));
+            };
+          });
+        };
+      } catch {};
     };
   };
 
@@ -2335,6 +2358,28 @@ class DiscordBotCreator {
     };
   };
 
+  copyRecursiveSync(source, destination) {
+    const path = require("path");
+
+    try {
+      const stat = fs.statSync(source);
+      if (stat.isDirectory()) {
+        if (!fs.existsSync(destination)) {
+          fs.mkdirSync(destination, { recursive: true });
+        };
+
+        const entries = fs.readdirSync(source);
+        for (const entry of entries) {
+          const sourcePath = path.join(source, entry);
+          const destinationPath = path.join(destination, entry);
+          this.copyRecursiveSync(sourcePath, destinationPath);
+        }
+      } else {
+        fs.copyFileSync(source, destination);
+      };
+    } catch {};
+  };
+
   formatNumber(num) {
     if (num >= 1000) {
       return `${(num / 1000).toFixed(1)}k`;
@@ -2371,7 +2416,7 @@ class DiscordBotCreator {
           let nodeScriptContent = "";
 
           if (platform === "win32") {
-            nodeScriptContent = `@echo off\n"${electronBinaryPath}" %*`;
+            nodeScriptContent = `@echo off\n"${path.join(process.cwd(), "app.asar.unpacked/tools/node/windows/node.exe")}" %*`;
             fs.writeFileSync(path.join(process.cwd(), "node.bat"), nodeScriptContent);
           } else {
             nodeScriptContent = `#!/bin/bash\n"${electronBinaryPath}" "$@"`;

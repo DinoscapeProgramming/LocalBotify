@@ -20,13 +20,6 @@ const path = require("path");
 const { parse } = require("markdown-wasm");
 let highlighter;
 
-import("shiki").then(async (shiki) => {
-  highlighter = await shiki.createHighlighter({
-    themes: ["github-dark"],
-    langs: ["javascript"]
-  })
-});
-
 let tray;
 let ptyProcesses = [];
 
@@ -157,28 +150,39 @@ const createWindow = () => {
     };
   });
 
-  ipcMain.handle("parseMarkdown", async (_, markdown) => {
-    const html = parse(markdown).replace(/&quot;/g, '"')
+  ipcMain.handle("parseMarkdown", (_, markdown) => {
+    return parse(markdown).replace(/&quot;/g, '"')
       .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&apos;/g, "'");
-    
+  });
+
+  ipcMain.handle("highlightSyntax", async (_, html) => {
+    if (!highlighter) (highlighter = await (await import("shiki")).createHighlighter({
+      themes: [
+        "material-theme-ocean"
+      ],
+      langs: [
+        "javascript"
+      ]
+    }));
+
     const highlightedHtml = await Promise.all(
       [...html.matchAll(/<pre><code class="(language-[^"]+)">([\s\S]*?)<\/code><\/pre>/gs)].map(async (match) => {
         const lang = match[1].replace("language-js", "javascript");
         const code = match[2];
-  
+
         try {
-          const highlightedCode = await highlighter.codeToHtml(code, { lang, theme: "github-dark" });
-  
+          const highlightedCode = await highlighter.codeToHtml(code, { lang, theme: "material-theme-ocean" });
+
           return highlightedCode;
         } catch {};
       })
     );
-  
+
     const resultHtml = html.replace(/<pre><code class="(language-[^"]+)">([\s\S]*?)<\/code><\/pre>/gs, () => highlightedHtml.shift());
-  
+
     return resultHtml;
   });
 };

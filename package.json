@@ -40,15 +40,15 @@
     "files": [
       "**/*",
       "!./bin/**",
-      "!**/*.md",
       "!**/test/**",
       "!**/example/**",
+      "!**/playground/**",
       "!**/LICENSE",
       "!**/license",
       "!**/.github/**",
       "!**/*.bak",
-      "!**/*.txt",
-      "!**/.vscode/**"
+      "!**/.vscode/**",
+      "!**/tools/**/*"
     ],
     "nsis": {
       "installerIcon": "assets/favicon.ico",
@@ -56,6 +56,10 @@
       "deleteAppDataOnUninstall": true,
       "allowToChangeInstallationDirectory": true,
       "oneClick": false
-    }
+    },
+    "asarUnpack": [
+      "**/node_modules/**",
+      "**/tools/${platform}/*"
+    ]
   }
 }

@@ -34,7 +34,7 @@ process.on("uncaughtException", (err) => {
   console.error("Uncaught exception:", err);
   updateStatus("offline");
   updateProcress("offline");
-  updateError(err.stack);
+  fs.writeFileSync(path.join(process.cwd(), "channels/error.txt"), Date.now().toString() + "\n" + err.stack, "utf8");
   process.exit(1);
 });
 
