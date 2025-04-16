@@ -4,6 +4,7 @@ Object.assign(process.env, require("fs").readFileSync(require("path").join(__dir
     [accumulator[0]]: JSON.parse(accumulator[1].trim().replace(/\{([^}]+)\}/g, (_, expression) => eval(expression)))
   }
 }), {}));
+const { FitAddon } = require("@xterm/addon-fit/lib/addon-fit");
 const { ipcRenderer } = require("electron");
 const fs = {
   _safeCall: (method, ...args) => {
@@ -667,6 +668,8 @@ class DiscordBotCreator {
       let terminal = new Terminal({
         rows: Math.round(200 / 17)
       });
+      /*let fitAddon = new FitAddon();
+      terminal.loadAddon(fitAddon);*/
       let currentLine = "";
 
       terminal.open(document.querySelector(".editor-terminal"));
@@ -684,6 +687,8 @@ class DiscordBotCreator {
           terminal.write(data);
         } catch {};
       });
+
+      // fitAddon.fit();
     });
 
     document.head.appendChild(stylesheet);
@@ -871,8 +876,9 @@ class DiscordBotCreator {
                 try {
                   const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
                   if (packageJson.main) return packageJson.main;
-                } catch {};
-                return "package.json";
+                } catch {
+                  return "package.json";
+                };
               };
               const firstJsFile = files.find((file) => file.endsWith(".js"));
               if (firstJsFile) return firstJsFile;
@@ -1078,8 +1084,9 @@ class DiscordBotCreator {
           try {
             const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
             if (packageJson.main) return packageJson.main;
-          } catch {};
-          return "package.json";
+          } catch {
+            return "package.json";
+          };
         };
         const firstJsFile = files.find((file) => file.endsWith(".js"));
         if (firstJsFile) return firstJsFile;
@@ -1133,54 +1140,33 @@ class DiscordBotCreator {
       });
     });
 
-    let watchedSubDirs = new Set();
+    fs.watch(path.join(process.cwd(), "bots", bot.id.toString()), (eventType) => {
+      if (eventType !== "rename") return;
 
-    fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).forEach((file) => {
-      const filePath = path.join(dir, file);
-      const stat = fs.statSync(filePath);
+      const activeFile = this.getFilePath(editorView.querySelector(".file-tree-item.active")) || "";
+      const newFile = this.getFlatFileList(bot, path.join(process.cwd(), "bots", bot.id.toString())).filter((file) => !this.parseFileTree(editorView.querySelector(".file-tree")).includes(file))[0]?.slice(2) || "";
 
-      if (stat.isDirectory()) {
-        if (!watchedSubDirs.has(filePath)) {
-          fs.watch(filePath, (eventType) => {
-            if (eventType !== "rename") return;
+      editorView.querySelector(".file-tree").innerHTML = this.renderFileTree(this.generateFileTree(path.join(process.cwd(), "bots", bot.id.toString())));
 
-            if (!this.getFlatFileList(path.join(process.cwd(), "bots", bot.id.toString())).includes(this.getFilePath(editorView.querySelector(".file-tree-item.active")))) {
-              const newFile = this.getFlatFileList(path.join(process.cwd(), "bots", bot.id.toString())).filter((file) => !this.parseFileTree(editorView.querySelector(".file-tree")).includes(file));
-
-              editorView.querySelector(".file-tree").innerHTML = this.renderFileTree(this.generateFileTree(path.join(process.cwd(), "bots", bot.id.toString())));
-
-              this.getFileTreeItem(newFile).classList.add("active");
-              this.getFileTreeItem(newFile).click();
-            } else {
-              editorView.querySelector(".file-tree").innerHTML = this.renderFileTree(this.generateFileTree(path.join(process.cwd(), "bots", bot.id.toString())));
-
-              const activeFile = ((dir) => {
-                const files = fs.readdirSync(dir);
-                if (files.includes("index.js")) return "index.js";
-                if (files.includes("package.json")) {
-                  try {
-                    const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
-                    if (packageJson.main) return packageJson.main;
-                  } catch {};
-                  return "package.json";
-                };
-                const firstJsFile = files.find((file) => file.endsWith(".js"));
-                if (firstJsFile) return firstJsFile;
-                const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
-                if (firstNonFolder) return firstNonFolder;
-                return null;
-              })(path.join(process.cwd(), "bots", bot.id.toString()))
-              
-              activeFile.classList.add("active");
-              activeFile.click();
-            };
-          });
-
-          watchedSubDirs.add(filePath);
+      (this.getFileTreeItem(editorView, activeFile) || this.getFileTreeItem(editorView, newFile) || this.getFileTreeItem(editorView, ((dir) => {
+        const files = fs.readdirSync(dir);
+        if (files.includes("index.js")) return "index.js";
+        if (files.includes("package.json")) {
+          try {
+            const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+            if (packageJson.main) return packageJson.main;
+          } catch {
+            return "package.json";
+          };
         };
+        const firstJsFile = files.find((file) => file.endsWith(".js"));
+        if (firstJsFile) return firstJsFile;
+        const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
+        if (firstNonFolder) return firstNonFolder;
+        return null;
+      })(path.join(process.cwd(), "bots", bot.id.toString())))).classList.add("active");
 
-        watchDirRecursive(filePath);
-      };
+      this.setupFileTreeListeners(editorView, bot);
     });
 
     const addFileBtn = editorView.querySelector(`.file-explorer-btn[title="New File"]`);
@@ -1232,10 +1218,10 @@ class DiscordBotCreator {
 
           newFileTreeItem.addEventListener("contextmenu", (e) => {
             if (document.body.querySelector(".file-tree-context-menu")) document.body.querySelector(".file-tree-context-menu").remove();
-    
+
             const contextMenu = document.createElement("div");
             contextMenu.className = "file-tree-context-menu";
-    
+
             contextMenu.innerHTML = `
               <div class="context-menu-rename-btn">
                 <i class="fas fa-pen" style="margin-right: 8.75px;"></i>Rename
@@ -1244,20 +1230,36 @@ class DiscordBotCreator {
                 <i class="fas fa-trash" style="margin-right: 10.5px;"></i>Delete
               </div>
             `;
-    
+
             contextMenu.style.top = `${e.clientY}px`;
             contextMenu.style.left = `${e.clientX}px`;
-    
+
             contextMenu.querySelector(".context-menu-rename-btn").addEventListener("click", () => {
               const oldFilePath = this.getFilePath(item);
-    
+
               const span = newFileTreeItem.querySelector("span");
+              span.style.cursor = "text";
               span.contentEditable = true;
               span.focus();
               span.addEventListener("blur", () => {
                 if (!span.textContent.trim()) return newFileTreeItem.remove();
                 if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
-    
+
+                span.style.cursor = "pointer";
+                span.contentEditable = false;
+                newFileTreeItem.dataset.filename = span.textContent.trim();
+                fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
+                
+                newFileTreeItem.click();
+              });
+
+              span.addEventListener("keydown", (e) => {
+                if (e.key !== "Enter") return;
+
+                if (!span.textContent.trim()) return newFileTreeItem.remove();
+                if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+
+                span.style.cursor = "pointer";
                 span.contentEditable = false;
                 newFileTreeItem.dataset.filename = span.textContent.trim();
                 fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
@@ -1265,19 +1267,19 @@ class DiscordBotCreator {
                 newFileTreeItem.click();
               });
             });
-    
+
             contextMenu.querySelector(".context-menu-delete-btn").addEventListener("click", () => {
               this.confirm("Delete File", `Are you sure you want to delete ${this.escapeHtml(newFileTreeItem.dataset.filename || newFileTreeItem.querySelector("span").textContent.trim())}?`).then(() => {
                 item.remove();
-    
+
                 try {
                   fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
                 } catch {};
               });
             });
-    
+
             document.body.appendChild(contextMenu);
-    
+
             window.addEventListener("click", () => {
               contextMenu.remove();
             });
@@ -1315,10 +1317,10 @@ class DiscordBotCreator {
 
           newFileTreeItem.addEventListener("contextmenu", (e) => {
             if (document.body.querySelector(".file-tree-context-menu")) document.body.querySelector(".file-tree-context-menu").remove();
-    
+
             const contextMenu = document.createElement("div");
             contextMenu.className = "file-tree-context-menu";
-    
+
             contextMenu.innerHTML = `
               <div class="context-menu-rename-btn">
                 <i class="fas fa-pen" style="margin-right: 8.75px;"></i>Rename
@@ -1327,20 +1329,36 @@ class DiscordBotCreator {
                 <i class="fas fa-trash" style="margin-right: 10.5px;"></i>Delete
               </div>
             `;
-    
+
             contextMenu.style.top = `${e.clientY}px`;
             contextMenu.style.left = `${e.clientX}px`;
-    
+
             contextMenu.querySelector(".context-menu-rename-btn").addEventListener("click", () => {
               const oldFilePath = this.getFilePath(item);
-    
+
               const span = newFileTreeItem.querySelector("span");
+              span.style.cursor = "text";
               span.contentEditable = true;
               span.focus();
               span.addEventListener("blur", () => {
                 if (!span.textContent.trim()) return newFileTreeItem.remove();
                 if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
-    
+
+                span.style.cursor = "pointer";
+                span.contentEditable = false;
+                newFileTreeItem.dataset.filename = span.textContent.trim();
+                fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
+                
+                newFileTreeItem.click();
+              });
+
+              span.addEventListener("keydown", (e) => {
+                if (e.key !== "Enter") return;
+
+                if (!span.textContent.trim()) return newFileTreeItem.remove();
+                if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+
+                span.style.cursor = "pointer";
                 span.contentEditable = false;
                 newFileTreeItem.dataset.filename = span.textContent.trim();
                 fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
@@ -1348,19 +1366,19 @@ class DiscordBotCreator {
                 newFileTreeItem.click();
               });
             });
-    
+
             contextMenu.querySelector(".context-menu-delete-btn").addEventListener("click", () => {
               this.confirm("Delete File", `Are you sure you want to delete ${this.escapeHtml(newFileTreeItem.dataset.filename || newFileTreeItem.querySelector("span").textContent.trim())}?`).then(() => {
                 item.remove();
-    
+
                 try {
                   fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
                 } catch {};
               });
             });
-    
+
             document.body.appendChild(contextMenu);
-    
+
             window.addEventListener("click", () => {
               contextMenu.remove();
             });
@@ -1701,12 +1719,28 @@ class DiscordBotCreator {
           const oldFilePath = this.getFilePath(item);
 
           const span = item.querySelector("span");
+          span.style.cursor = "text";
           span.contentEditable = true;
           span.focus();
           span.addEventListener("blur", () => {
             if (!span.textContent.trim()) return item.remove();
             if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
 
+            span.style.cursor = "pointer";
+            span.contentEditable = false;
+            item.dataset.filename = span.textContent.trim();
+            fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8");
+            
+            item.click();
+          });
+
+          span.addEventListener("keydown", (e) => {
+            if (e.key !== "Enter") return;
+
+            if (!span.textContent.trim()) return item.remove();
+            if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+
+            span.style.cursor = "pointer";
             span.contentEditable = false;
             item.dataset.filename = span.textContent.trim();
             fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8");
@@ -2437,7 +2471,7 @@ class DiscordBotCreator {
     } catch {};
   };
 
-  getFlatFileList(directory) {
+  getFlatFileList(bot, directory) {
     const path = require("path");
 
     let results = [];
@@ -2447,9 +2481,9 @@ class DiscordBotCreator {
       const stat = fs.statSync(filePath);
 
       if (stat && stat.isDirectory()) {
-        results = results.concat(getFlatFileList(filePath));
+        results = results.concat(this.getFlatFileList(bot, filePath));
       } else {
-        results.push(filePath);
+        results.push(`./${path.relative(path.join(process.cwd(), "bots", bot.id.toString()), filePath).replace("\\", "/")}`);
       };
     });
 
