@@ -100,10 +100,12 @@ const createWindow = () => {
     });
 
     ptyProcesses[botId].on("data", (data) => {
-      window.webContents.send("terminalData", [
-        botId,
-        data
-      ]);
+      try {
+        window.webContents.send("terminalData", [
+          botId,
+          data
+        ]);
+      } catch {};
     });
   });
 
@@ -130,10 +132,12 @@ const createWindow = () => {
     });
     
     ptyProcesses[botId].on("data", (data) => {
-      window.webContents.send("terminalData", [
-        botId,
-        data
-      ]);
+      try {
+        window.webContents.send("terminalData", [
+          botId,
+          data
+        ]);
+      } catch {};
     });
 
     try {
@@ -204,6 +208,16 @@ const createWindow = () => {
     const resultHtml = html.replace(/<pre><code class="(language-[^"]+)">([\s\S]*?)<\/code><\/pre>/gs, () => highlightedHtml.shift());
 
     return resultHtml;
+  });
+
+  window.webContents.once("did-finish-load", () => {
+    window.webContents.on("before-input-event", (event, input) => {
+      window.webContents.executeJavaScript(`localStorage.getItem("settings");`).then((settings) => {
+        if (!JSON.parse(settings || "{}").devMode && (input.control || input.meta) && input.shift && (input.key.toLowerCase() === "i")) {
+          window.webContents.closeDevTools();
+        };
+      });
+    });
   });
 };
 

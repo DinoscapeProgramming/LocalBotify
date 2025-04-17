@@ -50,7 +50,7 @@ const fs = {
   accessSync: (...args) => fs._safeCall(require("fs").accessSync, ...args)
 };
 
-class DiscordBotCreator {
+class LocalBotify {
   constructor() {
     this.bots = JSON.parse(localStorage.getItem("bots")) || [];
     this.currentView = "bots";
@@ -579,6 +579,18 @@ class DiscordBotCreator {
 
       document.head.appendChild(theme);
     };
+
+    try {
+      if (settings.devMode) {
+        if (!window.LocalBotify) {
+          window.LocalBotify = app;
+        };
+      } else {
+        if (window.LocalBotify) {
+          delete window.LocalBotify;
+        };
+      };
+    } catch {};
   };
 
   createHelpView() {
@@ -789,7 +801,7 @@ class DiscordBotCreator {
         <div id="workbenchMainView" style="animation: slideUp 0.5s ease;">
           <div class="bot-header" style="margin-bottom: 1.65rem;">
             <div class="bot-avatar" style="width: 60px; height: 60px; font-size: ${(50 - ((((this.isEmoji(bot.avatar)) ? this.escapeHtml(bot.avatar) : "🤖") === "🤖") * 2.5)).toString()}px;">${(this.isEmoji(bot.avatar)) ? this.escapeHtml(bot.avatar) : "🤖"}</div>
-            <div class="bot-info" style="margin-top: 2.5px; margin-left: -${(8.5 + ((((this.isEmoji(bot.avatar)) ? this.escapeHtml(bot.avatar) : "🤖") === "🤖") * 0.75)).toString()}px;">
+            <div class="bot-info" style="margin-top: 2px; margin-left: -${(8.5 + ((((this.isEmoji(bot.avatar)) ? this.escapeHtml(bot.avatar) : "🤖") === "🤖") * 0.75)).toString()}px;">
               <h3 style="font-size: 1.5rem; margin-left: 2.5px;">${this.escapeHtml(bot.name)}</h3>
               <p style="font-size: 0.95rem; margin-left: 2.5px; margin-top: -2.5px;">${(bot.description) ? this.escapeHtml(bot.description) : ""}</p>
             </div>
@@ -2676,4 +2688,8 @@ class DiscordBotCreator {
   };
 };
 
-new DiscordBotCreator();
+const app = new LocalBotify();
+
+if (JSON.parse(localStorage.getItem("settings") || "{}").devMode) {
+  window.LocalBotify = app;
+};

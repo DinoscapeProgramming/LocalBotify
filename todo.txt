@@ -1,7 +1,5 @@
 - Pro Suite (Analytics, etc.)
 - Fix website
-- Change bot profile picture (icon picker, picture, etc.)
-- Working settings
 - Add bot store
 - Add command & event store
 - Write documentation
