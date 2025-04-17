@@ -18,7 +18,7 @@
     "@xterm/xterm": "^5.5.0",
     "chokidar": "^4.0.3",
     "discord.js": "^14.18.0",
-    "localbotify": "^1.1.0",
+    "localbotify": "^2.1.0",
     "markdown-wasm": "^1.2.0",
     "node-fetch": "^3.3.2",
     "request": "^2.88.2",

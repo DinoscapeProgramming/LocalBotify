@@ -240,8 +240,8 @@ body {
 .bot-avatar {
   width: 48px;
   height: 48px;
+  font-size: 45px;
   border-radius: 50%;
-  background-color: var(--discord-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -251,6 +251,11 @@ body {
 .bot-avatar i {
   font-size: 1.5rem;
   color: white;
+}
+
+.bot-info {
+  margin-top: 5px;
+  margin-left: -6.5px;
 }
 
 .bot-info h3 {
@@ -289,6 +294,7 @@ body {
 
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8.5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -302,6 +308,10 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--discord-text);
+}
+
+::-webkit-scrollbar-corner {
+  background-color: transparent;
 }
 
 @keyframes slideIn {
@@ -1101,7 +1111,6 @@ body {
 
 .add-command-btn {
   position: fixed;
-  right: 25px;
   display: flex;
   align-items: center;
   gap: 0.5rem;

@@ -4,15 +4,6 @@ Object.assign(process.env, require("fs").readFileSync(require("path").join(__dir
     [accumulator[0]]: JSON.parse(accumulator[1].trim().replaceAll(/\{([^}]+)\}/g, (_, expression) => eval(expression)))
   }
 }), {}));
-if (!require("fs").readdirSync(process.resourcesPath).includes("autoLaunchType.txt")) require("fs").writeFileSync(require("path").join(process.resourcesPath, "autoLaunchType.txt"), "foreground");
-if (!require("fs").readdirSync(process.resourcesPath).includes("customServer.json")) require("fs").writeFileSync(require("path").join(process.resourcesPath, "customServer.json"), "{}");
-if (!require("fs").readdirSync(process.resourcesPath).includes("prompt.vbs")) {
-  require("fs").mkdir(require("path").join(process.resourcesPath, "nativePrompts"), () => {
-    require("fs").writeFileSync(require("path").join(process.resourcesPath, "nativePrompts/win32.vbs"), `box = InputBox(Wscript.Arguments.Item(1), Wscript.Arguments.Item(0), Wscript.Arguments.Item(2))\nWscript.Echo "RETURN" + box`, "utf8");
-    require("fs").writeFileSync(require("path").join(process.resourcesPath, "nativePrompts/darwin.scpt"), `on run (clp)\ndisplay dialog clp's item 2 with title clp's item 1 default answer clp's item 3 buttons {"Cancel", "OK"} default button 2\nend run`, "utf8");
-    require("fs").writeFileSync(require("path").join(process.resourcesPath, "nativePrompts/linux.sh"), `zenity --entry --title="$1" --text="$2" --entry-text="$3" ""`, "utf8");
-  });
-};
 const { app, BrowserWindow, ipcMain, dialog, Tray, Menu, autoUpdater } = require("electron");
 const fs = require("fs");
 const os = require("os");
@@ -20,8 +11,8 @@ const path = require("path");
 const { parse } = require("markdown-wasm");
 const unzipper = require("unzipper");
 const nodeFetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
-let highlighter;
 
+let highlighter;
 let tray;
 let ptyProcesses = [];
 
@@ -89,7 +80,7 @@ const createWindow = () => {
         ],
         title: "Application Update",
         message: (process.platform === "win32") ? releaseNotes : releaseName,
-        detail: 'A new version has been downloaded. Restart the application to apply the updates.'
+        detail: "A new version has been downloaded. Restart the application to apply the updates."
       }).then((returnValue) => {
         if (returnValue.response) return;
         autoUpdater.quitAndInstall();
@@ -127,6 +118,8 @@ const createWindow = () => {
       ptyProcesses[botId].write(command);
       return true;
     };
+
+    if (!fs.existsSync(path.join(process.cwd(), "bots", botId.toString()))) return;
 
     ptyProcesses[botId] = require("@lydell/node-pty").spawn((require("os").platform() === "win32") ? "powershell.exe" : "bash", [], {
       name: "xterm-color",

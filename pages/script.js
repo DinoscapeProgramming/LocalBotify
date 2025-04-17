@@ -4,7 +4,6 @@ Object.assign(process.env, require("fs").readFileSync(require("path").join(__dir
     [accumulator[0]]: JSON.parse(accumulator[1].trim().replace(/\{([^}]+)\}/g, (_, expression) => eval(expression)))
   }
 }), {}));
-const { FitAddon } = require("@xterm/addon-fit/lib/addon-fit");
 const { ipcRenderer } = require("electron");
 const fs = {
   _safeCall: (method, ...args) => {
@@ -58,8 +57,9 @@ class DiscordBotCreator {
     this.renderContent();
     this.setupEventListeners();
     this.updateSettings();
+    this.showAnnouncement();
+    this.runBots();
     // this.setupNode();
-    // this.runBots();
 
     this.isPackaged = require("path").basename(process.execPath) !== "electron.exe";
   };
@@ -106,11 +106,11 @@ class DiscordBotCreator {
 
     switch (this.currentView) {
       case "bots":
-        document.body.style.removeProperty("background-color");
+        document.querySelector(".app").style.removeProperty("background-color");
         content.appendChild(this.createBotGrid());
         break;
       case "settings":
-        document.body.style.removeProperty("background-color");
+        document.querySelector(".app").style.removeProperty("background-color");
         content.appendChild(this.createSettingsPanel());
         break;
       case "help":
@@ -158,11 +158,12 @@ class DiscordBotCreator {
       const card = document.createElement("div");
       card.className = "bot-card";
       card.style.animationDelay = `${index * 0.1}s`;
+      card.dataset.id = bot.id;
 
       const botStatus = this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/status.txt")) || "OFFLINE";
       const botStatistics = Object.fromEntries(
-        (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/statistics.txt")) || "Servers: 0\nUsers: 0").split('\n').map((line) => {
-          const [key, value] = line.split(':').map(part => part.trim());
+        (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/statistics.txt")) || "Servers: 0\nUsers: 0").split("\n").map((line) => {
+          const [key, value] = line.split(":").map((part) => part.trim());
           return [key.toLowerCase(), Number(value)];
         })
       );
@@ -170,9 +171,7 @@ class DiscordBotCreator {
 
       card.innerHTML = `
         <div class="bot-header" ${(settings.showStats ?? true) ? "" : `style="margin-bottom: 0;"`}>
-          <div class="bot-avatar">
-            <i class="fas fa-robot"></i>
-          </div>
+          <div class="bot-avatar">${(this.isEmoji(bot.avatar)) ? this.escapeHtml(bot.avatar) : "🤖"}</div>
           <div class="bot-info" >
             <h3${(!bot.description) ? ' style="font-size: 1.2rem; margin-left: 2.5px;"' : ""}>${this.escapeHtml(bot.name)}</h3>
             <p>${this.escapeHtml(bot.description)}</p>
@@ -212,9 +211,20 @@ class DiscordBotCreator {
         if (!this.statusWatchers) (this.statusWatchers = []);
         this.statusWatchers.push(fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), "channels/status.txt"), (eventType) => {
           if (eventType !== "change") return;
+
           const newStatus = this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/status.txt")) || "OFFLINE";
           card.querySelector(".bot-stats .stat-value").style.color = (newStatus.toLowerCase() === "online") ? "var(--discord-green)" : "var(--discord-red)";
           card.querySelector(".bot-stats .stat-value").childNodes[2].textContent = ` ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1).toLowerCase()}`;
+
+          if (JSON.parse(localStorage.getItem("settings") || "{}").statusNotifications ?? true) {
+            const title = (newStatus.toLowerCase() === "online") ? `✅ ${bot.name} Started` : `❌ ${bot.name} Stopped`;
+
+            const body = (newStatus.toLowerCase() === "online") ? `🟢 ${bot.name} is now running and connected. 🟢` : `🔴 ${bot.name} has stopped or crashed. 🔴`;
+
+            new Notification(title, {
+              body
+            });
+          };
         }));
       };
 
@@ -222,15 +232,47 @@ class DiscordBotCreator {
         if (!this.statisticsWatchers) (this.statisticsWatchers = []);
         this.statisticsWatchers.push(fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), "channels/statistics.txt"), (eventType) => {
           if (eventType !== "change") return;
+
           const newStatistics = Object.fromEntries(
-            (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/statistics.txt")) || "Servers: 0\nUsers: 0").split('\n').map((line) => {
-              const [key, value] = line.split(':').map(part => part.trim());
+            (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/statistics.txt")) || "Servers: 0\nUsers: 0").split("\n").map((line) => {
+              const [key, value] = line.split(":").map((part) => part.trim());
               return [key.toLowerCase(), Number(value)];
             })
           );
           card.querySelectorAll(".bot-stats .stat-value")[1].textContent = this.formatNumber(Number(newStatistics.servers));
           card.querySelectorAll(".bot-stats .stat-value")[2].textContent = this.formatNumber(Number(newStatistics.users));
         }));
+      };
+
+      if ((fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels")) || []).includes("error.txt")) {
+        fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), "channels/error.txt"), (eventType) => {
+          try {
+            if ((eventType !== "change") || !(JSON.parse(localStorage.getItem("settings") || "{}").errorNotifications ?? true) || (Number((fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/error.txt"), "utf8") || "").split("\n")[0]) === this.lastError)) return;
+
+            this.lastError = Number((fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/error.txt"), "utf8") || "").split("\n")[0]);
+
+            new Notification(`⚠️ Error in ${bot.name} ⚠️`, {
+              body: (fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/error.txt"), "utf8") || "").split("\n").slice(1).join("\n") || "Unknown error occured"
+            });
+          } catch {};
+        });
+      };
+
+      if ((fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels")) || []).includes("dialog.txt")) {
+        fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), "channels/dialog.txt"), (eventType) => {
+          try {
+            if ((eventType !== "change") || (Number((fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/dialog.txt"), "utf8") || "").split("\n")[0]) === this.lastDialog) || !["alert", "confirm", "prompt"].includes((fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/dialog.txt"), "utf8") || "").split("\n")[1])) return;
+
+            let id = Number((fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/dialog.txt"), "utf8") || "").split("\n")[0]);
+            this.lastDialog = id;
+
+            this[(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/dialog.txt"), "utf8") || "").split("\n")[1]](...JSON.parse((fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/dialog.txt"), "utf8") || "").split("\n").slice(2).join("\n") || "[]")).then((...result) => {
+              fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/dialog.txt"), id + "\nresponseResolve\n" + JSON.stringify(result), "utf8");
+            }).catch((...error) => {
+              fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/dialog.txt"), id + "\nresponseReject\n" + JSON.stringify(error), "utf8");
+            });
+          } catch {};
+        });
       };
 
       const codeBtn = card.querySelector(".code-btn");
@@ -479,11 +521,11 @@ class DiscordBotCreator {
         </div>
         <div class="setting-item">
           <label data-tooltip="Get notified about updates">
-            <span>Update Notifications</span>
-            <input type="checkbox" id="updateNotifications" ${(storedSettings.updateNotifications ?? true) ? "checked" : ""}/>
+            <span>Announcement Notifications</span>
+            <input type="checkbox" id="announcementNotifications" ${(storedSettings.announcementNotifications ?? true) ? "checked" : ""}/>
           </label>
           <div class="setting-description">
-            Receive notifications about new features and updates
+            Receive notifications about new announcements
           </div>
         </div>
       </div>
@@ -496,8 +538,6 @@ class DiscordBotCreator {
 
     const saveBtn = settings.querySelector(".settings-save-btn");
     saveBtn.addEventListener("click", () => {
-      const path = require("path");
-
       const updatedSettings = JSON.stringify({
         theme: document.getElementById("themeSelect").value,
         showStats: document.getElementById("showStats").checked,
@@ -505,7 +545,7 @@ class DiscordBotCreator {
         devMode: document.getElementById("devMode").checked,
         errorNotifications: document.getElementById("errorNotifications").checked,
         statusNotifications: document.getElementById("statusNotifications").checked,
-        updateNotifications: document.getElementById("updateNotifications").checked
+        announcementNotifications: document.getElementById("announcementNotifications").checked
       });
 
       localStorage.setItem("settings", updatedSettings);
@@ -556,9 +596,9 @@ class DiscordBotCreator {
       <div class="markdown-body" style="padding: 50px; overflow-y: auto;"></div>
     `;
 
-    document.body.style.backgroundColor = "#0d1117";
+    document.querySelector(".app").style.backgroundColor = "#0d1117";
 
-    ipcRenderer.invoke("parseMarkdown", fs.readFileSync(path.join(__dirname, "../docs/commandTutorial.md"), "utf8")).then((parsedMarkdown) => {
+    ipcRenderer.invoke("parseMarkdown", fs.readFileSync(path.join(__dirname, "../docs/CommandTutorial.md"), "utf8")).then((parsedMarkdown) => {
       helpView.querySelector(".markdown-body").innerHTML = parsedMarkdown;
 
       helpView.querySelectorAll(".markdown-body a").forEach((link) => {
@@ -576,15 +616,18 @@ class DiscordBotCreator {
       };
     });
 
-    this.getFileTreeItem(helpView, "commandTutorial.md").classList.add("active");
+    this.getFileTreeItem(helpView, "CommandTutorial.md").classList.add("active");
     
     this.setupHelpFileTreeListeners(helpView);
 
-    const markdownStylesheet = document.createElement("link");
-    markdownStylesheet.rel = "stylesheet";
-    markdownStylesheet.href = "../packages/github-markdown/github-markdown-dark.css";
+    if (!document.querySelector(".markdown-stylesheet")) {
+      const markdownStylesheet = document.createElement("link");
+      markdownStylesheet.rel = "stylesheet";
+      markdownStylesheet.href = "../packages/github-markdown/github-markdown-dark.css";
+      markdownStylesheet.className = "markdown-stylesheet";
 
-    document.head.appendChild(markdownStylesheet);
+      document.head.appendChild(markdownStylesheet);
+    };
 
     return helpView;
   };
@@ -593,7 +636,7 @@ class DiscordBotCreator {
     return [
       {
         name: "Introduction",
-        path: "commandTutorial.md"
+        path: "CommandTutorial.md"
       }
     ];
   };
@@ -640,7 +683,7 @@ class DiscordBotCreator {
         this.editor.on("change", () => {
           editorView.querySelector(".editor-play-btn").style.right = (this.editor.getScrollerElement().scrollHeight > this.editor.getScrollerElement().clientHeight) ? "calc(0.5rem + 5px)" : "calc(0.5rem - 2.5px)";
 
-          const activeFile = editorView.querySelector(".file-tree-item.active");
+          const activeFile = editorView.querySelector(".file-tree-item.active-file");
 
           if (activeFile) {
             fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(activeFile)), this.editor.getValue(), "utf8");
@@ -745,9 +788,7 @@ class DiscordBotCreator {
       <div class="workbench-view">
         <div id="workbenchMainView" style="animation: slideUp 0.5s ease;">
           <div class="bot-header" style="margin-bottom: 1.65rem;">
-            <div class="bot-avatar" style="width: 60px; height: 60px;">
-              <i class="fas fa-robot" style="font-size: 1.65rem;"></i>
-            </div>
+            <div class="bot-avatar" style="width: 60px; height: 60px; font-size: 1.65rem;">${(this.isEmoji(bot.avatar)) ? this.escapeHtml(bot.avatar) : "🤖"}</div>
             <div class="bot-info">
               <h3 style="font-size: 1.5rem; margin-left: 2.5px;">${this.escapeHtml(bot.name)}</h3>
               <p style="font-size: 0.95rem; margin-left: 2.5px; margin-top: -2.5px;">${(bot.description) ? this.escapeHtml(bot.description) : ""}</p>
@@ -822,9 +863,12 @@ class DiscordBotCreator {
           ">
             <h3 style="flex-direction: row; margin-bottom: 1rem;">
               <i class="fas fa-code"></i>Commands
-              <button class="add-command-btn">
+              <button class="add-command-btn" style="right: 67.5px;">
                 <i class="fas fa-plus"></i>
                 Add Command
+              </button>
+              <button class="add-command-btn" style="right: 25px; padding: 0.55rem 0.65rem;">
+                <i class="fas fa-upload"></i>
               </button>
             </h3>
             ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).length) ? `<span style="color: grey;">No commands found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).map((command) => (command.endsWith(".js")) ? `
@@ -832,9 +876,12 @@ class DiscordBotCreator {
             ` : "").join("")}
             <h3 style="flex-direction: row; margin-bottom: 1rem; margin-top: 2rem;">
               <i class="fas fa-calendar-days"></i>Events
-              <button class="add-command-btn">
+              <button class="add-command-btn" style="right: 67.5px;">
                 <i class="fas fa-plus"></i>
                 Add Event
+              </button>
+              <button class="add-command-btn" style="right: 25px; padding: 0.55rem 0.65rem;">
+                <i class="fas fa-upload"></i>
               </button>
             </h3>
             ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).length) ? `<span style="color: grey;">No events found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).map((command) => (command.endsWith(".js")) ? `
@@ -1060,6 +1107,8 @@ class DiscordBotCreator {
           if (!commandItem.dataset.id) return;
 
           commandItem.querySelector("input, textarea, select").addEventListener("change", (e) => {
+            if (!e.target.reportValidity()) return;
+
             if (!configFile) (configFile = {});
             if (!configFile.variables) (configFile.variables = {});
             if (!configFile.variables[command.dataset.category]) (configFile.variables[command.dataset.category] = {});
@@ -1095,7 +1144,7 @@ class DiscordBotCreator {
         return null;
       })(path.join(process.cwd(), "bots", bot.id.toString()));
 
-      this.getFileTreeItem(editorView, activeFile).classList.add("active");
+      this.getFileTreeItem(editorView, activeFile).classList.add("active", "active-file");
       this.fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), activeFile), (eventType) => {
         if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), activeFile), "utf8"))) return;
 
@@ -1130,7 +1179,7 @@ class DiscordBotCreator {
       playBtn.addEventListener("click", () => {
         ipcRenderer.send("terminalData", [
           bot.id,
-          (playBtn.children[0].className === "fas fa-stop") ? "\x03" : (((bot.initialized) ? "" : (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"))).commands.initialization + "; ")) + `${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"))).commands.startup}\r\n`)
+          (playBtn.children[0].className === "fas fa-stop") ? "\x03" : (((bot.initialized) ? "" : ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.initialization || "") + "; ")) + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`)
         ]);
 
         workspaceView.querySelectorAll("#workbench-play-btn, .editor-play-btn").forEach((changedPlayBtn) => {
@@ -1143,7 +1192,7 @@ class DiscordBotCreator {
     fs.watch(path.join(process.cwd(), "bots", bot.id.toString()), (eventType) => {
       if (eventType !== "rename") return;
 
-      const activeFile = this.getFilePath(editorView.querySelector(".file-tree-item.active")) || "";
+      const activeFile = this.getFilePath(editorView.querySelector(".file-tree-item.active-file")) || "";
       const newFile = this.getFlatFileList(bot, path.join(process.cwd(), "bots", bot.id.toString())).filter((file) => !this.parseFileTree(editorView.querySelector(".file-tree")).includes(file))[0]?.slice(2) || "";
 
       editorView.querySelector(".file-tree").innerHTML = this.renderFileTree(this.generateFileTree(path.join(process.cwd(), "bots", bot.id.toString())));
@@ -1202,9 +1251,11 @@ class DiscordBotCreator {
           newFileTreeItem.addEventListener("click", () => {
             const fileItems = editorView.querySelectorAll(".file-tree-item");
 
-            fileItems.forEach(i => i.classList.remove("active"));
+            fileItems.forEach((i) => i.classList.remove("active", "active-file"));
             newFileTreeItem.classList.add("active");
+            newFileTreeItem.classList.add("active-file");
 
+            this.editor.clearHistory();
             this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
             this.fileWatcher.close();
             this.fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), (eventType) => {
@@ -1303,9 +1354,11 @@ class DiscordBotCreator {
           newFileTreeItem.addEventListener("click", () => {
             const fileItems = editorView.querySelectorAll(".file-tree-item");
 
-            fileItems.forEach((i) => i.classList.remove("active"));
+            fileItems.forEach((i) => i.classList.remove("active", "active-file"));
             newFileTreeItem.classList.add("active");
+            newFileTreeItem.classList.add("active-file");
 
+            this.editor.clearHistory();
             this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
             this.fileWatcher.close();
             this.fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), (eventType) => {
@@ -1387,7 +1440,7 @@ class DiscordBotCreator {
           newFileTreeItem.click();
         });
 
-        ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").parentElement : document.querySelector(".file-tree")).appendChild(newFileTreeItem);
+        ((document.querySelector(".file-tree-item.active.active-file")) ? document.querySelector(".file-tree-item.active.active-file").parentElement : ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").nextElementSibling : document.querySelector(".file-tree"))).appendChild(newFileTreeItem);
         newFileTreeItem.querySelector("span").focus();
       });
     });
@@ -1426,6 +1479,9 @@ class DiscordBotCreator {
           fs.mkdirSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)));
 
           newFolderTreeItem.addEventListener("click", () => {
+            fileItems.forEach((i) => i.classList.remove("active"));
+            newFolderTreeItem.classList.add("active");
+
             newFolderTreeItem.nextElementSibling.style.display = (newFolderTreeItem.nextElementSibling.style.display === "none") ? "block" : "none";
           });
         });
@@ -1442,12 +1498,15 @@ class DiscordBotCreator {
           fs.mkdirSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)));
 
           newFolderTreeItem.addEventListener("click", () => {
+            fileItems.forEach((i) => i.classList.remove("active"));
+            newFolderTreeItem.classList.add("active");
+
             newFolderTreeItem.nextElementSibling.style.display = (newFolderTreeItem.nextElementSibling.style.display === "none") ? "block" : "none";
           });
         });
 
-        ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").parentElement : document.querySelector(".file-tree")).appendChild(newFolderTreeItem);
-        ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").parentElement : document.querySelector(".file-tree")).appendChild(newFolderTreeContent);
+        ((document.querySelector(".file-tree-item.active.active-file")) ? document.querySelector(".file-tree-item.active.active-file").parentElement : ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").nextElementSibling : document.querySelector(".file-tree")).appendChild(newFolderTreeItem));
+        ((document.querySelector(".file-tree-item.active.active-file")) ? document.querySelector(".file-tree-item.active.active-file").parentElement : ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").nextElementSibling : document.querySelector(".file-tree"))).appendChild(newFolderTreeContent);
         newFolderTreeItem.querySelector("span").focus();
       });
     });
@@ -1596,7 +1655,7 @@ class DiscordBotCreator {
       const part = parts[i];
       let foundItem = null;
 
-      const items = Array.from(container.children).filter(el => el.classList.contains("file-tree-item"));
+      const items = Array.from(container.children).filter((el) => el.classList.contains("file-tree-item"));
       for (const item of items) {
         const span = item.querySelector("span");
         if (span && ((span.textContent.trim() === part) || (span.parentElement?.dataset?.filename?.trim() === part))) {
@@ -1673,16 +1732,20 @@ class DiscordBotCreator {
     const path = require("path");
 
     const fileItems = editorView.querySelectorAll(".file-tree-item");
-    const editor = editorView.querySelector("textarea");
 
     fileItems.forEach((item) => {
       item.addEventListener("click", () => {
         if (item.classList.contains("folder")) {
-          item.nextElementSibling.style.display = (item.nextElementSibling.style.display === "none") ? "block" : "none";
-        } else {
-          editorView.querySelectorAll(".file-tree-item").forEach(i => i.classList.remove("active"));
+          fileItems.forEach((i) => i.classList.remove("active"));
           item.classList.add("active");
 
+          item.nextElementSibling.style.display = (item.nextElementSibling.style.display === "none") ? "block" : "none";
+        } else {
+          editorView.querySelectorAll(".file-tree-item").forEach((i) => i.classList.remove("active", "active-file"));
+          item.classList.add("active");
+          item.classList.add("active-file");
+
+          this.editor.clearHistory();
           this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"));
           this.fileWatcher.close();
           this.fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), (eventType) => {
@@ -1766,30 +1829,18 @@ class DiscordBotCreator {
         });
       });
     });
-
-    editor.addEventListener("input", () => {
-      const activeFile = editorView.querySelector(".file-tree-item.active");
-      if (activeFile) {
-        const fileName = activeFile.dataset.filename;
-        const file = bot.files.find(f => f.name === fileName);
-        if (file) {
-          file.content = editor.value;
-          this.saveBots();
-        };
-      };
-    });
   };
 
   setupHelpFileTreeListeners(helpView) {
     const fileItems = helpView.querySelectorAll(".file-tree-item");
     const helpContainer = helpView.querySelector(".help-container");
 
-    fileItems.forEach(item => {
+    fileItems.forEach((item) => {
       item.addEventListener("click", () => {
         if (item.classList.contains("folder")) {
           item.nextElementSibling.style.display = (item.nextElementSibling.style.display === "none") ? "block" : "none";
         } else {
-          fileItems.forEach(i => i.classList.remove("active"));
+          fileItems.forEach((i) => i.classList.remove("active"));
           item.classList.add("active");
 
           const filePath = item.dataset.filename;
@@ -2058,44 +2109,17 @@ class DiscordBotCreator {
   runBots() {
     const path = require("path");
 
-    this.bots.forEach(async (bot) => {
-      let readConfigFile = (configPath) => Object.assign(process.env, fs.readFileSync(path.join(configPath), "utf8").split("\n").filter((line) => !line.startsWith("#") && (line.split("=").length > 1)).map((line) => line.trim().split(/\/\/|#/)[0].split("=")).reduce((data, accumulator) => ({
-        ...data,
-        ...{
-          [accumulator[0]]: JSON.parse(accumulator[1].trim())
-        }
-      }), {}));
-
-      let configFile;
-      try {
-        configFile = readConfigFile(path.join(process.cwd(), "bots", bot.id.toString(), ".env"));
-      } catch {
-        configFile = {};
-      };
-      
-      if (!bot.initialized && !configFile.INITIALIZATION_COMMAND) {
-        try {
-          configFile.INITIALIZATION_COMMAND = await this.prompt("Enter Initialization Command");
-        } catch {};
-      };
-      
-      if (!configFile.STARTUP_COMMAND) {
-        try {
-          configFile.STARTUP_COMMAND = await this.prompt("Enter Startup Command");
-        } catch {};
-      };
-
+    this.bots.forEach((bot) => {
       ipcRenderer.invoke("runBotCommand", [
         bot.id,
-        ((bot.initialized) ? (configFile.INITIALIZATION_COMMAND + "; ") : "") + configFile.STARTUP_COMMAND
+        ((bot.initialized) ? "" : ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.initialization || "") + "; ")) + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`
       ]).then((success) => {
-        if (!success) return;
+        if (!success || bot.initialized) return;
 
-        const newBot = bot;
-        newBot.initialized = true;
+        bot.initialized = true;
 
         const index = this.bots.findIndex((b) => b.id === bot.id);
-        this.bots[index] = newBot;
+        this.bots[index] = bot;
 
         this.saveBots();
       });
@@ -2162,101 +2186,33 @@ class DiscordBotCreator {
     document.addEventListener("input", (e) => {
       if (e.target.matches(".search-container input")) {
         const query = e.target.value.toLowerCase();
-        const filteredBots = this.bots.filter(bot => 
+        const filteredBots = this.bots.filter((bot) => 
           bot.name.toLowerCase().includes(query) ||
           bot.description.toLowerCase().includes(query)
         );
-        
+
         const botGrid = document.getElementById("botGrid");
         if (botGrid) {
-          botGrid.innerHTML = "";
-          
+          Array.from(botGrid.children).forEach((card) => {
+            card.style.display = "none"
+          });
+
           if (filteredBots.length === 0) {
-            botGrid.innerHTML = `
-              <div class="no-results">
-                <i class="fas fa-search"></i>
-                <p>No bots found matching your search</p>
-              </div>
-            `;
-          } else {
-            filteredBots.forEach((bot, index) => {
-              const card = document.createElement("div");
-              card.className = "bot-card";
-              card.style.animationDelay = `${index * 0.1}s`;
-
-              const statusColor = bot.status === "online" ? "var(--discord-green)" : "var(--discord-red)";
-
-              card.innerHTML = `
-                <div class="bot-header">
-                  <div class="bot-avatar">
-                    <i class="fas fa-robot"></i>
-                  </div>
-                  <div class="bot-info">
-                    <h3>${this.escapeHtml(bot.name)}</h3>
-                    <p>${this.escapeHtml(bot.description)}</p>
-                  </div>
-                  <div class="bot-actions">
-                    <button class="action-btn code-btn" title="Open Workspace">
-                      <i class="fas fa-code"></i>
-                    </button>
-                    <button class="action-btn edit-btn" title="Edit Bot">
-                      <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="action-btn delete-btn" title="Delete Bot">
-                      <i class="fas fa-trash"></i>
-                    </button>
-                  </div>
-                </div>
-                <div class="bot-stats">
-                  <div class="stat">
-                    <div class="stat-label">Status</div>
-                    <div class="stat-value" style="color: ${statusColor}">
-                      <i class="fas fa-circle" style="font-size: 0.75rem; transform: translateY(-2.5px);"></i>
-                      ${bot.status.charAt(0).toUpperCase() + bot.status.slice(1)}
-                    </div>
-                  </div>
-                  <div class="stat">
-                    <div class="stat-label">Servers</div>
-                    <div class="stat-value">${this.formatNumber(bot.servers)}</div>
-                  </div>
-                  <div class="stat">
-                    <div class="stat-label">Users</div>
-                    <div class="stat-value">${this.formatNumber(bot.users)}</div>
-                  </div>
+            if (!botGrid.querySelector(".no-results")) {
+              botGrid.innerHTML += `
+                <div class="no-results">
+                  <i class="fas fa-search"></i>
+                  <p>No bots found matching your search</p>
                 </div>
               `;
-
-              const codeBtn = card.querySelector(".code-btn");
-              const editBtn = card.querySelector(".edit-btn");
-              const deleteBtn = card.querySelector(".delete-btn");
-
-              codeBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                this.showCodeEditor(bot);
-              });
-
-              editBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                this.showBotEditor(bot);
-              });
-
-              deleteBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                this.confirm("Delete Bot", `Are you sure about deleting ${this.escapeHtml(bot.name)}?`).then(() => {
-                  this.bots = this.bots.filter((b) => b.id !== bot.id);
-                  this.saveBots();
-                  this.renderContent();
-
-                  this.saveBots();
-                  this.renderContent();
-
-                  const path = require("path");
-
-                  fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString()));
-                }).catch(() => {});
-              });
-
-              document.getElementById("botGrid").appendChild(card);
+            } else {
+              botGrid.querySelector(".no-results").style.display = "block";
+            };
+          } else {
+            filteredBots.forEach((bot, index) => {
+              const card = Array.from(botGrid.children).find((card) => (card.dataset.id === bot.id.toString()));
+              card.style.animationDelay = `${index * 0.1}s`;
+              card.style.display = "block";
             });
           };
         };
@@ -2276,6 +2232,89 @@ class DiscordBotCreator {
         fs.writeFileSync(path.join(process.cwd(), "bots", botId, "channels/status.txt"), "OFFLINE", "utf8");
         fs.writeFileSync(path.join(process.cwd(), "bots", botId, "channels/process.txt"), "OFFLINE", "utf8");
       });
+    });
+  };
+
+  async showAnnouncement() {
+    if (!(JSON.parse(localStorage.getItem("settings") || "{}").announcementNotifications ?? true)) return;
+
+    const childProcess = require("child_process");
+
+    const repositorySha = (await (await fetch("https://api.github.com/repos/DinoscapeProgramming/LocalBotify-Announcements/git/refs/heads/main")).json()).object.sha;
+    const repositoryTreeSha = (await (await fetch(`https://api.github.com/repos/DinoscapeProgramming/LocalBotify-Announcements/git/commits/${repositorySha}`)).json()).tree.sha;
+    const repositoryTreeFileSha = (await (await fetch(`https://api.github.com/repos/DinoscapeProgramming/LocalBotify-Announcements/git/trees/${repositoryTreeSha}`)).json()).tree.find(({ path = "" } = {}) => (path === "Announcement.md")).sha;
+
+    if (repositoryTreeFileSha === (localStorage.getItem("lastAnnouncementSha") || process.env.LAST_ANNOUNCEMENT_SHA)) return;
+
+    localStorage.setItem("lastAnnouncementSha", repositoryTreeFileSha);
+
+    const modal = document.createElement("div");
+    modal.className = "modal";
+
+    const parsedMarkdown = await ipcRenderer.invoke("parseMarkdown", await (await fetch("https://raw.githubusercontent.com/DinoscapeProgramming/LocalBotify-Announcements/refs/heads/main/Announcement.md")).text());
+
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-body markdown-body" style="padding-top: 0; background-color: #151618; border: 1px solid #1f1f1f;">
+          <button class="close-btn" style="float: right; transform: translateY(15px);">
+            <i class="fas fa-times"></i>
+          </button>
+          <form id="botForm" style="padding: 0 10px; margin-top: -8.5px;">
+            <div class="form-group">
+              ${parsedMarkdown}
+            </div>
+            <div class="form-actions" style="margin-bottom: 7.5px;">
+              <button type="submit" class="submit-btn">
+                Ok / Roger
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    if (!document.querySelector(".markdown-stylesheet")) {
+      const markdownStylesheet = document.createElement("link");
+      markdownStylesheet.rel = "stylesheet";
+      markdownStylesheet.href = "../packages/github-markdown/github-markdown-dark.css";
+      markdownStylesheet.className = "markdown-stylesheet";
+
+      document.head.appendChild(markdownStylesheet);
+    };
+
+    modal.querySelectorAll(".form-group a").forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+
+        childProcess.exec(((process.platform === "win32") ? "start " : ((process.platform === "darwin") ? "open " : "xdg-open ")) + e.target.href);
+      });
+    });
+
+    if (parsedMarkdown.match(/<pre><code class="(language-[^"]+)">([\s\S]*?)<\/code><\/pre>/gs)) {
+      ipcRenderer.invoke("highlightSyntax", parsedMarkdown).then((syntaxHighlightedMarkdown) => {
+        helpView.querySelector(".form-group").innerHTML = syntaxHighlightedMarkdown;
+      });
+    };
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add("show"), 10);
+
+    const closeModal = () => {
+      modal.classList.remove("show");
+      setTimeout(() => modal.remove(), 300);
+    };
+
+    modal.querySelector(".close-btn").addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    const form = modal.querySelector("#botForm");
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      modal.classList.remove("show");
+      setTimeout(() => modal.remove(), 300);
     });
   };
 
@@ -2315,7 +2354,6 @@ class DiscordBotCreator {
       };
 
       modal.querySelector(".close-btn").addEventListener("click", closeModal);
-      modal.querySelector(".cancel-btn").addEventListener("click", closeModal);
       modal.addEventListener("click", (e) => {
         if (e.target === modal) closeModal();
       });
@@ -2377,8 +2415,9 @@ class DiscordBotCreator {
       form.addEventListener("submit", (e) => {
         e.preventDefault();
 
-        closeModal();
- 
+        modal.classList.remove("show");
+        setTimeout(() => modal.remove(), 300);
+
         resolve(form.querySelector("#formInput").value);
       });
     });
@@ -2504,6 +2543,12 @@ class DiscordBotCreator {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/"/g, "&#039;");
+  };
+
+  isEmoji(emoji) {
+    const emojiRegex = /(?:\p{Emoji}(?:\p{Emoji_Modifier}|\uFE0F)?(?:\u200D\p{Emoji})*)/gu;
+    const numberOrSpecialCharRegex = /^[0-9]$|[.*+?^${}()|[\]\\]/;
+    return emojiRegex.test(emoji) && !numberOrSpecialCharRegex.test(emoji);
   };
 
   setupNode() {

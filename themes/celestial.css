@@ -4,10 +4,10 @@ body {
   opacity: 0.95;
 }
 
-.sidebar-resizer {
-  display: none;
+.app {
+  background-color: var(--discord-bg);
 }
 
-.main-content {
-  background-color: var(--discord-bg);
+:root {
+  --discord-dark: #2d2e30;
 }

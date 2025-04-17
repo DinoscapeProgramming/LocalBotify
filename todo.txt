@@ -1,14 +1,9 @@
-- Fix: start bots on startup
-- Fix the code editor (rename files, delete files, etc.)
-- Request admin permissions by itself
-- Fix: Select folders in code editor
 - Pro Suite (Analytics, etc.)
 - Fix website
-- Command variable editor
 - Change bot profile picture (icon picker, picture, etc.)
 - Working settings
 - Add bot store
-- Add command store
+- Add command & event store
 - Write documentation
 - Working LocalBotify server
 - Add developer portal
