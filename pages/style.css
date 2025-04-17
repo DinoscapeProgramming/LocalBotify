@@ -404,7 +404,7 @@ body {
   font-size: 0.9rem;
 }
 
-.form-group input, .form-group textarea, .form-group select {
+.form-group input, .form-group textarea, .form-group select, .form-group button {
   width: 100%;
   padding: 0.5rem;
   background-color: var(--discord-darker);
@@ -415,7 +415,7 @@ body {
   transition: border-color 0.2s ease;
 }
 
-.form-group input:focus, .form-group textarea:focus {
+.form-group input:focus, .form-group textarea:focus, .form-group button:focus {
   outline: none;
   border-color: var(--discord-primary);
 }

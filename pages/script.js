@@ -171,7 +171,7 @@ class DiscordBotCreator {
 
       card.innerHTML = `
         <div class="bot-header" ${(settings.showStats ?? true) ? "" : `style="margin-bottom: 0;"`}>
-          <div class="bot-avatar">${(this.isEmoji(bot.avatar)) ? this.escapeHtml(bot.avatar) : "🤖"}</div>
+          <div class="bot-avatar"${(((this.isEmoji(bot.avatar)) ? this.escapeHtml(bot.avatar) : "🤖") === "🤖") ? ` style="font-size: 42.5px;"` : ""}>${(this.isEmoji(bot.avatar)) ? this.escapeHtml(bot.avatar) : "🤖"}</div>
           <div class="bot-info" >
             <h3${(!bot.description) ? ' style="font-size: 1.2rem; margin-left: 2.5px;"' : ""}>${this.escapeHtml(bot.name)}</h3>
             <p>${this.escapeHtml(bot.description)}</p>
@@ -788,8 +788,8 @@ class DiscordBotCreator {
       <div class="workbench-view">
         <div id="workbenchMainView" style="animation: slideUp 0.5s ease;">
           <div class="bot-header" style="margin-bottom: 1.65rem;">
-            <div class="bot-avatar" style="width: 60px; height: 60px; font-size: 1.65rem;">${(this.isEmoji(bot.avatar)) ? this.escapeHtml(bot.avatar) : "🤖"}</div>
-            <div class="bot-info">
+            <div class="bot-avatar" style="width: 60px; height: 60px; font-size: ${(50 - ((((this.isEmoji(bot.avatar)) ? this.escapeHtml(bot.avatar) : "🤖") === "🤖") * 2.5)).toString()}px;">${(this.isEmoji(bot.avatar)) ? this.escapeHtml(bot.avatar) : "🤖"}</div>
+            <div class="bot-info" style="margin-top: 2.5px; margin-left: -${(8.5 + ((((this.isEmoji(bot.avatar)) ? this.escapeHtml(bot.avatar) : "🤖") === "🤖") * 0.75)).toString()}px;">
               <h3 style="font-size: 1.5rem; margin-left: 2.5px;">${this.escapeHtml(bot.name)}</h3>
               <p style="font-size: 0.95rem; margin-left: 2.5px; margin-top: -2.5px;">${(bot.description) ? this.escapeHtml(bot.description) : ""}</p>
             </div>
@@ -1936,7 +1936,12 @@ class DiscordBotCreator {
           <form id="botForm">
             <div class="form-group">
               <label for="botName">Bot Name</label>
-              <input type="text" id="botName" value="${(bot) ? this.escapeHtml(bot.name) : ""}" required>
+              <div style="display: flex; flex-direction: row;">
+                <button type="button" id="botAvatar" style="width: fit-content; border-top-right-radius: 0; border-bottom-right-radius: 0;">
+                  <span${(!this.isEmoji(bot?.avatar)) ? ` style="opacity: 0.6;"` : ""}>${(this.isEmoji(bot?.avatar)) ? this.escapeHtml(bot?.avatar) : "🤖"}</span$>
+                </button>
+                <input type="text" id="botName" value="${(bot) ? this.escapeHtml(bot.name) : ""}" required style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+              </div>
             </div>
             <div class="form-group">
               <label for="botDescription">Description (optional)</label>
@@ -1971,6 +1976,10 @@ class DiscordBotCreator {
         </div>
       </div>
     `;
+
+    modal.querySelector("#botAvatar").addEventListener("click", () => {
+      this.showEmojiPicker();
+    });
 
     let checkDatalistMatch = (e) => {
       const dataList = modal.querySelector("#templateDatalist");
@@ -2036,6 +2045,7 @@ class DiscordBotCreator {
       e.preventDefault();
       
       const newBot = {
+        avatar: ((form.querySelector("#botAvatar span").style.opacity !== "0.6") && this.isEmoji(form.querySelector("#botAvatar span").textContent.trim())) ? form.querySelector("#botAvatar span").textContent.trim() : "🤖",
         id: (bot) ? bot.id : Date.now(),
         name: form.querySelector("#botName").value,
         description: form.querySelector("#botDescription").value,
@@ -2104,6 +2114,52 @@ class DiscordBotCreator {
         template.substring(4)
       ]);
     };
+  };
+
+  showEmojiPicker() {
+    const modal = document.createElement("div");
+    modal.className = "modal";
+
+    document.body.appendChild(modal);
+
+    if (!document.querySelector(".emoji-picker-script")) {
+      const emojiPickerScript = document.createElement("script");
+      emojiPickerScript.defer = true;
+      emojiPickerScript.src = "../packages/picmo/picmo.js";
+
+      emojiPickerScript.addEventListener("load", () => {
+        picmo.createPicker({
+          rootElement: modal
+        }).addEventListener("emoji:select", ({ emoji }) => {
+          document.querySelector("#botForm #botAvatar span").textContent = emoji;
+          document.querySelector("#botForm #botAvatar span").style.removeProperty("opacity");
+
+          closeModal();
+        });
+      });
+
+      document.head.appendChild(emojiPickerScript);
+    } else {
+      picmo.createPicker({
+        rootElement: modal
+      }).addEventListener("emoji:select", ({ emoji }) => {
+        document.querySelector("#botForm #botAvatar span").textContent = emoji;
+        document.querySelector("#botForm #botAvatar span").style.removeProperty("opacity");
+
+        closeModal();
+      });
+    };
+
+    setTimeout(() => modal.classList.add("show"), 10);
+
+    const closeModal = () => {
+      modal.classList.remove("show");
+      setTimeout(() => modal.remove(), 300);
+    };
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
   };
 
   runBots() {
