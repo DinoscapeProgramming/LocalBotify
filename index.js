@@ -210,15 +210,17 @@ const createWindow = () => {
     return resultHtml;
   });
 
-  window.webContents.once("did-finish-load", () => {
-    window.webContents.on("before-input-event", (event, input) => {
-      window.webContents.executeJavaScript(`localStorage.getItem("settings");`).then((settings) => {
-        if (!JSON.parse(settings || "{}").devMode && (input.control || input.meta) && input.shift && (input.key.toLowerCase() === "i")) {
-          window.webContents.closeDevTools();
-        };
+  if (app.isPackaged) {
+    window.webContents.once("did-finish-load", () => {
+      window.webContents.on("before-input-event", (_, input) => {
+        window.webContents.executeJavaScript(`localStorage.getItem("settings");`).then((settings) => {
+          if (!JSON.parse(settings || "{}").devMode && (input.control || input.meta) && input.shift && (input.key.toLowerCase() === "i")) {
+            window.webContents.closeDevTools();
+          };
+        });
       });
     });
-  });
+  };
 };
 
 app.whenReady().then(() => {

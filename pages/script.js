@@ -581,7 +581,7 @@ class LocalBotify {
     };
 
     try {
-      if (settings.devMode) {
+      if (!this.isPackaged || settings.devMode) {
         if (!window.LocalBotify) {
           window.LocalBotify = app;
         };
@@ -1267,8 +1267,8 @@ class LocalBotify {
             newFileTreeItem.classList.add("active");
             newFileTreeItem.classList.add("active-file");
 
-            this.editor.clearHistory();
             this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
+            this.editor.clearHistory();
             this.fileWatcher.close();
             this.fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), (eventType) => {
               if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"))) return;
@@ -1370,8 +1370,8 @@ class LocalBotify {
             newFileTreeItem.classList.add("active");
             newFileTreeItem.classList.add("active-file");
 
-            this.editor.clearHistory();
             this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
+            this.editor.clearHistory();
             this.fileWatcher.close();
             this.fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), (eventType) => {
               if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"))) return;
@@ -1757,8 +1757,8 @@ class LocalBotify {
           item.classList.add("active");
           item.classList.add("active-file");
 
-          this.editor.clearHistory();
           this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"));
+          this.editor.clearHistory();
           this.fileWatcher.close();
           this.fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), (eventType) => {
             if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"))) return;
@@ -2036,14 +2036,6 @@ class LocalBotify {
     const closeModal = () => {
       modal.classList.remove("show");
       setTimeout(() => modal.remove(), 300);
-
-      document.querySelectorAll(".nav-item").forEach((navItem) => {
-        navItem.classList.remove("active");
-        if (Array.from(navItem.classList).includes("currentView")) {
-          navItem.classList.remove("currentView");
-          navItem.classList.add("active");
-        };
-      });
     };
 
     modal.querySelector(".close-btn").addEventListener("click", closeModal);
@@ -2690,6 +2682,6 @@ class LocalBotify {
 
 const app = new LocalBotify();
 
-if (JSON.parse(localStorage.getItem("settings") || "{}").devMode) {
+if (!this.isPackaged || JSON.parse(localStorage.getItem("settings") || "{}").devMode) {
   window.LocalBotify = app;
 };
