@@ -31,7 +31,7 @@ const createWindow = () => {
   });
   window.maximize();
   window.loadFile("pages/index.html");
-  if (tray || (!app.getLoginItemSettings().wasOpenedAtLogin && !process.argv.includes("--startup")) || ((fs.readFileSync(path.join(process.resourcesPath, "autoLaunchType.txt"), "utf8") || "foreground") !== "background")) {
+  if (tray || (!app.getLoginItemSettings().wasOpenedAtLogin && !process.argv.includes("--startup"))) {
     window.show();
   } else {
     tray = new Tray(path.join(__dirname, "assets/favicon.ico"));

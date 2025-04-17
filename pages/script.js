@@ -602,11 +602,15 @@ class LocalBotify {
     
     helpView.innerHTML = `
       <div class="help-explorer">
-        <div class="help-tree">${this.renderFileTree(this.getHelpFileTree())}</div>
+        <div class="help-tree">${this.renderFileTree(this.generateFileTree("./docs"))}</div>
       </div>
 
       <div class="markdown-body" style="padding: 50px; overflow-y: auto;"></div>
     `;
+
+    helpView.querySelectorAll(".help-tree .folder-content").forEach((folderContent) => {
+      folderContent.style.display = "block";
+    });
 
     document.querySelector(".app").style.backgroundColor = "#0d1117";
 
@@ -630,7 +634,7 @@ class LocalBotify {
 
     this.getFileTreeItem(helpView, "CommandTutorial.md").classList.add("active");
     
-    this.setupHelpFileTreeListeners(helpView);
+    this.setupHelpTreeListeners(helpView);
 
     if (!document.querySelector(".markdown-stylesheet")) {
       const markdownStylesheet = document.createElement("link");
@@ -642,15 +646,6 @@ class LocalBotify {
     };
 
     return helpView;
-  };
-  
-  getHelpFileTree() {
-    return [
-      {
-        name: "Introduction",
-        path: "CommandTutorial.md"
-      }
-    ];
   };
 
   loadCodeEditor(editorView, bot = null) {
@@ -1524,7 +1519,6 @@ class LocalBotify {
     });
 
     this.setupFileTreeListeners(editorView, bot);
-    this.setupTerminal(editorView);
   };
 
   showBotSettings(bot) {
@@ -1843,27 +1837,42 @@ class LocalBotify {
     });
   };
 
-  setupHelpFileTreeListeners(helpView) {
+  setupHelpTreeListeners(helpView) {
+    const path = require("path");
+
     const fileItems = helpView.querySelectorAll(".file-tree-item");
-    const helpContainer = helpView.querySelector(".help-container");
 
     fileItems.forEach((item) => {
       item.addEventListener("click", () => {
         if (item.classList.contains("folder")) {
           item.nextElementSibling.style.display = (item.nextElementSibling.style.display === "none") ? "block" : "none";
         } else {
+          if (item.classList.contains("active")) return;
+
           fileItems.forEach((i) => i.classList.remove("active"));
           item.classList.add("active");
 
-          const filePath = item.dataset.filename;
+          const filePath = this.getFilePath(item);
 
-          fetch(`https://raw.githubusercontent.com/DinoscapeProgramming/Remote-Control/refs/heads/main/${filePath}`)
-          .then((response) => response.text())
-          .then((response) => {
-            ipcRenderer.invoke("parseMarkdown", response).then((parsedMarkdown) => {
-              helpContainer.innerHTML = parsedMarkdown;
-              this.loadCodeHighlighter();
+          ipcRenderer.invoke("parseMarkdown", fs.readFileSync(path.join(__dirname, "../docs", filePath), "utf8")).then((parsedMarkdown) => {
+            helpView.querySelector(".markdown-body").innerHTML = parsedMarkdown;
+
+            helpView.querySelectorAll(".markdown-body a").forEach((link) => {
+              link.addEventListener("click", (e) => {
+                e.preventDefault();
+
+                childProcess.exec(((process.platform === "win32") ? "start " : ((process.platform === "darwin") ? "open " : "xdg-open ")) + e.target.href);
+              });
             });
+
+            helpView.querySelector(".markdown-body").style.animation = "slideUp 0.5s ease";
+            setTimeout(() => helpView.querySelector(".markdown-body").style.removeProperty("animation"), 500);
+
+            if (parsedMarkdown.match(/<pre><code class="(language-[^"]+)">([\s\S]*?)<\/code><\/pre>/gs)) {
+              ipcRenderer.invoke("highlightSyntax", parsedMarkdown).then((syntaxHighlightedMarkdown) => {
+                helpView.querySelector(".markdown-body").innerHTML = syntaxHighlightedMarkdown;
+              });
+            };
           });
         };
       });
@@ -1895,43 +1904,6 @@ class LocalBotify {
       });
     });
     document.head.appendChild(codeHighlighterScript);
-  };
-
-  setupTerminal(editorView) {
-    return;
-    const terminalInput = editorView.querySelector(".terminal-input");
-    const terminalContent = editorView.querySelector(".terminal-content");
-    
-    terminalInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
-        const command = terminalInput.value;
-        if (command) {
-          terminalContent.innerHTML += `\n> ${command}`;
-          terminalInput.value = "";
-          
-          if (command === "npm start") {
-            terminalContent.innerHTML += "\n Starting bot...\n Bot is now online!";
-          } else if (command === "help") {
-            terminalContent.innerHTML += "\n Available commands: help, npm start, clear";
-          } else if (command === "clear") {
-            terminalContent.innerHTML = "";
-          };
-          
-          terminalContent.scrollTop = terminalContent.scrollHeight;
-        };
-      };
-    });
-
-    const clearBtn = editorView.querySelector(`.terminal-btn[title="Clear"]`);
-    clearBtn.addEventListener("click", () => {
-      terminalContent.innerHTML = "";
-    });
-
-    const copyBtn = editorView.querySelector(`.terminal-btn[title="Copy"]`);
-    copyBtn.addEventListener("click", () => {
-      const text = terminalContent.textContent;
-      navigator.clipboard.writeText(text);
-    });
   };
 
   showBotEditor(bot = null) {
@@ -2682,6 +2654,6 @@ class LocalBotify {
 
 const app = new LocalBotify();
 
-if (!this.isPackaged || JSON.parse(localStorage.getItem("settings") || "{}").devMode) {
+if ((require("path").basename(process.execPath) === "electron.exe") || JSON.parse(localStorage.getItem("settings") || "{}").devMode) {
   window.LocalBotify = app;
 };
