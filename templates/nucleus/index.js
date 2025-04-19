@@ -5,6 +5,7 @@ const path = require("path");
 require(`../../${fs.readdirSync(path.dirname(path.dirname(__dirname))).includes("LocalBotify.exe") ? "resources/app.asar.unpacked/" : ""}node_modules/@teeny-tiny/dotenv/index.js`).config();
 const { REST, Routes, Client, GatewayIntentBits, PresenceUpdateStatus, ActivityType } = require(`../../${fs.readdirSync(path.dirname(path.dirname(__dirname))).includes("LocalBotify.exe") ? "resources/app.asar.unpacked/" : ""}node_modules/discord.js/src/index.js`);
 const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
+const PERMISSIONS = require("./data/permissions.json");
 let config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
 
 const client = new Client({
@@ -16,7 +17,37 @@ const client = new Client({
 });
 
 client.once("ready", () => {
-  console.log("Bot is Online!");
+  fs.writeFileSync("./channels/invite.txt", `https://discord.com/oauth2/authorize?client_id=${client.user.id}&scope=bot+applications.commands&permissions=${Array.from(new Set([
+    ...[
+      "VIEW_CHANNEL",
+      "SEND_MESSAGES"
+    ],
+    ...fs.readdirSync("./commands").map((command) => require("./commands/" + command)).filter(({ permissions }) => permissions).map(({ permissions }) => permissions),
+    ...fs.readdirSync("./events").map((event) => require("./events/" + event)).filter(({ permissions }) => permissions).map(({ permissions }) => permissions),
+  ].flat())).reduce((acc, permission) => acc | PERMISSIONS[permission], 0).toString()}`, "utf8");
+
+  const lines = [
+    `🤖 ${client.user.username} is online!`,
+    `🚀 Ready to serve your server!`,
+    `🔗 Invite Link:`,
+    fs.readFileSync("./channels/invite.txt", "utf8")
+  ];
+
+  const boxWidth = Math.max(...lines.map(line => line.length)) + 4; // Padding
+  const horizontal = '═'.repeat(boxWidth);
+
+  const center = (text) => {
+    const totalPadding = boxWidth - text.length;
+    const left = Math.ceil(totalPadding / 2);
+    const right = Math.floor(totalPadding / 2);
+    return '║' + ' '.repeat(left) + text + ' '.repeat(right) + '║';
+  };
+
+  console.log('\x1b[36m%s\x1b[0m', `
+╔${horizontal}╗
+${lines.map(center).join('\n')}
+╚${horizontal}╝
+  `);
 
   updateStatus("online");
   updateStatistics(client);

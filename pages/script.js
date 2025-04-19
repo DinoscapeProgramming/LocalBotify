@@ -52,6 +52,9 @@ const fs = {
 
 class LocalBotify {
   constructor() {
+    this.isPackaged = require("path").basename(process.execPath) !== "electron.exe";
+    this.isProPlan = !this.isPackaged;
+
     this.bots = JSON.parse(localStorage.getItem("bots")) || [];
     this.currentView = "bots";
     this.renderContent();
@@ -59,9 +62,6 @@ class LocalBotify {
     this.updateSettings();
     this.showAnnouncement();
     this.runBots();
-    // this.setupNode();
-
-    this.isPackaged = require("path").basename(process.execPath) !== "electron.exe";
   };
 
   initializeDemoData() {
@@ -621,7 +621,9 @@ class LocalBotify {
         link.addEventListener("click", (e) => {
           e.preventDefault();
 
-          childProcess.exec(((process.platform === "win32") ? "start " : ((process.platform === "darwin") ? "open " : "xdg-open ")) + e.target.href);
+          childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + e.target.href + `"`, (process.platform === "win32") ? {
+            shell: "powershell.exe"
+          } : {});
         });
       });
 
@@ -774,7 +776,7 @@ class LocalBotify {
 
     workspaceView.innerHTML = `
       <div class="workspace-tabs">
-        <button class="active">
+        <button class="active currentView">
           <i class="fas fa-tools"></i>
           Workbench
         </button>
@@ -961,13 +963,41 @@ class LocalBotify {
         <div class="editor-terminal"></div>
       </div>
       
-      <div></div>
+      <div class="workbench-view suite-view">
+        <div id="suiteMainView">
+          <div id="vanityLinksSection" class="workbench-section settings-section" style="
+            padding: 1.5rem 2rem;
+            margin-top: 1.75rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-md);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            box-shadow: none;
+          ">
+            <h3 style="flex-direction: row; margin-bottom: 1rem;">
+              <i class="fas fa-link"></i>Vanity Links
+              <button class="add-command-btn" style="right: 25px;">
+                <i class="fas fa-plus"></i>
+                Create Vanity Link
+              </button>
+            </h3>
+            ${(!bot?.vanityLinks?.length) ? `<span style="color: grey;">No vanity links found</span>` : bot?.vanityLinks?.map((shortenedUrl) => `
+              <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem; cursor: pointer;">${this.escapeHtml(shortenedUrl)}</div>
+            `).join("")}
+          </div>
+        </div>
+
+        <div id="suiteDetailView" style="display: none;"></div>
+      </div>
     `;
 
     const workbenchView = workspaceView.querySelector(".workbench-view");
     const workbenchMainView = workbenchView.querySelector("#workbenchMainView");
     const workbenchEditorView = workbenchView.querySelector("#workbenchEditorView");
     const editorView = workspaceView.querySelector(".code-editor-view");
+    const suiteView = workspaceView.querySelector(".suite-view");
+    const suiteMainView = workspaceView.querySelector("#suiteMainView");
+    const suiteDetailView = workspaceView.querySelector("#suiteDetailView");
 
     workspaceView.querySelectorAll(".workspace-tabs button").forEach((tab) => {
       tab.addEventListener("click", () => {
@@ -977,19 +1007,43 @@ class LocalBotify {
         tab.classList.add("active");
 
         if (tab.querySelector("i").className === "fas fa-tools") {
+          workspaceView.querySelectorAll(".workspace-tabs button").forEach((activeTab) => activeTab.classList.remove("currentView"));
+          tab.classList.add("currentView");
+
           editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.add("animationless"));
           editorView.style.visibility = "hidden";
+          suiteView.style.display = "none";
           workbenchView.style.display = "block";
           workbenchEditorView.style.display = "none";
           workbenchMainView.style.display = "block";
         } else if (tab.querySelector("i").className === "fas fa-code") {
+          workspaceView.querySelectorAll(".workspace-tabs button").forEach((activeTab) => activeTab.classList.remove("currentView"));
+          tab.classList.add("currentView");
+
           workbenchView.style.display = "none";
+          suiteView.style.display = "none";
           editorView.style.visibility = "visible";
           editorView.style.animation = "slideUp 0.5s ease";
           setTimeout(() => {
             editorView.style.animation = "none";
           }, 500);
           editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.remove("animationless"));
+        } else if (tab.querySelector("i").className === "fas fa-trophy") {
+          if (!this.isProPlan) return this.showUpgradeModal();
+
+          workspaceView.querySelectorAll(".workspace-tabs button").forEach((activeTab) => activeTab.classList.remove("currentView"));
+          tab.classList.add("currentView");
+
+          editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.add("animationless"));
+          editorView.style.visibility = "hidden";
+          workbenchView.style.display = "none";
+          suiteView.style.display = "block";
+          suiteDetailView.style.display = "none";
+          suiteMainView.style.display = "block";
+          suiteMainView.style.animation = "0.5s ease 0s 1 normal none running slideUp";
+          setTimeout(() => {
+            suiteMainView.style.animation = "none";
+          }, 500);
         };
       });
     });
@@ -1519,6 +1573,484 @@ class LocalBotify {
     });
 
     this.setupFileTreeListeners(editorView, bot);
+
+    suiteMainView.querySelector("#vanityLinksSection .add-command-btn").addEventListener("click", async () => {
+      const customAlias = await this.prompt("Enter Custom Alias", "Enter a custom alias (optional)").catch(() => {
+        return null;
+      });
+
+      if (customAlias === null) return;
+
+      const formData = new URLSearchParams();
+      formData.append("url", fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/invite.txt"), "utf8"));
+      if (customAlias) formData.append("alias", customAlias);
+
+      fetch("https://spoo.me", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        },
+        body: formData
+      })
+      .then((response) => response.json())
+      .then(({ short_url }) => {
+        if (!short_url) return;
+
+        if (!bot.vanityLinks) (bot.vanityLinks = []);
+        bot.vanityLinks.push(short_url);
+
+        const index = this.bots.findIndex((b) => b.id === bot.id);
+        this.bots[index] = bot;
+
+        this.saveBots();
+
+        if (suiteMainView.querySelector("#vanityLinksSection").querySelector("span")) {
+          suiteMainView.querySelector("#vanityLinksSection").querySelector("span").remove();
+        };
+
+        const shortenedUrlItem = document.createElement("div");
+        shortenedUrlItem.className = "setting-item";
+        shortenedUrlItem.style.width = "calc(100% + 12.5px)";
+        shortenedUrlItem.style.marginLeft = "-2.5px";
+        shortenedUrlItem.style.marginBottom = "0.5rem";
+        shortenedUrlItem.style.padding = "0.5rem 1rem";
+        shortenedUrlItem.style.cursor = "pointer";
+        shortenedUrlItem.innerHTML = this.escapeHtml(short_url);
+
+        shortenedUrlItem.addEventListener("click", async () => {
+          const stats = (await (await fetch(`https://spoo.me/stats/${new URL(shortenedUrlItem.textContent.trim()).pathname.substring(1)}`, {
+            method: "POST",
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            }
+          })).json()) || {};
+
+          suiteDetailView.innerHTML = `
+            <h3 class="command-header">
+              <i class="fas fa-link"></i>${new URL(shortenedUrlItem.textContent.trim()).pathname.substring(1)}
+              <button class="add-command-btn" style="position: absolute; right: 80px;">
+                <i class="fas fa-arrow-up-right-from-square"></i>
+                Open
+              </button>
+              <button class="add-command-btn" style="position: absolute; right: 39px; padding: 0.55rem 0.65rem;">
+                <i class="fas fa-copy"></i>
+              </button>
+              <button class="add-command-btn" style="position: absolute; right: 0; padding: 0.55rem 0.65rem;">
+                <i class="fas fa-trash"></i>
+              </button>
+            </h3>
+            <div class="command-item setting-item" style="margin-bottom: 1rem;" data-id="header">
+              <pre class="vanity-link-info" style="line-height: 1.75rem; padding-left: 0.5rem;"><span>Original URL:</span> <span><a class="vanity-link-url"${(stats.url) ? ` href="${stats.url}" ` : ""}>${stats.url || "N/A"}</a></span>
+<span>Total Clicks:</span> <span>${stats["total-clicks"] || "N/A"}</span>
+<span>Total Unique Clicks:</span> <span>${stats.total_unique_clicks || "N/A"}</span>
+<span>Creation Date:</span> <span>${stats["creation-date"]}</span>
+<span>Average Redirection Time:</span> <span>${(stats.average_redirection_time) ? ((stats.average_redirection_time < 1) ? `${(stats.average_redirection_time * 1000).toFixed(0)} ms` : `${stats.average_redirection_time.toFixed(2)} seconds`) : "N/A"}</span>
+<span>Last Click:</span> <span>${stats["last-click"] || "N/A"}</span>
+<span>Last Click Browser:</span> <span>${stats["last-click-browser"] || "N/A"}</span>
+<span>Last Click OS:</span> <span>${stats["last-click-os"] || "N/A"}</span></pre>
+            </div>
+            <div style="display: flex; flex-direction: row;">
+              <div class="command-item setting-item" style="width: calc((100vw / 3) - (8rem / 3)); height: 30vh; display: flex; justify-content: center; align-items: center;">
+                <canvas id="clicksOverTimeChart"></canvas>
+              </div>
+              <div class="command-item setting-item" style="margin-left: 0.85rem; padding-bottom: 1.5rem; width: calc((100vw / 3) - (8rem / 3)); height: 30vh; display: flex; justify-content: center; align-items: center;">
+                <canvas id="browserChart"></canvas>
+              </div>
+              <div class="command-item setting-item" style="margin-left: 0.85rem; width: calc((100vw / 3) - (8rem / 3)); height: 30vh; display: flex; justify-content: center; align-items: center;">
+                <canvas id="countryChart"></canvas>
+              </div>
+            </div>
+          `;
+
+          suiteDetailView.querySelectorAll(".command-header button").forEach((button) => {
+            button.addEventListener("click", () => {
+              if (button.querySelector("i").className === "fas fa-arrow-up-right-from-square") {
+                const childProcess = require("child_process");
+
+                childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + shortenedUrlItem.textContent.trim() + `"`, (process.platform === "win32") ? {
+                  shell: "powershell.exe"
+                } : {});
+              } else if (button.querySelector("i").className === "fas fa-copy") {
+                navigator.clipboard.writeText(shortenedUrlItem.textContent.trim());
+                this.showToast("Copied to clipboard", "success", 2000);
+              } else if (button.querySelector("i").className === "fas fa-trash") {
+                this.confirm("Delete Vanity Link", `Are you sure you want to delete ${shortenedUrlItem.textContent.trim()}?`).then(() => {
+                  shortenedUrlItem.remove();
+                  if (!suiteMainView.querySelector("#vanityLinksSection .setting-shortenedUrlItem")) {
+                    const noLinks = document.createElement("span");
+                    noLinks.style.color = "grey";
+                    noLinks.textContent = "No vanity links found";
+                    suiteMainView.querySelector("#vanityLinksSection").appendChild(noLinks);
+                  };
+
+                  if (!bot.vanityLinks) (bot.vanityLinks = []);
+                  bot.vanityLinks = bot.vanityLinks.filter((link) => link !== shortenedUrlItem.textContent.trim());
+                  this.saveBots();
+
+                  suiteDetailView.style.display = "none";
+                  suiteMainView.style.display = "block";
+                  suiteMainView.style.animation = "0.5s ease 0s 1 normal none running slideUp";
+                  setTimeout(() => suiteMainView.style.removeProperty("animation"), 500);
+                  Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).find((tab) => tab.querySelector("i").className === "fas fa-trophy").classList.add("active");
+                }).catch(() => {});
+              };
+            });
+          });
+
+          suiteDetailView.querySelector(".vanity-link-url").addEventListener("click", (e) => {
+            e.preventDefault();
+
+            if (!e.target.href) return;
+
+            const childProcess = require("child_process");
+
+            childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + e.target.href + `"`, (process.platform === "win32") ? {
+              shell: "powershell.exe"
+            } : {});
+          });
+
+          await new Promise((resolve, reject) => {
+            if (document.querySelector(".chart-script")) resolve();
+
+            const chartScript = document.createElement("script");
+            chartScript.src = "../packages/chart.js/chart.js";
+            chartScript.className = "chart-script";
+
+            chartScript.addEventListener("load", resolve);
+
+            document.head.appendChild(chartScript);
+          });
+
+          const dates = Object.keys(stats.unique_counter);
+          const clicksOverTime = Object.values(stats.unique_counter);
+
+          new Chart(suiteDetailView.querySelector("#clicksOverTimeChart"), {
+            type: "line",
+            data: {
+              labels: dates,
+              datasets: [{
+                label: "Total Clicks",
+                data: clicksOverTime,
+                fill: false,
+                borderColor: '#4bc0c0',
+                tension: 0.1,
+                pointBackgroundColor: '#4bc0c0',
+                borderWidth: 2
+              }]
+            },
+            options: {
+              responsive: true,
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: "Clicks"
+                  }
+                },
+                x: {
+                  title: {
+                    display: true,
+                    text: "Date"
+                  }
+                }
+              },
+              plugins: {
+                tooltip: {
+                  mode: "index",
+                  intersect: false
+                }
+              }
+            }
+          });
+
+          new Chart(suiteDetailView.querySelector("#browserChart"), {
+            type: "doughnut",
+            data: {
+              labels: Object.keys(stats.browser),
+              datasets: [{
+                label: "Browser Usage",
+                data: Object.values(stats.browser),
+                backgroundColor: ["#ffcd56"],
+                borderColor: "#fff",
+                borderWidth: 2
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                tooltip: {
+                  callbacks: {
+                    label: (tooltipItem) => `${tooltipItem.label}: ${tooltipItem.raw} clicks`
+                  }
+                },
+                legend: {
+                  position: "top",
+                }
+              }
+            }
+          });
+
+          new Chart(suiteDetailView.querySelector("#countryChart"), {
+            type: "bar",
+            data: {
+              labels: Object.keys(stats.country),
+              datasets: [{
+                label: "Country Traffic",
+                data: Object.values(stats.country),
+                backgroundColor: "#ff6384",
+                borderColor: "#ff6384",
+                borderWidth: 1
+              }]
+            },
+            options: {
+              responsive: true,
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: "Number of Clicks"
+                  }
+                }
+              },
+              plugins: {
+                tooltip: {
+                  callbacks: {
+                    label: (tooltipItem) => `${tooltipItem.label}: ${tooltipItem.raw} clicks`
+                  }
+                }
+              }
+            }
+          });
+
+          suiteMainView.style.display = "none";
+          suiteDetailView.style.display = "block";
+          suiteDetailView.style.animation = "0.5s ease 0s 1 normal none running slideUp";
+          setTimeout(() => suiteDetailView.style.removeProperty("animation"), 500);
+          workspaceView.querySelectorAll(".workspace-tabs button").forEach((activeTab) => activeTab.classList.remove("active"));
+        });
+
+        suiteMainView.querySelector("#vanityLinksSection").appendChild(shortenedUrlItem);
+      });
+    });
+
+    suiteMainView.querySelectorAll("#vanityLinksSection .setting-item").forEach((item) => {
+      item.addEventListener("click", async () => {
+        const stats = (await (await fetch(`https://spoo.me/stats/${new URL(item.textContent.trim()).pathname.substring(1)}`, {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          }
+        })).json()) || {};
+
+        suiteDetailView.innerHTML = `
+          <h3 class="command-header">
+            <i class="fas fa-link"></i>${new URL(item.textContent.trim()).pathname.substring(1)}
+            <button class="add-command-btn" style="position: absolute; right: 80px;">
+              <i class="fas fa-arrow-up-right-from-square"></i>
+              Open
+            </button>
+            <button class="add-command-btn" style="position: absolute; right: 39px; padding: 0.55rem 0.65rem;">
+              <i class="fas fa-copy"></i>
+            </button>
+            <button class="add-command-btn" style="position: absolute; right: 0; padding: 0.55rem 0.65rem;">
+              <i class="fas fa-trash"></i>
+            </button>
+          </h3>
+          <div class="command-item setting-item" style="margin-bottom: 1rem;">
+            <pre class="vanity-link-info" style="line-height: 1.75rem; padding-left: 0.5rem;"><span>Original URL:</span> <span><a class="vanity-link-url"${(stats.url) ? ` href="${stats.url}" ` : ""}>${stats.url || "N/A"}</a></span>
+<span>Total Clicks:</span> <span>${stats["total-clicks"] || "N/A"}</span>
+<span>Total Unique Clicks:</span> <span>${stats.total_unique_clicks || "N/A"}</span>
+<span>Creation Date:</span> <span>${stats["creation-date"]}</span>
+<span>Average Redirection Time:</span> <span>${(stats.average_redirection_time) ? ((stats.average_redirection_time < 1) ? `${(stats.average_redirection_time * 1000).toFixed(0)} ms` : `${stats.average_redirection_time.toFixed(2)} seconds`) : "N/A"}</span>
+<span>Last Click:</span> <span>${stats["last-click"] || "N/A"}</span>
+<span>Last Click Browser:</span> <span>${stats["last-click-browser"] || "N/A"}</span>
+<span>Last Click OS:</span> <span>${stats["last-click-os"] || "N/A"}</span></pre>
+          </div>
+          <div style="display: flex; flex-direction: row;">
+            <div class="command-item setting-item" style="width: calc((100vw / 3) - (8rem / 3)); height: 30vh; display: flex; justify-content: center; align-items: center;">
+              <canvas id="clicksOverTimeChart"></canvas>
+            </div>
+            <div class="command-item setting-item" style="margin-left: 0.85rem; padding-bottom: 1.5rem; width: calc((100vw / 3) - (8rem / 3)); height: 30vh; display: flex; justify-content: center; align-items: center;">
+              <canvas id="browserChart"></canvas>
+            </div>
+            <div class="command-item setting-item" style="margin-left: 0.85rem; width: calc((100vw / 3) - (8rem / 3)); height: 30vh; display: flex; justify-content: center; align-items: center;">
+              <canvas id="countryChart"></canvas>
+            </div>
+          </div>
+        `;
+
+        suiteDetailView.querySelectorAll(".command-header button").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (button.querySelector("i").className === "fas fa-arrow-up-right-from-square") {
+              const childProcess = require("child_process");
+
+              childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + item.textContent.trim() + `"`, (process.platform === "win32") ? {
+                shell: "powershell.exe"
+              } : {});
+            } else if (button.querySelector("i").className === "fas fa-copy") {
+              navigator.clipboard.writeText(item.textContent.trim());
+              this.showToast("Copied to clipboard", "success", 2000);
+            } else if (button.querySelector("i").className === "fas fa-trash") {
+              this.confirm("Delete Vanity Link", `Are you sure you want to delete ${item.textContent.trim()}?`).then(() => {
+                item.remove();
+                if (!suiteMainView.querySelector("#vanityLinksSection .setting-item")) {
+                  const noLinks = document.createElement("span");
+                  noLinks.style.color = "grey";
+                  noLinks.textContent = "No vanity links found";
+                  suiteMainView.querySelector("#vanityLinksSection").appendChild(noLinks);
+                };
+
+                if (!bot.vanityLinks) (bot.vanityLinks = []);
+                bot.vanityLinks = bot.vanityLinks.filter((link) => link !== item.textContent.trim());
+                this.saveBots();
+
+                suiteDetailView.style.display = "none";
+                suiteMainView.style.display = "block";
+                suiteMainView.style.animation = "0.5s ease 0s 1 normal none running slideUp";
+                setTimeout(() => suiteMainView.style.removeProperty("animation"), 500);
+                Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).find((tab) => tab.querySelector("i").className === "fas fa-trophy").classList.add("active");
+              }).catch(() => {});
+            };
+          });
+        });
+
+        suiteDetailView.querySelector(".vanity-link-url").addEventListener("click", (e) => {
+          e.preventDefault();
+
+          if (!e.target.href) return;
+
+          const childProcess = require("child_process");
+
+          childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + e.target.href + `"`, (process.platform === "win32") ? {
+            shell: "powershell.exe"
+          } : {});
+        });
+
+        await new Promise((resolve, reject) => {
+          if (document.querySelector(".chart-script")) resolve();
+
+          const chartScript = document.createElement("script");
+          chartScript.src = "../packages/chart.js/chart.js";
+          chartScript.className = "chart-script";
+
+          chartScript.addEventListener("load", resolve);
+
+          document.head.appendChild(chartScript);
+        });
+
+        const dates = Object.keys(stats.unique_counter);
+        const clicksOverTime = Object.values(stats.unique_counter);
+
+        new Chart(suiteDetailView.querySelector("#clicksOverTimeChart"), {
+          type: "line",
+          data: {
+            labels: dates,
+            datasets: [{
+              label: "Total Clicks",
+              data: clicksOverTime,
+              fill: false,
+              borderColor: '#4bc0c0',
+              tension: 0.1,
+              pointBackgroundColor: '#4bc0c0',
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "Clicks"
+                }
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: "Date"
+                }
+              }
+            },
+            plugins: {
+              tooltip: {
+                mode: "index",
+                intersect: false
+              }
+            }
+          }
+        });
+
+        new Chart(suiteDetailView.querySelector("#browserChart"), {
+          type: "doughnut",
+          data: {
+            labels: Object.keys(stats.browser),
+            datasets: [{
+              label: "Browser Usage",
+              data: Object.values(stats.browser),
+              backgroundColor: ["#ffcd56"],
+              borderColor: "#fff",
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: (tooltipItem) => `${tooltipItem.label}: ${tooltipItem.raw} clicks`
+                }
+              },
+              legend: {
+                position: "top",
+              }
+            }
+          }
+        });
+
+        new Chart(suiteDetailView.querySelector("#countryChart"), {
+          type: "bar",
+          data: {
+            labels: Object.keys(stats.country),
+            datasets: [{
+              label: "Country Traffic",
+              data: Object.values(stats.country),
+              backgroundColor: "#ff6384",
+              borderColor: "#ff6384",
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "Number of Clicks"
+                }
+              }
+            },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: (tooltipItem) => `${tooltipItem.label}: ${tooltipItem.raw} clicks`
+                }
+              }
+            }
+          }
+        });
+
+        suiteMainView.style.display = "none";
+        suiteDetailView.style.display = "block";
+        suiteDetailView.style.animation = "0.5s ease 0s 1 normal none running slideUp";
+        setTimeout(() => suiteDetailView.style.removeProperty("animation"), 500);
+        workspaceView.querySelectorAll(".workspace-tabs button").forEach((activeTab) => activeTab.classList.remove("active"));
+      });
+    });
   };
 
   showBotSettings(bot) {
@@ -1547,7 +2079,7 @@ class LocalBotify {
         }
       }
     `);
-    
+
     modal.innerHTML = `
       <div class="modal-content">
         <div class="modal-header">
@@ -1861,7 +2393,9 @@ class LocalBotify {
               link.addEventListener("click", (e) => {
                 e.preventDefault();
 
-                childProcess.exec(((process.platform === "win32") ? "start " : ((process.platform === "darwin") ? "open " : "xdg-open ")) + e.target.href);
+                childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + e.target.href + `"`, (process.platform === "win32") ? {
+                  shell: "powershell.exe"
+                } : {});
               });
             });
 
@@ -2019,33 +2553,34 @@ class LocalBotify {
     const form = modal.querySelector("#botForm");
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      
+
       const newBot = {
         avatar: ((form.querySelector("#botAvatar span").style.opacity !== "0.6") && this.isEmoji(form.querySelector("#botAvatar span").textContent.trim())) ? form.querySelector("#botAvatar span").textContent.trim() : "🤖",
         id: (bot) ? bot.id : Date.now(),
         name: form.querySelector("#botName").value,
         description: form.querySelector("#botDescription").value,
-        initialized: false
+        initialized: false,
+        vanityLinks: (bot) ? bot.vanityLinks :  []
       };
 
-      if (bot) {
-        const path = require("path");
+      const path = require("path");
 
+      let replacedToken = false;
+
+      fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "utf8").split("\n").map((line) => {
+        if (replacedToken) return line;
+
+        if (line.split(/#|\/\//)[0].match(/^\s*TOKEN\s*=/)) {
+          replacedToken = true;
+          return line.replace(/^\s*TOKEN\s*=.*?(#|\/\/|$)/, `TOKEN="${form.querySelector("#botToken").value}" $1`).trim();
+        };
+
+        return line;
+      }).join("\n"), "utf8");
+
+      if (bot) {
         const index = this.bots.findIndex((b) => b.id === bot.id);
         this.bots[index] = newBot;
-
-        let replacedToken = false;
-
-        fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "utf8").split("\n").map((line) => {
-          if (replacedToken) return line;
-
-          if (line.split(/#|\/\//)[0].match(/^\s*TOKEN\s*=/)) {
-            replacedToken = true;
-            return line.replace(/^\s*TOKEN\s*=.*?(#|\/\/|$)/, `TOKEN="${form.querySelector("#botToken").value}" $1`).trim();
-          };
-
-          return line;
-        }).join("\n"), "utf8");
       } else {
         this.bots.push(newBot);
         this.initializeTemplate(newBot, ((form.querySelector("#botTemplate").tagName === "INPUT") ? "git:" : "") + form.querySelector("#botTemplate").value);
@@ -2090,6 +2625,65 @@ class LocalBotify {
         template.substring(4)
       ]);
     };
+  };
+
+  showUpgradeModal() {
+    const modal = document.createElement("div");
+    modal.className = "modal";
+
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>✨ Become a LocalBotify Pro User! ✨</h2>
+          <button class="close-btn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <form id="upgradeForm">
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <p style="margin-bottom: 0.5rem;">Looks like you tried to access a LocalBotify Pro feature. 👀</p>
+              <p style="text-decoration: underline; color: #ffb100de;">Upgrading only costs 5$ / month!</p>
+            </div>
+            <div class="form-actions" style="margin-top: 0;">
+              <button type="submit" class="submit-btn">
+                Upgrade Now
+              </button>
+              <button type="button" class="cancel-btn">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add("show"), 10);
+
+    const closeModal = () => {
+      modal.classList.remove("show");
+      setTimeout(() => modal.remove(), 300);
+
+      const workspaceView = document.querySelector(".workspace-view");
+
+      Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).find((tab) => tab.querySelector("i").className === "fas fa-trophy").classList.remove("active");
+      Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).find((tab) => tab.classList.contains("currentView")).classList.add("active");
+    };
+
+    modal.querySelector(".close-btn").addEventListener("click", closeModal);
+    modal.querySelector(".cancel-btn").addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    const form = modal.querySelector("#upgradeForm");
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      closeModal();
+
+      const childProcess = require("child_process");
+      childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + process.env.HOMEPAGE + `/#pricing"`, (process.platform === "win32") ? {
+        shell: "powershell.exe"
+      } : {});
+    });
   };
 
   showEmojiPicker() {
@@ -2318,7 +2912,9 @@ class LocalBotify {
       link.addEventListener("click", (e) => {
         e.preventDefault();
 
-        childProcess.exec(((process.platform === "win32") ? "start " : ((process.platform === "darwin") ? "open " : "xdg-open ")) + e.target.href);
+        childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + e.target.href + `"`, (process.platform === "win32") ? {
+          shell: "powershell.exe"
+        } : {});
       });
     });
 
@@ -2506,6 +3102,24 @@ class LocalBotify {
         resolve();
       });
     });
+  };
+
+  showToast(message, type = "default", duration = 4000) {
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    toast.innerHTML += `
+      <div class="toast-progress" style="animation: shrink ${duration}ms linear forwards;"></div>
+    `;
+
+    document.body.appendChild(toast);
+    void toast.offsetWidth;
+    toast.classList.add("show");
+
+    setTimeout(() => {
+      toast.classList.remove("show");
+      toast.addEventListener("transitionend", () => toast.remove());
+    }, duration);
   };
 
   readFileSafelySync(path) {

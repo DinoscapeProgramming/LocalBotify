@@ -27,9 +27,27 @@ module.exports = {
 };
 ```
 
+## 🛡️ 3. Set Your Permissions
+
+Permissions will influence the bot's invite link accordingly:
+
+```js
+module.exports = {
+  description: "Check the bot's response time",
+
+  permissions: [
+    "SEND_MESSAGES",
+    "MANAGE_MESSAGES",
+    "EMBED_LINKS",
+    "ATTACH_FILES",
+    "READ_MESSAGE_HISTORY"
+  ]
+}
+```
+
 ---
 
-## 🧩 3. Define Your Variables
+## 🧩 4. Define Your Variables
 
 Variables are used to make the command customizable from the dashboard or config. Here's the full structure:
 
@@ -101,7 +119,7 @@ You can enhance each variable using a `properties` object.
 
 ---
 
-## 🧠 4. Define the Command Logic
+## 🧠 5. Define the Command Logic
 
 Here’s the full structure again for clarity:
 
@@ -132,7 +150,7 @@ module.exports = {
 };
 ```
 
-## 🔧 5. Register the Slash Command
+## 🔧 6. Register the Slash Command
 
 Define the `slashCommand` property like this:
 

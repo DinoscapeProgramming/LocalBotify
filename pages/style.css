@@ -451,6 +451,14 @@ body {
   background-color: #4752c4;
 }
 
+#upgradeForm .submit-btn {
+  background-color: #a9780b;
+}
+
+#upgradeForm .submit-btn:hover {
+  background-color: #7c5f1e;
+}
+
 .cancel-btn {
   background-color: var(--discord-muted);
   color: white;
@@ -1501,6 +1509,29 @@ body {
   outline: none;
 }
 
+#vanityLinksSection .setting-item:last-child {
+  margin-bottom: 0 !important;
+}
+
+.vanity-link-info span:nth-child(odd) {
+  font-family: system-ui;
+}
+
+.vanity-link-info span:nth-child(even) {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  white-space: break-spaces;
+  background-color: rgb(100 96 96 / 40%);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+}
+
+.vanity-link-info span a {
+  color: inherit;
+  text-decoration: none;
+}
+
 .help-view {
   z-index: 1000;
   display: grid;
@@ -1571,4 +1602,71 @@ body {
 
 .markdown-body pre.shiki {
   background-color: #0d1117 !important;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #2f3136;
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-family: 'gg sans', 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 9999;
+  max-width: 300px;
+  word-break: break-word;
+  pointer-events: none;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.3);
+  width: 100%;
+  animation-timing-function: linear;
+  border-bottom-left-radius: 999px;
+}
+
+.toast-default {
+  background-color: #2f3136;
+}
+
+.toast-success {
+  background-color: #38986d;
+}
+
+.toast-error {
+  background-color: #f04747;
+}
+
+.toast-warning {
+  background-color: #faa61a;
+}
+
+.toast-info {
+  background-color: #7289da;
+}
+
+@keyframes shrink {
+  from {
+    width: 100%;
+  }
+
+  to {
+    width: 0%;
+  }
 }
