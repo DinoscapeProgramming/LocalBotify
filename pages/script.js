@@ -1675,7 +1675,7 @@ class LocalBotify {
                 navigator.clipboard.writeText(shortenedUrlItem.textContent.trim());
                 this.showToast("Copied to clipboard", "success", 2000);
               } else if (button.querySelector("i").className === "fas fa-trash") {
-                this.confirm("Delete Vanity Link", `Are you sure you want to delete ${shortenedUrlItem.textContent.trim()}?`).then(() => {
+                this.confirm("Delete Vanity Link", `Are you sure you want to delete ${shortenedUrlItem.textContent.trim()}?\nThis will not deactivate the link itself.`).then(() => {
                   shortenedUrlItem.remove();
                   if (!suiteMainView.querySelector("#vanityLinksSection .setting-shortenedUrlItem")) {
                     const noLinks = document.createElement("span");
@@ -1894,7 +1894,7 @@ class LocalBotify {
               navigator.clipboard.writeText(item.textContent.trim());
               this.showToast("Copied to clipboard", "success", 2000);
             } else if (button.querySelector("i").className === "fas fa-trash") {
-              this.confirm("Delete Vanity Link", `Are you sure you want to delete ${item.textContent.trim()}?`).then(() => {
+              this.confirm("Delete Vanity Link", `Are you sure you want to delete ${item.textContent.trim()}?\nThis will not deactivate the link itself.`).then(() => {
                 item.remove();
                 if (!suiteMainView.querySelector("#vanityLinksSection .setting-item")) {
                   const noLinks = document.createElement("span");
@@ -2960,7 +2960,7 @@ class LocalBotify {
           <div class="modal-body">
             <form id="botForm">
               <div class="form-group">
-                ${this.escapeHtml(message)}
+                ${message.split("\n").map((line) => `<p>${this.escapeHtml(line)}</p>`).join("\n")}
               </div>
               <div class="form-actions">
                 <button type="submit" class="submit-btn">
@@ -2997,6 +2997,59 @@ class LocalBotify {
     });
   };
   
+  confirm(title, message) {
+    return new Promise((resolve, reject) => {
+      const modal = document.createElement("div");
+      modal.className = "modal";
+
+      modal.innerHTML = `
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>${this.escapeHtml(title)}</h2>
+            <button class="close-btn"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="modal-body">
+            <form id="botForm">
+              <div class="form-group">
+                ${message.split("\n").map((line) => `<p>${this.escapeHtml(line)}</p>`).join("\n")}
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="submit-btn">
+                  ${this.escapeHtml(title)}
+                </button>
+                <button type="button" class="cancel-btn">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+      setTimeout(() => modal.classList.add("show"), 10);
+
+      const closeModal = () => {
+        modal.classList.remove("show");
+        setTimeout(() => modal.remove(), 300);
+        reject();
+      };
+
+      modal.querySelector(".close-btn").addEventListener("click", closeModal);
+      modal.querySelector(".cancel-btn").addEventListener("click", closeModal);
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+      });
+
+      const form = modal.querySelector("#botForm");
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        modal.classList.remove("show");
+        setTimeout(() => modal.remove(), 300);
+        resolve();
+      });
+    });
+  };
+
   prompt(title, placeholder = "") {
     return new Promise((resolve, reject) => {
       const modal = document.createElement("div");
@@ -3047,59 +3100,6 @@ class LocalBotify {
         setTimeout(() => modal.remove(), 300);
 
         resolve(form.querySelector("#formInput").value);
-      });
-    });
-  };
-  
-  confirm(title, message) {
-    return new Promise((resolve, reject) => {
-      const modal = document.createElement("div");
-      modal.className = "modal";
-
-      modal.innerHTML = `
-        <div class="modal-content">
-          <div class="modal-header">
-            <h2>${this.escapeHtml(title)}</h2>
-            <button class="close-btn"><i class="fas fa-times"></i></button>
-          </div>
-          <div class="modal-body">
-            <form id="botForm">
-              <div class="form-group">
-                ${this.escapeHtml(message)}
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="submit-btn">
-                  ${this.escapeHtml(title)}
-                </button>
-                <button type="button" class="cancel-btn">Cancel</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      `;
-
-      document.body.appendChild(modal);
-      setTimeout(() => modal.classList.add("show"), 10);
-
-      const closeModal = () => {
-        modal.classList.remove("show");
-        setTimeout(() => modal.remove(), 300);
-        reject();
-      };
-
-      modal.querySelector(".close-btn").addEventListener("click", closeModal);
-      modal.querySelector(".cancel-btn").addEventListener("click", closeModal);
-      modal.addEventListener("click", (e) => {
-        if (e.target === modal) closeModal();
-      });
-
-      const form = modal.querySelector("#botForm");
-      form.addEventListener("submit", (e) => {
-        e.preventDefault();
-
-        modal.classList.remove("show");
-        setTimeout(() => modal.remove(), 300);
-        resolve();
       });
     });
   };
