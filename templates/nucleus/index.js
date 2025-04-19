@@ -112,6 +112,16 @@ client.on("messageCreate", (message) => {
         }
       }), {})
     }, client, message);
+
+    const commands = Object.fromEntries(
+        fs.readFileSync("./channels/commands.txt", "utf8").split("\n").filter((line) => line).map((line) => {
+        const [key, value] = line.split(":").map((part) => part.trim());
+        return [key.toLowerCase(), Number(value)];
+      })
+    );
+    const commandCount = commands.find(([key]) => key === commandName)?.[1] || 0;
+    const updatedCommands = commands.filter(([key]) => key !== commandName).concat([[commandName, commandCount + 1]]);
+    fs.writeFileSync("./channels/commands.txt", updatedCommands.map(([key, value]) => `${key}: ${value}`).join("\n"), "utf8");
   };
 });
 
@@ -140,6 +150,16 @@ client.on("interactionCreate", (interaction) => {
         }
       }), {})
     }, client, interaction);
+
+    const commands = Object.fromEntries(
+      fs.readFileSync("./channels/commands.txt", "utf8").split("\n").filter((line) => line).map((line) => {
+        const [key, value] = line.split(":").map((part) => part.trim());
+        return [key.toLowerCase(), Number(value)];
+      })
+    );
+    const commandCount = commands.find(([key]) => key === commandName)?.[1] || 0;
+    const updatedCommands = commands.filter(([key]) => key !== commandName).concat([[commandName, commandCount + 1]]);
+    fs.writeFileSync("./channels/commands.txt", updatedCommands.map(([key, value]) => `${key}: ${value}`).join("\n"), "utf8");
   };
 });
 

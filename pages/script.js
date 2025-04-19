@@ -162,7 +162,7 @@ class LocalBotify {
 
       const botStatus = this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/status.txt")) || "OFFLINE";
       const botStatistics = Object.fromEntries(
-        (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/statistics.txt")) || "Servers: 0\nUsers: 0").split("\n").map((line) => {
+        (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/statistics.txt")) || "Servers: 0\nUsers: 0").split("\n").filter((line) => line).map((line) => {
           const [key, value] = line.split(":").map((part) => part.trim());
           return [key.toLowerCase(), Number(value)];
         })
@@ -234,7 +234,7 @@ class LocalBotify {
           if (eventType !== "change") return;
 
           const newStatistics = Object.fromEntries(
-            (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/statistics.txt")) || "Servers: 0\nUsers: 0").split("\n").map((line) => {
+            (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/statistics.txt")) || "Servers: 0\nUsers: 0").split("\n").filter((line) => line).map((line) => {
               const [key, value] = line.split(":").map((part) => part.trim());
               return [key.toLowerCase(), Number(value)];
             })
@@ -747,7 +747,7 @@ class LocalBotify {
     document.head.appendChild(script);
   };
 
-  showCodeEditor(bot = null) {
+  async showCodeEditor(bot = null) {
     const path = require("path");
 
     const workspaceView = document.createElement("div");
@@ -965,6 +965,25 @@ class LocalBotify {
       
       <div class="workbench-view suite-view">
         <div id="suiteMainView">
+          <div id="analyticsSection" class="workbench-section settings-section" style="
+            padding: 1.5rem 2rem;
+            padding-bottom: 4.75rem;
+            margin-top: 1.75rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-md);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            box-shadow: none;
+            height: 55vh;
+          ">
+            <h3 style="flex-direction: row; margin-bottom: 1rem;">
+              <i class="fas fa-chart-simple"></i>Analytics
+            </h3>
+            <div style="display: flex; flex-direction: row; height: calc(55vh - 7rem);">
+              <canvas id="analyticsChart"></canvas>
+              <canvas id="commandsChart" style="margin-top: -2.25rem; margin-left: 3.5rem;"></canvas>
+            </div>
+          </div>
           <div id="vanityLinksSection" class="workbench-section settings-section" style="
             padding: 1.5rem 2rem;
             margin-top: 1.75rem;
@@ -1574,6 +1593,104 @@ class LocalBotify {
 
     this.setupFileTreeListeners(editorView, bot);
 
+    const analytics = (fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/analytics.txt"), "utf8") || "").split("\n").slice(1);
+
+    const labels = [];
+    const serverData = [];
+    const userData = [];
+
+    for (let i = 0; i < analytics.length; i += 3) {
+      const timestamp = parseInt(analytics[i], 10);
+      const date = new Date(timestamp);
+      labels.push(date.toLocaleDateString());
+
+      serverData.push(parseInt(analytics[i + 1], 10));
+      userData.push(parseInt(analytics[i + 2], 10));
+    };
+
+    await new Promise((resolve, reject) => {
+      if (document.querySelector(".chart-script")) resolve();
+
+      const chartScript = document.createElement("script");
+      chartScript.src = "../packages/chart.js/chart.js";
+      chartScript.className = "chart-script";
+
+      chartScript.addEventListener("load", resolve);
+
+      document.head.appendChild(chartScript);
+    });
+
+    new Chart(suiteMainView.querySelector("#analyticsChart"), {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Servers',
+            data: serverData,
+            borderColor: 'rgba(54, 162, 235, 1)',
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            fill: true,
+            tension: 0.3
+          },
+          {
+            label: 'Users',
+            data: userData,
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            fill: true,
+            tension: 0.3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            title: { display: true, text: 'Date' }
+          },
+          y: {
+            title: { display: true, text: 'Count' },
+            beginAtZero: true
+          }
+        }
+      }
+    });
+
+    const commands = Object.fromEntries(
+      (fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/commands.txt"), "utf8") || "").split("\n").filter((line) => line).map((line) => {
+        const [key, value] = line.split(":").map((part) => part.trim());
+        return [key.toLowerCase(), Number(value)];
+      })
+    );
+
+    new Chart(suiteMainView.querySelector("#commandsChart"), {
+      type: "doughnut",
+      data: {
+        labels: Object.keys(commands),
+        datasets: [{
+          label: "Command Usage",
+          data: Object.values(commands),
+          backgroundColor: ["#ffcd56"],
+          borderColor: "#fff",
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: (tooltipItem) => ` ${tooltipItem.raw} uses`
+            }
+          },
+          legend: {
+            position: "top",
+          }
+        }
+      }
+    });
+
     suiteMainView.querySelector("#vanityLinksSection .add-command-btn").addEventListener("click", async () => {
       const customAlias = await this.prompt("Enter Custom Alias", "Enter a custom alias (optional)").catch(() => {
         return null;
@@ -1655,7 +1772,11 @@ class LocalBotify {
                 <canvas id="clicksOverTimeChart"></canvas>
               </div>
               <div class="command-item setting-item" style="margin-left: 0.85rem; padding-bottom: 1.5rem; width: calc((100vw / 3) - (8rem / 3)); height: 30vh; display: flex; justify-content: center; align-items: center;">
-                <canvas id="browserChart"></canvas>
+                ${(stats["total-clicks"]) ? `
+                  <canvas id="browserChart"></canvas>
+                ` : `
+                  <p style="font-size: 1.25rem; font-family: system-ui;">Vanity Link hasn't been clicked yet</p>
+                `}
               </div>
               <div class="command-item setting-item" style="margin-left: 0.85rem; width: calc((100vw / 3) - (8rem / 3)); height: 30vh; display: flex; justify-content: center; align-items: center;">
                 <canvas id="countryChart"></canvas>
@@ -1765,7 +1886,7 @@ class LocalBotify {
             }
           });
 
-          new Chart(suiteDetailView.querySelector("#browserChart"), {
+          if (stats["total-clicks"]) new Chart(suiteDetailView.querySelector("#browserChart"), {
             type: "doughnut",
             data: {
               labels: Object.keys(stats.browser),
@@ -1782,7 +1903,7 @@ class LocalBotify {
               plugins: {
                 tooltip: {
                   callbacks: {
-                    label: (tooltipItem) => `${tooltipItem.label}: ${tooltipItem.raw} clicks`
+                    label: (tooltipItem) => ` ${tooltipItem.raw} clicks`
                   }
                 },
                 legend: {
@@ -1874,7 +1995,11 @@ class LocalBotify {
               <canvas id="clicksOverTimeChart"></canvas>
             </div>
             <div class="command-item setting-item" style="margin-left: 0.85rem; padding-bottom: 1.5rem; width: calc((100vw / 3) - (8rem / 3)); height: 30vh; display: flex; justify-content: center; align-items: center;">
-              <canvas id="browserChart"></canvas>
+              ${(stats["total-clicks"]) ? `
+                <canvas id="browserChart"></canvas>
+              ` : `
+                <p style="font-size: 1.25rem; font-family: system-ui;">Vanity Link hasn't been clicked yet</p>
+              `}
             </div>
             <div class="command-item setting-item" style="margin-left: 0.85rem; width: calc((100vw / 3) - (8rem / 3)); height: 30vh; display: flex; justify-content: center; align-items: center;">
               <canvas id="countryChart"></canvas>
@@ -1984,7 +2109,7 @@ class LocalBotify {
           }
         });
 
-        new Chart(suiteDetailView.querySelector("#browserChart"), {
+        if (stats["total-clicks"]) new Chart(suiteDetailView.querySelector("#browserChart"), {
           type: "doughnut",
           data: {
             labels: Object.keys(stats.browser),
@@ -2001,7 +2126,7 @@ class LocalBotify {
             plugins: {
               tooltip: {
                 callbacks: {
-                  label: (tooltipItem) => `${tooltipItem.label}: ${tooltipItem.raw} clicks`
+                  label: (tooltipItem) => ` ${tooltipItem.raw} clicks`
                 }
               },
               legend: {

@@ -1,4 +1,4 @@
-- Pro Suite (Analytics, etc.)
+- Pro Suite (Cloud Hosting, Analytics, Bot Sites, Collaboration, etc.)
 - Fix website
 - Add bot store
 - Add command & event store
