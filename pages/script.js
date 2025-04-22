@@ -356,17 +356,21 @@ class LocalBotify {
       deleteBtn.addEventListener("click", (e) => {
         e.stopPropagation();
 
-        this.confirm("Delete Bot", `Are you sure about deleting ${this.escapeHtml(bot.name)}?`).then(() => {
-          this.bots = this.bots.filter((b) => b.id !== bot.id);
-          this.saveBots();
-          this.renderContent();
+        this.confirm("Delete Bot", `Are you sure about deleting ${this.escapeHtml(bot.name)}?`, "dangerous").then(() => {
+          this.prompt("Delete Bot", "Enter bot name...", "dangerous").then((botName) => {
+            if (botName !== bot.name) return;
 
-          this.saveBots();
-          this.renderContent();
+            this.bots = this.bots.filter((b) => b.id !== bot.id);
+            this.saveBots();
+            this.renderContent();
 
-          const path = require("path");
+            this.saveBots();
+            this.renderContent();
 
-          fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString()));
+            const path = require("path");
+
+            fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString()));
+          }).catch(() => {});
         }).catch(() => {});
       });
 
@@ -431,7 +435,7 @@ class LocalBotify {
                   <div class="stat-label">Status</div>
                   <div class="stat-value" style="color: ${(bot.verified) ? "#00adff" : "var(--discord-muted)"}; white-space: nowrap;">
                     <i class="fas fa-circle-${(bot.verified) ? "check" : "xmark"}" style="margin-right: 2.5px;"></i>
-                    ${(bot.verified) ? "Verified" : "Unsafe"}
+                    ${(bot.verified) ? "Verified" : "Unverified"}
                   </div>
                 </div>
                 <div class="stat" style="margin-left: 10%;">
@@ -1243,15 +1247,14 @@ class LocalBotify {
           ">
             <h3 style="flex-direction: row; margin-bottom: 1rem;">
               <i class="fas fa-laptop-code"></i>Landing Page
-              <button class="add-command-btn" style="right: 183.5px;">
+              <button class="add-command-btn" style="right: 117.5px;">
                 <i class="fas fa-plus"></i>
                 Add Feature
               </button>
-              <button class="add-command-btn" style="right: 74.75px;">
+              <button class="add-command-btn" style="right: 74.7px; padding: 0.55rem 0.65rem;">
                 <i class="fas fa-upload"></i>
-                Publish
               </button>
-              <button class="add-command-btn" style="right: 32.5px;padding: 0.55rem 0.65rem;">
+              <button class="add-command-btn" style="right: 32.5px; padding: 0.55rem 0.65rem;">
                 <i class="fas fa-arrow-up-right-from-square"></i>
               </button>
             </h3>
@@ -3954,7 +3957,7 @@ class LocalBotify {
     });
   };
 
-  alert(title, message) {
+  alert(title, message = "", mode) {
     return new Promise((resolve, reject) => {
       const modal = document.createElement("div");
       modal.className = "modal";
@@ -3971,7 +3974,7 @@ class LocalBotify {
                 ${message.split("\n").map((line) => `<p>${this.escapeHtml(line)}</p>`).join("\n")}
               </div>
               <div class="form-actions">
-                <button type="submit" class="submit-btn">
+                <button type="submit" class="submit-btn${(mode === "dangerous") ? ` submit-report-btn" style="background-color: var(--discord-red);"` : `"`}>
                   Ok / Roger
                 </button>
               </div>
@@ -4005,7 +4008,7 @@ class LocalBotify {
     });
   };
 
-  confirm(title, message) {
+  confirm(title, message = "", mode) {
     return new Promise((resolve, reject) => {
       const modal = document.createElement("div");
       modal.className = "modal";
@@ -4022,7 +4025,7 @@ class LocalBotify {
                 ${message.split("\n").map((line) => `<p>${this.escapeHtml(line)}</p>`).join("\n")}
               </div>
               <div class="form-actions">
-                <button type="submit" class="submit-btn">
+                <button type="submit" class="submit-btn${(mode === "dangerous") ? ` submit-report-btn" style="background-color: var(--discord-red);"` : `"`}>
                   ${this.escapeHtml(title)}
                 </button>
                 <button type="button" class="cancel-btn">Cancel</button>
@@ -4058,7 +4061,7 @@ class LocalBotify {
     });
   };
 
-  prompt(title, placeholder = "") {
+  prompt(title, placeholder = "", mode) {
     return new Promise((resolve, reject) => {
       const modal = document.createElement("div");
       modal.className = "modal";
@@ -4075,7 +4078,7 @@ class LocalBotify {
                 <input type="text" id="formInput" placeholder="${placeholder}"></input>
               </div>
               <div class="form-actions" style="margin-top: 0;">
-                <button type="submit" class="submit-btn">
+                <button type="submit" class="submit-btn${(mode === "dangerous") ? ` submit-report-btn" style="background-color: var(--discord-red);"` : `"`}>
                   Submit
                 </button>
                 <button type="button" class="cancel-btn">Cancel</button>

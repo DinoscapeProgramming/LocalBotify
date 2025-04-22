@@ -175,7 +175,8 @@ const createWindow = () => {
   });
 
   ipcMain.handle("parseMarkdown", (_, markdown) => {
-    return parse(markdown).replace(/&quot;/g, '"')
+    return parse(markdown)
+      .replace(/&quot;/g, '"')
       .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
@@ -195,7 +196,12 @@ const createWindow = () => {
     const highlightedHtml = await Promise.all(
       [...html.matchAll(/<pre><code class="(language-[^"]+)">([\s\S]*?)<\/code><\/pre>/gs)].map(async (match) => {
         const lang = match[1].replace("language-js", "javascript");
-        const code = match[2];
+        const code = match[2]
+          .replace(/&quot;/g, '"')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&apos;/g, "'");
 
         try {
           const highlightedCode = await highlighter.codeToHtml(code, { lang, theme: "material-theme-ocean" });
