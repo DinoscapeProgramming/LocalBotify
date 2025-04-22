@@ -436,39 +436,44 @@ class LocalBotify {
             installBtn.addEventListener("click", (e) => {
               e.stopPropagation();
 
-              const newBot = {
-                id: Date.now(),
-                avatar: bot.avatar,
-                name: bot.name,
-                description: bot.description || "",
-                initialized: false,
-                features: [],
-                vanityLinks: []
-              };
-
-              const path = require("path");
-
-              let replacedToken = false;
-
-              this.bots.push(newBot);
-              this.initializeTemplate(newBot, `git:${bot.repository}`).then(() => {
+              this.confirm("Install Bot", (bot.verified) ? "Installing bots can be dangerous even if they are verified since bot owners can change the codebase of their bots whenever they want to.\nㅤ\nAre you sure you want to install this bot?" : "Unverified bots can contain malicious code.\nㅤ\nAre you sure you want to install this bot?").then(() => {
                 this.prompt("Install Bot", "Enter token...").then((token) => {
-                  fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "utf8").split("\n").map((line) => {
-                    if (replacedToken) return line;
+                  const newBot = {
+                    id: Date.now(),
+                    avatar: bot.avatar,
+                    name: bot.name,
+                    description: bot.description || "",
+                    initialized: false,
+                    features: [],
+                    vanityLinks: []
+                  };
 
-                    if (line.split(/#|\/\//)[0].match(/^\s*TOKEN\s*=/)) {
-                      replacedToken = true;
-                      return line.replace(/^\s*TOKEN\s*=.*?(#|\/\/|$)/, `TOKEN="${token}" $1`).trim();
+                  const path = require("path");
+
+                  let replacedToken = false;
+
+                  this.bots.push(newBot);
+                  this.initializeTemplate(newBot, `git:${bot.repository}`).then(() => {
+                    if (fs.existsSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"))) {
+                      fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "utf8").split("\n").map((line) => {
+                        if (replacedToken) return line;
+
+                        if (line.split(/#|\/\//)[0].match(/^\s*TOKEN\s*=/)) {
+                          replacedToken = true;
+                          return line.replace(/^\s*TOKEN\s*=.*?(#|\/\/|$)/, `TOKEN="${token}" $1`).trim();
+                        };
+
+                        return line;
+                      }).join("\n"), "utf8");
                     };
+                  });
 
-                    return line;
-                  }).join("\n"), "utf8");
+                  this.saveBots();
+                  this.currentView = "bots";
+                  this.renderContent();
+                  Array.from(document.querySelectorAll(".nav-item")).find((navItem) => navItem.querySelector("i").className === "fas fa-robot").classList.add("active");
                 }).catch(() => {});
-              });
-
-              this.saveBots();
-              this.currentView = "bots";
-              this.renderContent();
+              }).catch(() => {});
             });
 
             reportBtn.addEventListener("click", (e) => {
@@ -3271,19 +3276,7 @@ class LocalBotify {
         const index = this.bots.findIndex((b) => b.id === bot.id);
         this.bots[index] = newBot;
 
-        fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "utf8").split("\n").map((line) => {
-          if (replacedToken) return line;
-
-          if (line.split(/#|\/\//)[0].match(/^\s*TOKEN\s*=/)) {
-            replacedToken = true;
-            return line.replace(/^\s*TOKEN\s*=.*?(#|\/\/|$)/, `TOKEN="${form.querySelector("#botToken").value}" $1`).trim();
-          };
-
-          return line;
-        }).join("\n"), "utf8");
-      } else {
-        this.bots.push(newBot);
-        this.initializeTemplate(newBot, ((form.querySelector("#botTemplate").tagName === "INPUT") ? "git:" : "") + form.querySelector("#botTemplate").value).then(() => {
+        if (fs.existsSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"))) {
           fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "utf8").split("\n").map((line) => {
             if (replacedToken) return line;
 
@@ -3294,6 +3287,22 @@ class LocalBotify {
 
             return line;
           }).join("\n"), "utf8");
+        };
+      } else {
+        this.bots.push(newBot);
+        this.initializeTemplate(newBot, ((form.querySelector("#botTemplate").tagName === "INPUT") ? "git:" : "") + form.querySelector("#botTemplate").value).then(() => {
+          if (fs.existsSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"))) {
+            fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "utf8").split("\n").map((line) => {
+              if (replacedToken) return line;
+
+              if (line.split(/#|\/\//)[0].match(/^\s*TOKEN\s*=/)) {
+                replacedToken = true;
+                return line.replace(/^\s*TOKEN\s*=.*?(#|\/\/|$)/, `TOKEN="${form.querySelector("#botToken").value}" $1`).trim();
+              };
+
+              return line;
+            }).join("\n"), "utf8");
+          };
         });
       };
 
