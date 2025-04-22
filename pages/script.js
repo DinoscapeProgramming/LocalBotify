@@ -64,30 +64,11 @@ class LocalBotify {
     this.runBots();
   };
 
-  initializeDemoData() {
-    this.bots = [
-      {
-        id: 1,
-        name: "Example Bot",
-        description: "Super simple example bot",
-        template: "ping-pong-bot",
-        status: "offline",
-        servers: 0,
-        users: 0,
-        token: "EXAMPLE TOKEN",
-        prefix: "!",
-        commands: ["ping"],
-        initialized: false
-      }
-    ];
-    this.saveBots();
-  };
-
   saveBots() {
     localStorage.setItem("bots", JSON.stringify(this.bots));
   };
 
-  renderContent() {
+  async renderContent() {
     (this.statusWatchers || []).forEach((statusWatcher) => statusWatcher.close());
     (this.statusWatchers || []).forEach((statisticsWatcher) => statisticsWatcher.close());
 
@@ -107,13 +88,72 @@ class LocalBotify {
     switch (this.currentView) {
       case "bots":
         document.querySelector(".app").style.removeProperty("background-color");
-        content.appendChild(this.createBotGrid());
+        if (this.bots.length) {
+          content.classList.remove("no-bots");
+          content.appendChild(this.createBotGrid());
+        } else {
+          content.classList.add("no-bots");
+
+          content.innerHTML = `
+            <i class="fas fa-magnifying-glass" style="
+              font-size: 5rem;
+              margin-bottom: 1.5rem;
+              opacity: 0.8;
+            "></i>
+            <p style="opacity: 0.8;margin-bottom: 0.6rem;">Yikes. So quiet here...</p>
+            <button class="create-btn" style="
+              width: 19.5ch;
+              justify-content: center;
+              white-space: nowrap;
+            ">
+              <i class="fas fa-plus"></i>Create Bot Now
+            </button>
+          `;
+        };
+        break;
+      case "store":
+        document.querySelector(".app").style.removeProperty("background-color");
+        if (!navigator.onLine) {
+          content.classList.add("no-bots");
+
+          content.innerHTML = `
+            <i class="fas fa-wifi" style="
+              font-size: 5rem;
+              margin-bottom: 1.5rem;
+              opacity: 0.8;
+            "></i>
+            <p style="opacity: 0.8;margin-bottom: 0.6rem;">No Internet Connection</p>
+          `;
+        } else if (this.bots.length) {
+          content.classList.remove("no-bots");
+          content.appendChild(await this.createStoreGrid());
+        } else {
+          content.classList.add("no-bots");
+
+          content.innerHTML = `
+            <i class="fas fa-magnifying-glass" style="
+              font-size: 5rem;
+              margin-bottom: 1.5rem;
+              opacity: 0.8;
+            "></i>
+            <p style="opacity: 0.8;margin-bottom: 0.6rem;">Yikes. So quiet here...</p>
+            <button class="create-btn" style="
+              width: 19.5ch;
+              justify-content: center;
+              white-space: nowrap;
+            ">
+              <i class="fas fa-plus"></i>Create Bot Now
+            </button>
+          `;
+        };
         break;
       case "settings":
         document.querySelector(".app").style.removeProperty("background-color");
+        content.classList.remove("no-bots");
         content.appendChild(this.createSettingsPanel());
         break;
       case "help":
+        content.classList.remove("no-bots");
         content.appendChild(this.createHelpView());
         break;
     };
@@ -172,7 +212,7 @@ class LocalBotify {
       card.innerHTML = `
         <div class="bot-header" ${(settings.showStats ?? true) ? "" : `style="margin-bottom: 0;"`}>
           <div class="bot-avatar"${(((this.isEmoji(bot.avatar)) ? this.escapeHtml(bot.avatar) : "🤖") === "🤖") ? ` style="font-size: 42.5px;"` : ""}>${(this.isEmoji(bot.avatar)) ? this.escapeHtml(bot.avatar) : "🤖"}</div>
-          <div class="bot-info" >
+          <div class="bot-info">
             <h3${(!bot.description) ? ' style="font-size: 1.2rem; margin-left: 2.5px;"' : ""}>${this.escapeHtml(bot.name)}</h3>
             <p>${this.escapeHtml(bot.description)}</p>
           </div>
@@ -281,16 +321,19 @@ class LocalBotify {
 
       codeBtn.addEventListener("click", (e) => {
         e.stopPropagation();
+
         this.showCodeEditor(bot);
       });
 
       editBtn.addEventListener("click", (e) => {
         e.stopPropagation();
+
         this.showBotEditor(bot);
       });
 
       deleteBtn.addEventListener("click", (e) => {
         e.stopPropagation();
+
         this.confirm("Delete Bot", `Are you sure about deleting ${this.escapeHtml(bot.name)}?`).then(() => {
           this.bots = this.bots.filter((b) => b.id !== bot.id);
           this.saveBots();
@@ -311,10 +354,142 @@ class LocalBotify {
     return grid;
   };
 
+  createStoreGrid() {
+    return new Promise((resolve, reject) => {
+      fetch(process.env.SERVER + "/api/v1/store/all")
+      .then((response) => response.json())
+      .then((store) => {
+        if (store.version === "1") {
+          const path = require("path");
+
+          const grid = document.createElement("div");
+          grid.className = "bot-grid";
+          grid.id = "botGrid";
+
+          const settings = JSON.parse(localStorage.getItem("settings") || "{}");
+
+          Object.entries(store).filter(([id]) => !["version", "activity"].includes(id)).forEach(([id, bot], index) => {
+            bot = {
+              id: id || "",
+              avatar: bot[0] || "🤖",
+              name: bot[1] || "",
+              description: bot[2] || "",
+              repository: bot[3] || "",
+              verified: bot[4] || false,
+              installs: bot[5] || 0,
+              likes: bot[6] || 0
+            };
+
+            const card = document.createElement("div");
+            card.className = "bot-card";
+            card.style.animationDelay = `${index * 0.1}s`;
+            card.dataset.id = bot.id;
+
+            card.innerHTML = `
+              <div class="bot-header" ${(settings.showStats ?? true) ? "" : `style="margin-bottom: 0;"`}>
+                <div class="bot-avatar"${(((this.isEmoji(bot.avatar)) ? this.escapeHtml(bot.avatar) : "🤖") === "🤖") ? ` style="font-size: 42.5px;"` : ""}>${(this.isEmoji(bot.avatar)) ? this.escapeHtml(bot.avatar) : "🤖"}</div>
+                <div class="bot-info">
+                  <h3${(!bot.description) ? ' style="font-size: 1.2rem; margin-left: 2.5px;"' : ""}>${this.escapeHtml(bot.name)}</h3>
+                  <p>${this.escapeHtml(bot.description)}</p>
+                </div>
+                <div class="bot-actions">
+                  <button class="action-btn view-btn" title="View Bot">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="action-btn install-btn" title="Install Bot">
+                    <i class="fas fa-download"></i>
+                  </button>
+                  <button class="action-btn report-btn" title="Report Bot">
+                    <i class="fas fa-flag"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="bot-stats" ${(settings.showStats ?? true) ? "" : `style="display: none;"`}>
+                <div class="stat">
+                  <div class="stat-label">Status</div>
+                  <div class="stat-value" style="color: ${(bot.verified) ? "#00adff" : "var(--discord-muted)"};">
+                    <i class="fas fa-circle-${(bot.verified) ? "check" : "xmark"}" style="margin-right: 2.5px;"></i>
+                    ${(bot.verified) ? "Verified" : "Unsafe"}
+                  </div>
+                </div>
+                <div class="stat">
+                  <div class="stat-label">Installs</div>
+                  <div class="stat-value">${this.formatNumber(bot.installs)}</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-label">Likes</div>
+                  <div class="stat-value">${this.formatNumber(bot.likes)}</div>
+                </div>
+              </div>
+            `;
+
+            const viewBtn = card.querySelector(".view-btn");
+            const installBtn = card.querySelector(".install-btn");
+            const reportBtn = card.querySelector(".report-btn");
+
+            viewBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+
+              this.viewBot(bot);
+            });
+
+            installBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+
+              const newBot = {
+                id: Date.now(),
+                avatar: bot.avatar,
+                name: bot.name,
+                description: bot.description || "",
+                initialized: false,
+                features: [],
+                vanityLinks: []
+              };
+
+              const path = require("path");
+
+              let replacedToken = false;
+
+              this.bots.push(newBot);
+              this.initializeTemplate(newBot, `git:${bot.repository}`).then(() => {
+                this.prompt("Install Bot", "Enter token...").then((token) => {
+                  fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "utf8").split("\n").map((line) => {
+                    if (replacedToken) return line;
+
+                    if (line.split(/#|\/\//)[0].match(/^\s*TOKEN\s*=/)) {
+                      replacedToken = true;
+                      return line.replace(/^\s*TOKEN\s*=.*?(#|\/\/|$)/, `TOKEN="${token}" $1`).trim();
+                    };
+
+                    return line;
+                  }).join("\n"), "utf8");
+                }).catch(() => {});
+              });
+
+              this.saveBots();
+              this.currentView = "bots";
+              this.renderContent();
+            });
+
+            reportBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+
+              this.reportBot(bot);
+            });
+
+            grid.appendChild(card);
+          });
+
+          resolve(grid);
+        };
+      }).catch(() => {});
+    });
+  };
+
   showFeedbackModal() {
     const modal = document.createElement("div");
     modal.className = "modal";
-    
+
     modal.innerHTML = `
       <div class="modal-content">
         <div class="modal-header">
@@ -384,13 +559,15 @@ class LocalBotify {
       modal.classList.remove("show");
       setTimeout(() => modal.remove(), 300);
 
-      document.querySelectorAll(".nav-item").forEach((navItem) => {
-        navItem.classList.remove("active");
-        if (Array.from(navItem.classList).includes("currentView")) {
-          navItem.classList.remove("currentView");
-          navItem.classList.add("active");
-        };
-      });
+      if (Array.from(document.querySelectorAll(".nav-item")).find((navItem) => navItem.classList.contains("currentView"))) {
+        document.querySelectorAll(".nav-item").forEach((navItem) => {
+          navItem.classList.remove("active");
+          if (Array.from(navItem.classList).includes("currentView")) {
+            navItem.classList.remove("currentView");
+            navItem.classList.add("active");
+          };
+        });
+      };
     };
 
     modal.querySelector(".close-btn").addEventListener("click", closeModal);
@@ -444,11 +621,13 @@ class LocalBotify {
   };
 
   createSettingsPanel() {
+    const path = require("path");
+
     const storedSettings = JSON.parse(localStorage.getItem("settings") || "{}");
 
     const settings = document.createElement("div");
     settings.className = "settings-panel";
-    
+
     settings.innerHTML = `
       <div class="settings-section">
         <h3><i class="fas fa-palette"></i>Appearance</h3>
@@ -476,7 +655,7 @@ class LocalBotify {
           </div>
         </div>
       </div>
-      
+
       <div class="settings-section">
         <h3><i class="fas fa-code"></i>Developer Settings</h3>
         <div class="setting-item">
@@ -530,6 +709,28 @@ class LocalBotify {
         </div>
       </div>
 
+      <div class="settings-section">
+        <h3><i class="fas fa-trophy"></i>Pro Plan</h3>
+        <div class="setting-item">
+          <label data-tooltip="Pro plan activation token">
+            <span>Activation Token</span>
+            <input type="text" id="activationToken" value="${fs.readFileSync(path.join(process.cwd(), "ACTIVATION_TOKEN.txt"), "utf8") || ""}" placeholder="Enter activation token..." />
+          </label>
+          <div class="setting-description">
+            Activate LocalBotify's pro plan using your activation token
+          </div>
+        </div>
+        <div class="setting-item">
+          <label data-tooltip="Terminate pro subscription">
+            <span>Cancel Subscription</span>
+            <input type="text" id="cancelSubscription" placeholder="Enter activation token..." />
+          </label>
+          <div class="setting-description">
+            Cancel your pro subscription using your activation token
+          </div>
+        </div>
+      </div>
+
       <button class="settings-save-btn">
         <i class="fas fa-save"></i>
         Save Changes
@@ -553,7 +754,7 @@ class LocalBotify {
 
       saveBtn.innerHTML = `<i class="fas fa-check"></i>Saved!`;
       saveBtn.style.backgroundColor = "var(--discord-green)";
-      
+
       setTimeout(() => {
         saveBtn.innerHTML = `<i class="fas fa-save"></i>Save Changes`;
         saveBtn.style.backgroundColor = "var(--discord-primary)";
@@ -599,10 +800,10 @@ class LocalBotify {
 
     const helpView = document.createElement("div");
     helpView.className = "help-view show";
-    
+
     helpView.innerHTML = `
       <div class="help-explorer">
-        <div class="help-tree">${this.renderFileTree(this.generateFileTree("./docs"))}</div>
+        <div class="help-tree">${this.renderFileTree(this.generateFileTree("./docs"), true)}</div>
       </div>
 
       <div class="markdown-body" style="padding: 50px; overflow-y: auto;"></div>
@@ -614,7 +815,7 @@ class LocalBotify {
 
     document.querySelector(".app").style.backgroundColor = "#0d1117";
 
-    ipcRenderer.invoke("parseMarkdown", fs.readFileSync(path.join(__dirname, "../docs/CommandTutorial.md"), "utf8")).then((parsedMarkdown) => {
+    ipcRenderer.invoke("parseMarkdown", fs.readFileSync(path.join(__dirname, "../docs/User Guide/Getting Started.md"), "utf8")).then((parsedMarkdown) => {
       helpView.querySelector(".markdown-body").innerHTML = parsedMarkdown;
 
       helpView.querySelectorAll(".markdown-body a").forEach((link) => {
@@ -634,8 +835,8 @@ class LocalBotify {
       };
     });
 
-    this.getFileTreeItem(helpView, "CommandTutorial.md").classList.add("active");
-    
+    this.getFileTreeItem(helpView, "User Guide/Getting Started.md").classList.add("active");
+
     this.setupHelpTreeListeners(helpView);
 
     if (!document.querySelector(".markdown-stylesheet")) {
@@ -931,7 +1132,8 @@ class LocalBotify {
               if (files.includes("package.json")) {
                 try {
                   const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
-                  if (packageJson.main) return packageJson.main;
+                  if (packageJson.main && fs.existsSync(path.join(dir, packageJson.main))) return packageJson.main;
+                  return "package.json";
                 } catch {
                   return "package.json";
                 };
@@ -940,6 +1142,8 @@ class LocalBotify {
               if (firstJsFile) return firstJsFile;
               const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
               if (firstNonFolder) return firstNonFolder;
+              const firstFile = this.getFlatFileList(dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
+              if (firstFile) return firstFile.substring(2);
               return null;
             })(path.join(process.cwd(), "bots", bot.id.toString()))), "utf8")) : ""}</textarea>
             ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file)).isDirectory())) ? `
@@ -962,7 +1166,7 @@ class LocalBotify {
 
         <div class="editor-terminal"></div>
       </div>
-      
+
       <div class="workbench-view suite-view">
         <div id="suiteMainView">
           <div id="analyticsSection" class="workbench-section settings-section" style="
@@ -974,14 +1178,59 @@ class LocalBotify {
             transition: all 0.3s ease;
             border: 1px solid transparent;
             box-shadow: none;
-            height: 55vh;
+            height: 44.25vh;
+            overflow-x: auto;
+            overflow-y: hidden;
           ">
             <h3 style="flex-direction: row; margin-bottom: 1rem;">
               <i class="fas fa-chart-simple"></i>Analytics
             </h3>
-            <div style="display: flex; flex-direction: row; height: calc(55vh - 7rem);">
+            <div style="display: flex; flex-direction: row; height: calc(44.25vh - 7rem);">
               <canvas id="analyticsChart"></canvas>
-              <canvas id="commandsChart" style="margin-top: -2.25rem; margin-left: 3.5rem;"></canvas>
+              <canvas id="commandsChart" style="margin-top: -2.25rem; margin-left: 3.5rem; opacity: 0.8;"></canvas>
+              <canvas id="eventsChart" style="margin-top: -2.25rem; margin-left: 1.75rem; opacity: 0.8;"></canvas>
+            </div>
+          </div>
+          <div id="landingPageSection" class="workbench-section settings-section" style="
+            padding: 1.5rem 2rem 2rem;
+            margin-top: 1.75rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-md);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            box-shadow: none;
+          ">
+            <h3 style="flex-direction: row; margin-bottom: 1rem;">
+              <i class="fas fa-laptop-code"></i>Landing Page
+              <button class="add-command-btn" style="right: 183.5px;">
+                <i class="fas fa-plus"></i>
+                Add Feature
+              </button>
+              <button class="add-command-btn" style="right: 74.75px;">
+                <i class="fas fa-upload"></i>
+                Publish
+              </button>
+              <button class="add-command-btn" style="right: 32.5px;padding: 0.55rem 0.65rem;">
+                <i class="fas fa-arrow-up-right-from-square"></i>
+              </button>
+            </h3>
+            <div class="grid-container">
+              ${
+                (!(bot.features || []).length) ? `<span style="color: grey; margin-bottom: -0.5rem;">No features found</span>` : (bot.features || []).map((feature) => `
+                  <div class="card" data-id="${this.escapeHtml(feature.id.toString())}">
+                    <i class="fas fa-xmark" style="
+                      float: right;
+                      cursor: pointer;
+                      opacity: 0.85;
+                    "></i>
+                    <div class="icon">
+                      <i class="fas fa-${this.escapeHtml(feature.icon)}"></i>
+                    </div>
+                    <p class="title" contenteditable spellcheck="false" placeholder="Enter title...">${this.escapeHtml(feature.name)}</p>
+                    <p class="description" contenteditable spellcheck="false" placeholder="Enter description...">${this.escapeHtml(feature.description)}</p>
+                  </div>
+                `).join("\n")
+              }
             </div>
           </div>
           <div id="vanityLinksSection" class="workbench-section settings-section" style="
@@ -1067,6 +1316,10 @@ class LocalBotify {
       });
     });
 
+    workbenchMainView.querySelector("#workbench-publish-btn").addEventListener("click", () => {
+      this.showPublicationModal(bot);
+    });
+
     workbenchMainView.querySelector("#workbench-settings-btn").addEventListener("click", () => {
       this.showBotSettings(bot);
     });
@@ -1110,9 +1363,12 @@ class LocalBotify {
         workbenchEditorView.innerHTML = `
           <h3 class="command-header">
             <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i>${command.textContent.trim().replace(/[^A-Za-z]/g, "")}
-            <button class="add-command-btn" style="position: absolute; right: 0;">
-              <i class="fas fa-plus"></i>
+            <button class="add-command-btn" style="position: absolute; right: 39.5px;">
+              <i class="fas fa-code"></i>
               Edit in code lab
+            </button>
+            <button class="add-command-btn" style="position: absolute; right: 0; padding: 0.55rem 0.65rem;">
+              <i class="fas fa-trash"></i>
             </button>
           </h3>
           ${(!variables.length) ? `
@@ -1169,18 +1425,43 @@ class LocalBotify {
           `).join("")}
         `;
 
-        workbenchEditorView.querySelector(".command-header button").addEventListener("click", () => {
-          this.getFileTreeItem(editorView, command.dataset.category).click();
-          this.getFileTreeItem(editorView, `${command.dataset.category}/${command.textContent.trim()}.js`).click();
+        workbenchEditorView.querySelectorAll(".command-header button").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (button.querySelector("i").className === "fas fa-code") {
+              this.getFileTreeItem(editorView, command.dataset.category).click();
+              this.getFileTreeItem(editorView, `${command.dataset.category}/${command.textContent.trim()}.js`).click();
 
-          Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).find((tab) => tab.querySelector("i").className === "fas fa-code").classList.add("active");
-          workbenchView.style.display = "none";
-          editorView.style.visibility = "visible";
-          editorView.style.animation = "slideUp 0.5s ease";
-          setTimeout(() => {
-            editorView.style.animation = "none";
-          }, 500);
-          editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.remove("animationless"));
+              Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).find((tab) => tab.querySelector("i").className === "fas fa-code").classList.add("active");
+              workbenchView.style.display = "none";
+              editorView.style.visibility = "visible";
+              editorView.style.animation = "slideUp 0.5s ease";
+              setTimeout(() => {
+                editorView.style.animation = "none";
+              }, 500);
+              editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.remove("animationless"));
+            } else if (button.querySelector("i").className === "fas fa-trash") {
+              try {
+                this.confirm(`Delete ${command.dataset.category[0].toUpperCase() + command.dataset.category.substring(1, command.dataset.category.length - 1)}`, `Are you sure you want to delete ${command.textContent.trim()}?`).then(() => {
+                  fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${command.textContent.trim()}.js`));
+
+                  if (workbenchMainView.querySelector(`.workbench-section .setting-item[data-category="${command.dataset.category}"]`).length === 1) {
+                    const noItems = document.createElement("span");
+                    noItems.style.color = "grey";
+                    noItems.textContent = `No ${command.dataset.category} found`;
+                    workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.insertBefore(noItems, workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.nextElementSibling);
+                  };
+
+                  workbenchEditorView.style.display = "none";
+                  workbenchMainView.style.display = "block";
+                  workbenchMainView.style.animation = "0.5s ease 0s 1 normal none running slideUp";
+                  setTimeout(() => suiteMainView.style.removeProperty("animation"), 500);
+                  Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).find((tab) => tab.querySelector("i").className === "fas fa-tools").classList.add("active");
+
+                  command.remove();
+                }).catch(() => {});
+              } catch (err) {console.log(err);};
+            };
+          });
         });
 
         workbenchEditorView.querySelectorAll(".command-item.setting-item").forEach((commandItem) => {
@@ -1212,7 +1493,8 @@ class LocalBotify {
         if (files.includes("package.json")) {
           try {
             const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
-            if (packageJson.main) return packageJson.main;
+            if (packageJson.main && fs.existsSync(path.join(dir, packageJson.main))) return packageJson.main;
+            return "package.json";
           } catch {
             return "package.json";
           };
@@ -1221,6 +1503,8 @@ class LocalBotify {
         if (firstJsFile) return firstJsFile;
         const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
         if (firstNonFolder) return firstNonFolder;
+        const firstFile = this.getFlatFileList(dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
+        if (firstFile) return firstFile.substring(2);
         return null;
       })(path.join(process.cwd(), "bots", bot.id.toString()));
 
@@ -1250,7 +1534,7 @@ class LocalBotify {
       if (eventType !== "change") return;
 
       workbenchView.querySelector("#workbench-play-btn").children[0].className = (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/process.txt")).trim() === "ONLINE") ? "fas fa-stop" : "fas fa-play";
-      workbenchView.querySelector("#workbench-play-btn").childNodes[2].textContent = (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/process.txt")).trim() === "ONLINE") ? "Stop" : "Play";
+      workbenchView.querySelector("#workbench-play-btn").childNodes[2].textContent = (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/process.txt")).trim() === "ONLINE") ? "Stop" : "Run";
 
       editorView.querySelector(".editor-play-btn").children[0].className = (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/process.txt")).trim() === "ONLINE") ? "fas fa-stop" : "fas fa-play";
     });
@@ -1259,12 +1543,12 @@ class LocalBotify {
       playBtn.addEventListener("click", () => {
         ipcRenderer.send("terminalData", [
           bot.id,
-          (playBtn.children[0].className === "fas fa-stop") ? "\x03" : (((bot.initialized) ? "" : ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.initialization || "") + "; ")) + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`)
+          (playBtn.children[0].className === "fas fa-stop") ? "\x03\x03" : (((bot.initialized) ? "" : ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.initialization || "") + "; ")) + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`)
         ]);
 
         workspaceView.querySelectorAll("#workbench-play-btn, .editor-play-btn").forEach((changedPlayBtn) => {
           changedPlayBtn.children[0].className = (changedPlayBtn.children[0].className === "fas fa-stop") ? "fas fa-play" : "fas fa-stop";
-          if (changedPlayBtn.id === "workbench-play-btn") changedPlayBtn.childNodes[2].textContent = (changedPlayBtn.children[0].className === "fas fa-play") ? "Play" : "Stop";
+          if (changedPlayBtn.id === "workbench-play-btn") changedPlayBtn.childNodes[2].textContent = (changedPlayBtn.children[0].className === "fas fa-play") ? "Run" : "Stop";
         });
       });
     });
@@ -1283,7 +1567,8 @@ class LocalBotify {
         if (files.includes("package.json")) {
           try {
             const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
-            if (packageJson.main) return packageJson.main;
+            if (packageJson.main && fs.existsSync(path.join(dir, packageJson.main))) return packageJson.main;
+            return "package.json";
           } catch {
             return "package.json";
           };
@@ -1292,6 +1577,8 @@ class LocalBotify {
         if (firstJsFile) return firstJsFile;
         const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
         if (firstNonFolder) return firstNonFolder;
+        const firstFile = this.getFlatFileList(dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
+        if (firstFile) return firstFile.substring(2);
         return null;
       })(path.join(process.cwd(), "bots", bot.id.toString())))).classList.add("active");
 
@@ -1380,7 +1667,7 @@ class LocalBotify {
                 span.contentEditable = false;
                 newFileTreeItem.dataset.filename = span.textContent.trim();
                 fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
-                
+
                 newFileTreeItem.click();
               });
 
@@ -1394,7 +1681,7 @@ class LocalBotify {
                 span.contentEditable = false;
                 newFileTreeItem.dataset.filename = span.textContent.trim();
                 fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
-                
+
                 newFileTreeItem.click();
               });
             });
@@ -1481,7 +1768,7 @@ class LocalBotify {
                 span.contentEditable = false;
                 newFileTreeItem.dataset.filename = span.textContent.trim();
                 fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
-                
+
                 newFileTreeItem.click();
               });
 
@@ -1495,7 +1782,7 @@ class LocalBotify {
                 span.contentEditable = false;
                 newFileTreeItem.dataset.filename = span.textContent.trim();
                 fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
-                
+
                 newFileTreeItem.click();
               });
             });
@@ -1671,7 +1958,18 @@ class LocalBotify {
         datasets: [{
           label: "Command Usage",
           data: Object.values(commands),
-          backgroundColor: ["#ffcd56"],
+          backgroundColor: [
+            "#4ECDC4",
+            "#556270",
+            "#C7F464",
+            "#FF6B6B",
+            "#C44D58",
+            "#69D2E7",
+            "#A7DBD8",
+            "#E0E4CC",
+            "#F38630",
+            "#FA6900"
+          ],
           borderColor: "#fff",
           borderWidth: 2
         }]
@@ -1689,6 +1987,187 @@ class LocalBotify {
           }
         }
       }
+    });
+
+    const events = Object.fromEntries(
+      (fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/events.txt"), "utf8") || "").split("\n").filter((line) => line).map((line) => {
+        const [key, value] = line.split(":").map((part) => part.trim());
+        return [key.toLowerCase(), Number(value)];
+      })
+    );
+
+    new Chart(suiteMainView.querySelector("#eventsChart"), {
+      type: "doughnut",
+      data: {
+        labels: Object.keys(events),
+        datasets: [{
+          label: "Event Usage",
+          data: Object.values(events),
+          backgroundColor: [
+            "#6C5B7B",
+            "#355C7D",
+            "#F67280",
+            "#F8B195",
+            "#C06C84",
+            "#11999E",
+            "#30E3CA",
+            "#40514E",
+            "#FFCB05",
+            "#D7263D"
+          ],
+          borderColor: "#fff",
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: (tooltipItem) => ` ${tooltipItem.raw} uses`
+            }
+          },
+          legend: {
+            position: "top",
+          }
+        }
+      }
+    });
+
+    suiteMainView.querySelectorAll("#landingPageSection .add-command-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (button.querySelector("i").className === "fas fa-plus") {
+          const id = Date.now();
+
+          if (!bot.features) (bot.features = []);
+          bot.features.push({
+            id,
+            icon: "star",
+            name: "",
+            description: ""
+          });
+
+          const index = this.bots.findIndex((b) => b.id === bot.id);
+          this.bots[index] = bot;
+
+          this.saveBots();
+
+          if (suiteMainView.querySelector("#landingPageSection .grid-container").children[0].tagName === "SPAN") suiteMainView.querySelector("#landingPageSection .grid-container").children[0].remove();
+
+          const featureCard = document.createElement("div");
+          featureCard.className = "card";
+          featureCard.dataset.id = id;
+
+          featureCard.innerHTML = `
+            <i class="fas fa-xmark" style="
+              float: right;
+              cursor: pointer;
+              opacity: 0.85;
+            "></i>
+            <div class="icon">
+              <i class="fas fa-star"></i>
+            </div>
+            <p class="title" contenteditable spellcheck="false" placeholder="Enter title..."></p>
+            <p class="description" contenteditable spellcheck="false" placeholder="Enter description..."></p>
+          `;
+
+          featureCard.querySelector("i").addEventListener("click", () => {
+            if (!bot.features) (bot.features = []);
+            bot.features = bot.features.filter((feature) => feature.id !== id);
+
+            const index = this.bots.findIndex((b) => b.id === bot.id);
+            this.bots[index] = bot;
+
+            this.saveBots();
+
+            featureCard.remove();
+
+            if (!suiteMainView.querySelector("#landingPageSection .grid-container").children.length) {
+              suiteMainView.querySelector("#landingPageSection .grid-container").innerHTML = `<span style="color: grey; margin-bottom: -0.5rem;">No features found</span>`;
+            };
+          });
+
+          featureCard.querySelector(".icon i").addEventListener("click", () => {
+            this.prompt("Change Feature Icon", "Enter FontAwesome icon name...").then((icon) => {
+              if (!this.isFontAwesomeIconAvailable(icon)) return;
+
+              featureCard.querySelector(".icon i").className = `fas fa-${icon}`;
+
+              if (!bot.features) (bot.features = []);
+              bot.features.find((feature) => feature.id === id).icon = icon;
+
+              const index = this.bots.findIndex((b) => b.id === bot.id);
+              this.bots[index] = bot;
+
+              this.saveBots();
+            }).catch(() => {});
+          });
+
+          featureCard.querySelectorAll(".title, .description").forEach((featureInput) => {
+            featureInput.addEventListener("blur", () => {
+              if (!bot.features) (bot.features = []);
+              bot.features.find((feature) => feature.id === id)[featureInput.className.replace("title", "name")] = featureInput.textContent;
+
+              const index = this.bots.findIndex((b) => b.id === bot.id);
+              this.bots[index] = bot;
+
+              this.saveBots();
+            });
+          });
+
+          suiteMainView.querySelector("#landingPageSection .grid-container").appendChild(featureCard);
+        } else if (button.querySelector("i").className === "fas fa-upload") {
+
+        } else if (button.querySelector("i").className === "fas fa-arrow-up-right-from-square") {
+
+        };
+      });
+    });
+
+    suiteMainView.querySelectorAll("#landingPageSection .grid-container .card").forEach((featureCard) => {
+      featureCard.querySelector("i").addEventListener("click", () => {
+        if (!bot.features) (bot.features = []);
+        bot.features = bot.features.filter((feature) => feature.id.toString() !== featureCard.dataset.id);
+
+        const index = this.bots.findIndex((b) => b.id === bot.id);
+        this.bots[index] = bot;
+
+        this.saveBots();
+
+        featureCard.remove();
+
+        if (!suiteMainView.querySelector("#landingPageSection .grid-container").children.length) {
+          suiteMainView.querySelector("#landingPageSection .grid-container").innerHTML = `<span style="color: grey; margin-bottom: -0.5rem;">No features found</span>`;
+        };
+      });
+
+      featureCard.querySelector(".icon i").addEventListener("click", () => {
+        this.prompt("Change Feature Icon", "Enter FontAwesome icon name...").then((icon) => {
+          if (!this.isFontAwesomeIconAvailable(icon)) return;
+
+          featureCard.querySelector(".icon i").className = `fas fa-${icon}`;
+
+          if (!bot.features) (bot.features = []);
+          bot.features.find((feature) => feature.id.toString() === featureCard.dataset.id).icon = icon;
+
+          const index = this.bots.findIndex((b) => b.id === bot.id);
+          this.bots[index] = bot;
+
+          this.saveBots();
+        }).catch(() => {});
+      });
+
+      featureCard.querySelectorAll(".title, .description").forEach((featureInput) => {
+        featureInput.addEventListener("blur", () => {
+          if (!bot.features) (bot.features = []);
+          bot.features.find((feature) => feature.id.toString() === featureCard.dataset.id)[featureInput.className.replace("title", "name")] = featureInput.textContent;
+
+          const index = this.bots.findIndex((b) => b.id === bot.id);
+          this.bots[index] = bot;
+
+          this.saveBots();
+        });
+      });
     });
 
     suiteMainView.querySelector("#vanityLinksSection .add-command-btn").addEventListener("click", async () => {
@@ -1775,7 +2254,7 @@ class LocalBotify {
                 ${(stats["total-clicks"]) ? `
                   <canvas id="browserChart"></canvas>
                 ` : `
-                  <p style="font-size: 1.25rem; font-family: system-ui;">Vanity Link hasn't been clicked yet</p>
+                  <p style="font-size: 1.25rem; font-family: system-ui; text-align: center;">Vanity Link hasn't been clicked yet</p>
                 `}
               </div>
               <div class="command-item setting-item" style="margin-left: 0.85rem; width: calc((100vw / 3) - (8rem / 3)); height: 30vh; display: flex; justify-content: center; align-items: center;">
@@ -1998,7 +2477,7 @@ class LocalBotify {
               ${(stats["total-clicks"]) ? `
                 <canvas id="browserChart"></canvas>
               ` : `
-                <p style="font-size: 1.25rem; font-family: system-ui;">Vanity Link hasn't been clicked yet</p>
+                <p style="font-size: 1.25rem; font-family: system-ui; text-align: center;">Vanity Link hasn't been clicked yet</p>
               `}
             </div>
             <div class="command-item setting-item" style="margin-left: 0.85rem; width: calc((100vw / 3) - (8rem / 3)); height: 30vh; display: flex; justify-content: center; align-items: center;">
@@ -2178,6 +2657,91 @@ class LocalBotify {
     });
   };
 
+  showPublicationModal(bot) {
+    const modal = document.createElement("div");
+    modal.className = "modal";
+
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Publish Bot</h2>
+          <button class="close-btn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <form id="botForm">
+            <div class="form-group">
+              <label for="botName">Bot Name</label>
+              <div style="display: flex; flex-direction: row;">
+                <button type="button" id="botAvatar" style="width: fit-content; border-top-right-radius: 0; border-bottom-right-radius: 0;">
+                  <span${(!this.isEmoji(bot?.avatar)) ? ` style="opacity: 0.6;"` : ""}>${(this.isEmoji(bot?.avatar)) ? this.escapeHtml(bot?.avatar) : "🤖"}</span$>
+                </button>
+                <input type="text" id="botName" value="${this.escapeHtml(bot.name || "")}" required style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="botDescription">Description (optional)</label>
+              <textarea id="botDescription" value="${this.escapeHtml(bot.description || "")}"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="githubRepository">GitHub Repository</label>
+              <input type="text" id="githubRepository" required>
+            </div>
+            <div class="form-actions" style="margin-top: 0;">
+              <button type="submit" class="submit-btn">
+                Publish Bot
+              </button>
+              <button type="button" class="cancel-btn">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    modal.querySelector("#botAvatar").addEventListener("click", () => {
+      this.showEmojiPicker();
+    });
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add("show"), 10);
+
+    const closeModal = () => {
+      modal.classList.remove("show");
+      setTimeout(() => modal.remove(), 300);
+    };
+
+    modal.querySelector(".close-btn").addEventListener("click", closeModal);
+    modal.querySelector(".cancel-btn").addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    const form = modal.querySelector("#botForm");
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      fetch(process.env.SERVER + "/api/v1/store/add", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          avatar: (this.isEmoji(modal.querySelector("#botAvatar").textContent.trim()) ? modal.querySelector("#botAvatar").textContent.trim() : "🤖"),
+          name: modal.querySelector("#botName").value,
+          description: modal.querySelector("#botDescription").value,
+          repository: modal.querySelector("#githubRepository").value
+        })
+      })
+      .then((response) => response.json())
+      .then(({ err }) => {
+        if (err) return this.showToast(err, "error");
+
+        this.showToast("Published bot", "success");
+      }).catch(() => {});
+
+      closeModal();
+    });
+  };
+
   showBotSettings(bot) {
     const path = require("path");
 
@@ -2286,7 +2850,7 @@ class LocalBotify {
     return result;
   };
 
-  renderFileTree(files) {
+  renderFileTree(files, helpView = false) {
     return files.map((file) => {
       if (file.type === "folder") {
         return `
@@ -2295,7 +2859,7 @@ class LocalBotify {
             <span>${this.escapeHtml(file.name)}</span>
           </div>
           <div class="folder-content" style="display: none; padding-left: 1rem;">
-            ${this.renderFileTree(file.files)}
+            ${this.renderFileTree(file.files, helpView)}
           </div>
         `;
       } else {
@@ -2303,7 +2867,7 @@ class LocalBotify {
         return `
           <div class="file-tree-item" data-filename="${this.escapeHtml(file.path || file.name)}">
             <i class="fas ${icon}"></i>
-            <span>${this.escapeHtml(file.name)}</span>
+            <span>${this.escapeHtml(file.name.substring(0, file.name.length - (helpView * 3)))}</span>
           </div>
         `;
       };
@@ -2349,8 +2913,8 @@ class LocalBotify {
       if (fileItem.classList.contains("file-tree-item")) {
         let span = fileItem.querySelector("span");
         if (span) {
-          path.unshift(span.textContent.trim());
-          };
+          path.unshift(fileItem.dataset.filename || span.textContent.trim());
+        };
       };
 
       if (fileItem.parentElement && fileItem.parentElement.classList.contains("folder-content")) {
@@ -2415,7 +2979,7 @@ class LocalBotify {
             if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"))) return;
 
             this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"));
-            
+
             editorView.querySelector(".editor-play-btn").style.right = (this.editor.getScrollerElement().scrollHeight > this.editor.getScrollerElement().clientHeight) ? "calc(0.5rem + 5px)" : "calc(0.5rem - 2.5px)";
           });
 
@@ -2456,7 +3020,7 @@ class LocalBotify {
             span.contentEditable = false;
             item.dataset.filename = span.textContent.trim();
             fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8");
-            
+
             item.click();
           });
 
@@ -2470,7 +3034,7 @@ class LocalBotify {
             span.contentEditable = false;
             item.dataset.filename = span.textContent.trim();
             fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8");
-            
+
             item.click();
           });
         });
@@ -2568,7 +3132,7 @@ class LocalBotify {
   showBotEditor(bot = null) {
     const modal = document.createElement("div");
     modal.className = "modal";
-    
+
     modal.innerHTML = `
       <div class="modal-content">
         <div class="modal-header">
@@ -2601,7 +3165,7 @@ class LocalBotify {
               </div>
             </div>` : ""}
             <div class="form-group">
-              <label for="botToken">Bot Token (optional)</label>
+              <label for="botToken">Bot Token</label>
               <input type="text" id="botToken" value="${(bot) ? this.escapeHtml(require("fs").readFileSync(require("path").join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8").split("\n").filter((line) => !line.startsWith("#") && (line.split("=").length > 1)).map((line) => line.trim().split(/\/\/|#/)[0].split("=")).reduce((data, accumulator) => ({
                 ...data,
                 ...{
@@ -2667,6 +3231,16 @@ class LocalBotify {
     const closeModal = () => {
       modal.classList.remove("show");
       setTimeout(() => modal.remove(), 300);
+
+      if (Array.from(document.querySelectorAll(".nav-item")).find((navItem) => navItem.classList.contains("currentView"))) {
+        document.querySelectorAll(".nav-item").forEach((navItem) => {
+          navItem.classList.remove("active");
+          if (Array.from(navItem.classList).includes("currentView")) {
+            navItem.classList.remove("currentView");
+            navItem.classList.add("active");
+          };
+        });
+      };
     };
 
     modal.querySelector(".close-btn").addEventListener("click", closeModal);
@@ -2680,11 +3254,12 @@ class LocalBotify {
       e.preventDefault();
 
       const newBot = {
-        avatar: ((form.querySelector("#botAvatar span").style.opacity !== "0.6") && this.isEmoji(form.querySelector("#botAvatar span").textContent.trim())) ? form.querySelector("#botAvatar span").textContent.trim() : "🤖",
         id: (bot) ? bot.id : Date.now(),
+        avatar: ((form.querySelector("#botAvatar span").style.opacity !== "0.6") && this.isEmoji(form.querySelector("#botAvatar span").textContent.trim())) ? form.querySelector("#botAvatar span").textContent.trim() : "🤖",
         name: form.querySelector("#botName").value,
         description: form.querySelector("#botDescription").value,
-        initialized: false,
+        initialized: (bot) ? bot.initialized : false,
+        features: (bot) ? bot.features :  [],
         vanityLinks: (bot) ? bot.vanityLinks :  []
       };
 
@@ -2692,23 +3267,34 @@ class LocalBotify {
 
       let replacedToken = false;
 
-      fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "utf8").split("\n").map((line) => {
-        if (replacedToken) return line;
-
-        if (line.split(/#|\/\//)[0].match(/^\s*TOKEN\s*=/)) {
-          replacedToken = true;
-          return line.replace(/^\s*TOKEN\s*=.*?(#|\/\/|$)/, `TOKEN="${form.querySelector("#botToken").value}" $1`).trim();
-        };
-
-        return line;
-      }).join("\n"), "utf8");
-
       if (bot) {
         const index = this.bots.findIndex((b) => b.id === bot.id);
         this.bots[index] = newBot;
+
+        fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "utf8").split("\n").map((line) => {
+          if (replacedToken) return line;
+
+          if (line.split(/#|\/\//)[0].match(/^\s*TOKEN\s*=/)) {
+            replacedToken = true;
+            return line.replace(/^\s*TOKEN\s*=.*?(#|\/\/|$)/, `TOKEN="${form.querySelector("#botToken").value}" $1`).trim();
+          };
+
+          return line;
+        }).join("\n"), "utf8");
       } else {
         this.bots.push(newBot);
-        this.initializeTemplate(newBot, ((form.querySelector("#botTemplate").tagName === "INPUT") ? "git:" : "") + form.querySelector("#botTemplate").value);
+        this.initializeTemplate(newBot, ((form.querySelector("#botTemplate").tagName === "INPUT") ? "git:" : "") + form.querySelector("#botTemplate").value).then(() => {
+          fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "utf8").split("\n").map((line) => {
+            if (replacedToken) return line;
+
+            if (line.split(/#|\/\//)[0].match(/^\s*TOKEN\s*=/)) {
+              replacedToken = true;
+              return line.replace(/^\s*TOKEN\s*=.*?(#|\/\/|$)/, `TOKEN="${form.querySelector("#botToken").value}" $1`).trim();
+            };
+
+            return line;
+          }).join("\n"), "utf8");
+        });
       };
 
       this.saveBots();
@@ -2731,7 +3317,7 @@ class LocalBotify {
     };
 
     if (template === "none") return;
-    
+
     if (!template.startsWith("git:")) {
       this.copyRecursiveSync(path.join(__dirname, "../templates", template), path.join(process.cwd(), "bots", newBot.id.toString()));
 
@@ -2745,11 +3331,26 @@ class LocalBotify {
         });
       };
     } else {
-      ipcRenderer.send("importGitHubRepo", [
+      ipcRenderer.invoke("importGitHubRepository", [
         newBot.id,
         template.substring(4)
-      ]);
+      ]).then(() => {
+        if (fs.readdirSync(path.join(process.cwd(), "bots", newBot.id.toString())).includes("files.config") && fs.statSync(path.join(process.cwd(), "bots", newBot.id.toString(), "files.config")).isFile()) {
+          fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), "files.config"), "utf8").split("```").filter((_, index) => (index % 2)).forEach((configFile) => {
+            fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), configFile.split("\n")[0].trim()), configFile.split("\n").slice(1).join("\n").trim().replace(/\$\{([^}]+)\}/g, (_, code) => {
+              try {
+                return eval(code);
+              } catch {};
+            }), "utf8");
+          });
+        };
+      });
     };
+
+    ipcRenderer.send("terminalData", [
+      newBot.id,
+      (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization || "") + "; " + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`
+    ]);
   };
 
   showUpgradeModal() {
@@ -2811,6 +3412,55 @@ class LocalBotify {
     });
   };
 
+  showActivationModal() {
+    const modal = document.createElement("div");
+    modal.className = "modal";
+
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>✨ Thanks for Becoming a LocalBotify Pro User! ✨</h2>
+          <button class="close-btn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <form id="upgradeForm">
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <p style="margin-bottom: 0.5rem;">As the sole developer of this app, I greatly thank you for supporting our cause.</p>
+              <p style="color: #ffb100de;"><span style="text-decoration: underline;">Love from Germany!</span> ❤️</p>
+            </div>
+            <div class="form-actions" style="margin-top: 0;">
+              <button type="submit" class="submit-btn">
+                Start Using Pro
+              </button>
+              <button type="button" class="cancel-btn">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add("show"), 10);
+
+    const closeModal = () => {
+      modal.classList.remove("show");
+      setTimeout(() => modal.remove(), 300);
+    };
+
+    modal.querySelector(".close-btn").addEventListener("click", closeModal);
+    modal.querySelector(".cancel-btn").addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    const form = modal.querySelector("#upgradeForm");
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      closeModal();
+    });
+  };
+
   showEmojiPicker() {
     const modal = document.createElement("div");
     modal.className = "modal";
@@ -2857,6 +3507,189 @@ class LocalBotify {
     });
   };
 
+  async viewBot(bot) {
+    const childProcess = require("child_process");
+
+    const modal = document.createElement("div");
+    modal.className = "modal";
+
+    const match = bot.repository.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)(\/)?$/);
+
+    const parsedMarkdown = await ipcRenderer.invoke("parseMarkdown", await (await fetch(`https://raw.githubusercontent.com/${match[1]}/${match[2]}/refs/heads/main/README.md`)).text());
+
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-body markdown-body" style="padding-top: 0; background-color: #151618; border: 1px solid #1f1f1f;">
+          <button class="close-btn" style="float: right; transform: translateY(15px);">
+            <i class="fas fa-times"></i>
+          </button>
+          <button class="close-btn like-btn" style="float: right; transform: translateY(15px);">
+            <i class="fas fa-thumbs-up"></i>
+          </button>
+          <form id="botForm" style="padding: 0 10px; margin-top: -8.5px;">
+            <div class="form-group">
+              ${parsedMarkdown}
+            </div>
+            <div class="form-actions" style="margin-bottom: 7.5px;">
+              <button type="submit" class="submit-btn">
+                Close
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    if (!document.querySelector(".markdown-stylesheet")) {
+      const markdownStylesheet = document.createElement("link");
+      markdownStylesheet.rel = "stylesheet";
+      markdownStylesheet.href = "../packages/github-markdown/github-markdown-dark.css";
+      markdownStylesheet.className = "markdown-stylesheet";
+
+      document.head.appendChild(markdownStylesheet);
+    };
+
+    modal.querySelectorAll(".form-group a").forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+
+        childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + e.target.href + `"`, (process.platform === "win32") ? {
+          shell: "powershell.exe"
+        } : {});
+      });
+    });
+
+    if (parsedMarkdown.match(/<pre><code class="(language-[^"]+)">([\s\S]*?)<\/code><\/pre>/gs)) {
+      ipcRenderer.invoke("highlightSyntax", parsedMarkdown).then((syntaxHighlightedMarkdown) => {
+        modal.querySelector(".form-group").innerHTML = syntaxHighlightedMarkdown;
+      });
+    };
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add("show"), 10);
+
+    const closeModal = () => {
+      modal.classList.remove("show");
+      setTimeout(() => modal.remove(), 300);
+    };
+
+    modal.querySelector(".like-btn").addEventListener("click", () => {
+      fetch(process.env.SERVER + "/api/v1/store/like", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id: bot.id
+        })
+      })
+      .then((response) => response.json())
+      .then(({ err }) => {
+        if (err) return this.showToast(err, "error");
+
+        this.showToast("Liked bot", "success");
+
+        const botGrid = document.getElementById("botGrid");
+        const card = Array.from(botGrid.children).find((card) => card.dataset.id === bot.id);
+
+        card.querySelectorAll(".bot-stats .stat-value")[2].textContent = this.formatNumber(Number(card.querySelectorAll(".bot-stats .stat-value")[2].textContent) + 1);
+      });
+    });
+
+    modal.querySelector(".close-btn").addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    const form = modal.querySelector("#botForm");
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      modal.classList.remove("show");
+      setTimeout(() => modal.remove(), 300);
+    });
+  };
+
+  reportBot(bot) {
+    const modal = document.createElement("div");
+    modal.className = "modal";
+
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Report Bot</h2>
+          <button class="close-btn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <form id="botForm">
+            <div class="form-group">
+              <label for="reportReason">Reason</label>
+              <select id="reportReason">
+                <option disabled selected hidden>Select a reason</option>
+                <option value="malicious">🚨 Malicious Behavior</option>
+                <option value="tosViolation">🚫 Violating Discord Terms of Service</option>
+                <option value="privacyAbuse">🔒 Privacy / Data Abuse</option>
+                <option value="broken">💥 Broken / Non-Functional</option>
+                <option value="misleading">🧬 Misleading or Fraudulent Description</option>
+                <option value="stolen">🎮 Stolen / Uncredited Copy</option>
+                <option value="other">🧩 Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="reportContext">Additional Context</label>
+              <textarea id="reportContext"></textarea>
+            </div>
+            <div class="form-actions" style="margin-top: 0;">
+              <button type="submit" class="submit-btn submit-report-btn" style="background-color: var(--discord-red);">
+                Report Bot
+              </button>
+              <button type="button" class="cancel-btn">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add("show"), 10);
+
+    const closeModal = () => {
+      modal.classList.remove("show");
+      setTimeout(() => modal.remove(), 300);
+    };
+
+    modal.querySelector(".close-btn").addEventListener("click", closeModal);
+    modal.querySelector(".cancel-btn").addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    const form = modal.querySelector("#botForm");
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      fetch("/api/v1/store/report", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id: bot.id,
+          reason: modal.querySelector("#reportReason").value || "other",
+          context: modal.querySelector("#reportContext").value || null
+        })
+      })
+      .then((response) => response.json())
+      .then(({ err } = {}) => {
+        if (err) return this.showToast(err, "error");
+
+        this.showToast("Reported bot", "success");
+      }).catch(() => {});
+
+      closeModal();
+    });
+  };
+
   runBots() {
     const path = require("path");
 
@@ -2898,7 +3731,7 @@ class LocalBotify {
         } else if (item.querySelector("span").textContent === "Create New") {
           this.showBotEditor();
         } else if (item.querySelector("span").textContent === "Bot Store") {
-          this.currentView = "settings";
+          this.currentView = "store";
         } else if (item.querySelector("span").textContent === "Feedback") {
           this.showFeedbackModal();
         } else if (item.querySelector("span").textContent === "Settings") {
@@ -2906,7 +3739,7 @@ class LocalBotify {
         } else if (item.querySelector("span").textContent === "Help") {
           this.currentView = "help";
         };
-        
+
         if (["My Bots", "Bot Store", "Settings", "Help"].includes(item.querySelector("span").textContent)) this.renderContent();
       });
     });
@@ -2921,7 +3754,7 @@ class LocalBotify {
       const newWidth = e.clientX - sidebarLeft;
       sidebar.style.width = Math.min(Number(window.getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width").slice(0, -2)), newWidth) + "px";
     };
-    
+
     let stopResize = () => {
       isResizing = false;
       document.removeEventListener("mousemove", handleResize);
@@ -3045,7 +3878,7 @@ class LocalBotify {
 
     if (parsedMarkdown.match(/<pre><code class="(language-[^"]+)">([\s\S]*?)<\/code><\/pre>/gs)) {
       ipcRenderer.invoke("highlightSyntax", parsedMarkdown).then((syntaxHighlightedMarkdown) => {
-        helpView.querySelector(".form-group").innerHTML = syntaxHighlightedMarkdown;
+        modal.querySelector(".form-group").innerHTML = syntaxHighlightedMarkdown;
       });
     };
 
@@ -3121,7 +3954,7 @@ class LocalBotify {
       });
     });
   };
-  
+
   confirm(title, message) {
     return new Promise((resolve, reject) => {
       const modal = document.createElement("div");
@@ -3247,6 +4080,20 @@ class LocalBotify {
     }, duration);
   };
 
+  isFontAwesomeIconAvailable(icon) {
+    const testElement = document.createElement("i");
+    testElement.className = `fas fa-${icon}`;
+    testElement.style.display = "none";
+    document.body.appendChild(testElement);
+
+    const style = window.getComputedStyle(testElement, "::before");
+    const content = style.getPropertyValue("content");
+
+    document.body.removeChild(testElement);
+
+    return content && (content !== "none") && (content !== '""');
+  }
+
   readFileSafelySync(path) {
     try {
       return fs.readFileSync(path, "utf8");
@@ -3337,7 +4184,7 @@ class LocalBotify {
 
       try {
         execSync((platform === "win32") ? "net session" : "sudo -v", { stdio: "ignore" });
-        
+
         function createGlobalNodeScript() {
           let nodeScriptContent = "";
 

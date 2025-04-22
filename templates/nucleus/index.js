@@ -113,12 +113,12 @@ client.on("messageCreate", (message) => {
       }), {})
     }, client, message);
 
-    const commands = Object.fromEntries(
-        fs.readFileSync("./channels/commands.txt", "utf8").split("\n").filter((line) => line).map((line) => {
-        const [key, value] = line.split(":").map((part) => part.trim());
-        return [key.toLowerCase(), Number(value)];
-      })
-    );
+    fs.writeFileSync("./channels/messages.txt", (Number(fs.readFileSync("./channels/messages.txt", "utf8") || "0") + 1).toString(), "utf8");
+
+    const commands = fs.readFileSync("./channels/commands.txt", "utf8").split("\n").filter((line) => line).map((line) => {
+      const [key, value] = line.split(":").map((part) => part.trim());
+      return [key.toLowerCase(), Number(value)];
+    });
     const commandCount = commands.find(([key]) => key === commandName)?.[1] || 0;
     const updatedCommands = commands.filter(([key]) => key !== commandName).concat([[commandName, commandCount + 1]]);
     fs.writeFileSync("./channels/commands.txt", updatedCommands.map(([key, value]) => `${key}: ${value}`).join("\n"), "utf8");
@@ -151,12 +151,12 @@ client.on("interactionCreate", (interaction) => {
       }), {})
     }, client, interaction);
 
-    const commands = Object.fromEntries(
-      fs.readFileSync("./channels/commands.txt", "utf8").split("\n").filter((line) => line).map((line) => {
-        const [key, value] = line.split(":").map((part) => part.trim());
-        return [key.toLowerCase(), Number(value)];
-      })
-    );
+    fs.writeFileSync("./channels/messages.txt", (Number(fs.readFileSync("./channels/messages.txt", "utf8") || "0") + 1).toString(), "utf8");
+
+    const commands = fs.readFileSync("./channels/commands.txt", "utf8").split("\n").filter((line) => line).map((line) => {
+      const [key, value] = line.split(":").map((part) => part.trim());
+      return [key.toLowerCase(), Number(value)];
+    });
     const commandCount = commands.find(([key]) => key === commandName)?.[1] || 0;
     const updatedCommands = commands.filter(([key]) => key !== commandName).concat([[commandName, commandCount + 1]]);
     fs.writeFileSync("./channels/commands.txt", updatedCommands.map(([key, value]) => `${key}: ${value}`).join("\n"), "utf8");
@@ -188,6 +188,14 @@ fs.readdirSync("./events").forEach((event) => {
         }
       }), {})
     }, client, ...args);
+
+    const events = fs.readFileSync("./channels/events.txt", "utf8").split("\n").filter((line) => line).map((line) => {
+      const [key, value] = line.split(":").map((part) => part.trim());
+      return [key.toLowerCase(), Number(value)];
+    });
+    const eventCount = events.find(([key]) => key === event.substring(0, event.length - 3))?.[1] || 0;
+    const updatedEvents = events.filter(([key]) => key !== event.substring(0, event.length - 3)).concat([[event.substring(0, event.length - 3), eventCount + 1]]);
+    fs.writeFileSync("./channels/events.txt", updatedEvents.map(([key, value]) => `${key}: ${value}`).join("\n"), "utf8");
   });
 });
 

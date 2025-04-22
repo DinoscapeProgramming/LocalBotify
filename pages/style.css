@@ -138,6 +138,15 @@ body {
   overflow-y: auto;
 }
 
+.content.no-bots {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: calc(100% - var(--header-height) - 20px);
+  animation: slideUp 0.5s ease;
+}
+
 .search-container {
   position: relative;
   flex: 1;
@@ -415,7 +424,7 @@ body {
   transition: border-color 0.2s ease;
 }
 
-.form-group input:focus, .form-group textarea:focus, .form-group button:focus {
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus, .form-group button:focus {
   outline: none;
   border-color: var(--discord-primary);
 }
@@ -449,6 +458,10 @@ body {
 
 .submit-btn:hover {
   background-color: #4752c4;
+}
+
+.submit-report-btn:hover {
+  background-color: #b92f32 !important;
 }
 
 #upgradeForm .submit-btn {
@@ -937,7 +950,7 @@ body {
   transform: scale(1.1);
 }
 
-.action-btn.delete-btn:hover {
+.action-btn.delete-btn:hover, .action-btn.report-btn:hover {
   background-color: var(--discord-red);
   color: white;
 }
@@ -1509,6 +1522,66 @@ body {
   outline: none;
 }
 
+#landingPageSection .grid-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  #landingPageSection .grid-container {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  #landingPageSection .grid-container {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+#landingPageSection .card {
+  background-color: #2a2b2e;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: background-color 0.3s ease;
+}
+
+#landingPageSection .card:hover {
+  background-color: #3a3b3e;
+}
+
+#landingPageSection .icon {
+  color: #9b59b6;
+  margin-bottom: 1rem;
+}
+
+#landingPageSection .icon i {
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+#landingPageSection .icon i:hover {
+  opacity: 0.8;
+}
+
+#landingPageSection .title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+#landingPageSection .description {
+  color: #b0b0b0;
+}
+
+#landingPageSection [contenteditable]:empty:before{
+  content: attr(placeholder);
+  pointer-events: none;
+  opacity: 0.75;
+}
+
 #vanityLinksSection .setting-item:last-child {
   margin-bottom: 0 !important;
 }
@@ -1598,6 +1671,10 @@ body {
 
 .help-tree .file-tree-item.active {
   background-color: rgb(45 102 187 / 75%) !important;
+}
+
+.markdown-body img {
+  background-color: transparent !important;
 }
 
 .markdown-body pre.shiki {

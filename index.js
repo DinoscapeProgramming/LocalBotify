@@ -149,7 +149,7 @@ const createWindow = () => {
     };
   });
 
-  ipcMain.on("importGitHubRepo", async (_, [botId, repo]) => {
+  ipcMain.handle("importGitHubRepository", async (_, [botId, repo]) => {
     const url = `${repo}/archive/refs/heads/main.zip`;
     const outputDirectory = path.join(process.cwd(), "bots", botId.toString());
 
