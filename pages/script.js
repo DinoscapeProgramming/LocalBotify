@@ -68,7 +68,7 @@ class LocalBotify {
     localStorage.setItem("bots", JSON.stringify(this.bots));
   };
 
-  async renderContent() {
+  renderContent() {
     (this.statusWatchers || []).forEach((statusWatcher) => statusWatcher.close());
     (this.statusWatchers || []).forEach((statisticsWatcher) => statisticsWatcher.close());
 
@@ -100,7 +100,7 @@ class LocalBotify {
               margin-bottom: 1.5rem;
               opacity: 0.8;
             "></i>
-            <p style="opacity: 0.8;margin-bottom: 0.6rem;">Yikes. So quiet here...</p>
+            <p style="opacity: 0.8; margin-bottom: 0.6rem;">Yikes. So quiet here...</p>
             <button class="create-btn" style="
               width: 19.5ch;
               justify-content: center;
@@ -122,11 +122,26 @@ class LocalBotify {
               margin-bottom: 1.5rem;
               opacity: 0.8;
             "></i>
-            <p style="opacity: 0.8;margin-bottom: 0.6rem;">No Internet Connection</p>
+            <p style="opacity: 0.8; margin-bottom: 0.6rem;">No Internet Connection</p>
           `;
         } else if (this.bots.length) {
-          content.classList.remove("no-bots");
-          content.appendChild(await this.createStoreGrid());
+          content.classList.add("no-bots");
+
+          content.innerHTML = `
+            <i class="fas fa-spin fa-spinner" style="
+              font-size: 5rem;
+              margin-bottom: 1.5rem;
+              opacity: 0.8;
+            "></i>
+            <p style="opacity: 0.8; margin-bottom: 0.6rem;">Revolutionizing bot creation...</p>
+          `;
+
+          this.createStoreGrid().then((storeGrid) => {
+            content.classList.remove("no-bots");
+            content.innerHTML = "";
+
+            content.appendChild(storeGrid);
+          });
         } else {
           content.classList.add("no-bots");
 
@@ -136,7 +151,7 @@ class LocalBotify {
               margin-bottom: 1.5rem;
               opacity: 0.8;
             "></i>
-            <p style="opacity: 0.8;margin-bottom: 0.6rem;">Yikes. So quiet here...</p>
+            <p style="opacity: 0.8; margin-bottom: 0.6rem;">Yikes. So quiet here...</p>
             <button class="create-btn" style="
               width: 19.5ch;
               justify-content: center;
@@ -175,6 +190,13 @@ class LocalBotify {
           <i class="fas fa-plus"></i>
           Create Bot
         </button>
+      `;
+    } else if (this.currentView === "store") {
+      header.innerHTML = `
+        <div class="search-container">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search bots..." />
+        </div>
       `;
     } else {
       header.innerHTML = `
@@ -407,12 +429,12 @@ class LocalBotify {
               <div class="bot-stats" ${(settings.showStats ?? true) ? "" : `style="display: none;"`}>
                 <div class="stat">
                   <div class="stat-label">Status</div>
-                  <div class="stat-value" style="color: ${(bot.verified) ? "#00adff" : "var(--discord-muted)"};">
+                  <div class="stat-value" style="color: ${(bot.verified) ? "#00adff" : "var(--discord-muted)"}; white-space: nowrap;">
                     <i class="fas fa-circle-${(bot.verified) ? "check" : "xmark"}" style="margin-right: 2.5px;"></i>
                     ${(bot.verified) ? "Verified" : "Unsafe"}
                   </div>
                 </div>
-                <div class="stat">
+                <div class="stat" style="margin-left: 10%;">
                   <div class="stat-label">Installs</div>
                   <div class="stat-value">${this.formatNumber(bot.installs)}</div>
                 </div>
@@ -472,6 +494,20 @@ class LocalBotify {
                   this.currentView = "bots";
                   this.renderContent();
                   Array.from(document.querySelectorAll(".nav-item")).find((navItem) => navItem.querySelector("i").className === "fas fa-robot").classList.add("active");
+
+                  fetch(process.env.SERVER + "/api/v1/store/install", {
+                    method: "POST",
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                      id: bot.id
+                    })
+                  })
+                  .then((response) => response.json())
+                  .then(({ err }) => {
+                    if (err) return this.showToast(err, "error");
+                  }).catch(() => {});
                 }).catch(() => {});
               }).catch(() => {});
             });
@@ -820,7 +856,7 @@ class LocalBotify {
 
     document.querySelector(".app").style.backgroundColor = "#0d1117";
 
-    ipcRenderer.invoke("parseMarkdown", fs.readFileSync(path.join(__dirname, "../docs/User Guide/Getting Started.md"), "utf8")).then((parsedMarkdown) => {
+    ipcRenderer.invoke("parseMarkdown", this.escapeHtml(fs.readFileSync(path.join(__dirname, "../docs/User Guide/Getting Started.md"), "utf8"))).then((parsedMarkdown) => {
       helpView.querySelector(".markdown-body").innerHTML = parsedMarkdown;
 
       helpView.querySelectorAll(".markdown-body a").forEach((link) => {
@@ -3080,7 +3116,7 @@ class LocalBotify {
 
           const filePath = this.getFilePath(item);
 
-          ipcRenderer.invoke("parseMarkdown", fs.readFileSync(path.join(__dirname, "../docs", filePath), "utf8")).then((parsedMarkdown) => {
+          ipcRenderer.invoke("parseMarkdown", this.escapeHtml(fs.readFileSync(path.join(__dirname, "../docs", filePath), "utf8"))).then((parsedMarkdown) => {
             helpView.querySelector(".markdown-body").innerHTML = parsedMarkdown;
 
             helpView.querySelectorAll(".markdown-body a").forEach((link) => {
@@ -3524,7 +3560,7 @@ class LocalBotify {
 
     const match = bot.repository.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)(\/)?$/);
 
-    const parsedMarkdown = await ipcRenderer.invoke("parseMarkdown", await (await fetch(`https://raw.githubusercontent.com/${match[1]}/${match[2]}/refs/heads/main/README.md`)).text());
+    const parsedMarkdown = await ipcRenderer.invoke("parseMarkdown", this.escapeHtml(await (await fetch(`https://raw.githubusercontent.com/${match[1]}/${match[2]}/refs/heads/main/README.md`)).text()));
 
     modal.innerHTML = `
       <div class="modal-content">
@@ -3602,7 +3638,7 @@ class LocalBotify {
         const card = Array.from(botGrid.children).find((card) => card.dataset.id === bot.id);
 
         card.querySelectorAll(".bot-stats .stat-value")[2].textContent = this.formatNumber(Number(card.querySelectorAll(".bot-stats .stat-value")[2].textContent) + 1);
-      });
+      }).catch(() => {});
     });
 
     modal.querySelector(".close-btn").addEventListener("click", closeModal);
@@ -3636,7 +3672,7 @@ class LocalBotify {
               <select id="reportReason">
                 <option disabled selected hidden>Select a reason</option>
                 <option value="malicious">🚨 Malicious Behavior</option>
-                <option value="tosViolation">🚫 Violating Discord Terms of Service</option>
+                <option value="tosViolation">👮 Violating Discord Terms of Service</option>
                 <option value="privacyAbuse">🔒 Privacy / Data Abuse</option>
                 <option value="broken">💥 Broken / Non-Functional</option>
                 <option value="misleading">🧬 Misleading or Fraudulent Description</option>
@@ -3779,10 +3815,12 @@ class LocalBotify {
     document.addEventListener("input", (e) => {
       if (e.target.matches(".search-container input")) {
         const query = e.target.value.toLowerCase();
-        const filteredBots = this.bots.filter((bot) => 
+        const filteredBots = (this.currentView === "bots") ? this.bots.filter((bot) => 
           bot.name.toLowerCase().includes(query) ||
           bot.description.toLowerCase().includes(query)
-        );
+        ) : Array.from(document.getElementById("botGrid").children).filter((card) => card.dataset.id && card.querySelector(".bot-info").textContent.trim().toLowerCase().includes(query)).map((card) => ({
+          id: card.dataset.id
+        }));
 
         const botGrid = document.getElementById("botGrid");
         if (botGrid) {
@@ -3792,12 +3830,15 @@ class LocalBotify {
 
           if (filteredBots.length === 0) {
             if (!botGrid.querySelector(".no-results")) {
-              botGrid.innerHTML += `
-                <div class="no-results">
-                  <i class="fas fa-search"></i>
-                  <p>No bots found matching your search</p>
-                </div>
+              const noResults = document.createElement("div");
+              noResults.className = "no-results";
+
+              noResults.innerHTML = `
+                <i class="fas fa-search"></i>
+                <p>No bots found matching your search</p>
               `;
+
+              botGrid.appendChild(noResults);
             } else {
               botGrid.querySelector(".no-results").style.display = "block";
             };
