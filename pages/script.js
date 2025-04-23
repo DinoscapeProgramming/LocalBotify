@@ -1399,6 +1399,14 @@ class LocalBotify {
       });
     });
 
+    workbenchMainView.querySelectorAll(".add-command-btn").forEach((button, index) => {
+      button.addEventListener("click", () => {
+        if ((index % 2) === 0) {
+          this.addInteractionItem(workspaceView, bot, (!index) ? "commands" : "events");
+        };
+      });
+    });
+
     workbenchMainView.querySelectorAll(".workbench-section .setting-item").forEach((command) => {
       command.addEventListener("click", () => {
         delete require.cache[require.resolve(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js"))];
@@ -1421,12 +1429,12 @@ class LocalBotify {
                   No variables found
                 </label>
               </div>
-            ` : variables.map(([id, { title = "", description = "", type = "text", datalist = null, options = {}, properties = {} } = {}] = [], index) => `
+            ` : variables.map(([id, { title = "", description = "", defaultValue = "", type = "text", datalist = null, options = {}, properties = {} } = {}] = [], index) => `
             <div class="command-item setting-item" style="margin-bottom: 1rem;" data-id="${this.escapeHtml(id)}">
               ${(type === "switch") ? `
                 <label>
                   <span>${this.escapeHtml(title)}</span>
-                  <input type="checkbox" ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}/>
+                  <input type="checkbox"${(defaultValue) ? " checked" : ""} ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}/>
                 </label>
                 ${
                   (description) ? `
@@ -1454,7 +1462,7 @@ class LocalBotify {
                       `)}
                     </select>
                   ` : `
-                    <input type="${type.replace("switch", "checkbox").replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                    <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                   `)}
                 </label>
               `}
@@ -1498,7 +1506,7 @@ class LocalBotify {
                   workbenchEditorView.style.display = "none";
                   workbenchMainView.style.display = "block";
                   workbenchMainView.style.animation = "0.5s ease 0s 1 normal none running slideUp";
-                  setTimeout(() => suiteMainView.style.removeProperty("animation"), 500);
+                  setTimeout(() => workbenchMainView.style.removeProperty("animation"), 500);
                   Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).find((tab) => tab.querySelector("i").className === "fas fa-tools").classList.add("active");
 
                   command.remove();
@@ -2716,7 +2724,7 @@ class LocalBotify {
             <div class="form-group">
               <label for="botName">Bot Name</label>
               <div style="display: flex; flex-direction: row;">
-                <button type="button" id="botAvatar" style="width: fit-content; border-top-right-radius: 0; border-bottom-right-radius: 0;">
+                <button type="button" id="botAvatar" style="width: fit-content; border-top-right-radius: 0; border-bottom-right-radius: 0; cursor: pointer;">
                   <span${(!this.isEmoji(bot?.avatar)) ? ` style="opacity: 0.6;"` : ""}>${(this.isEmoji(bot?.avatar)) ? this.escapeHtml(bot?.avatar) : "🤖"}</span$>
                 </button>
                 <input type="text" id="botName" value="${this.escapeHtml(bot.name || "")}" required style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
@@ -2863,6 +2871,272 @@ class LocalBotify {
       configFile.commands.startup = modal.querySelector("#startupCommand").value || null;
 
       fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
+
+      closeModal();
+    });
+  };
+
+  addInteractionItem(workspaceView, bot, category) {
+    const path = require("path");
+
+    const workbenchView = workspaceView.querySelector(".workbench-view");
+    const workbenchMainView = workbenchView.querySelector("#workbenchMainView");
+    const workbenchEditorView = workbenchView.querySelector("#workbenchEditorView");
+    const editorView = workspaceView.querySelector(".code-editor-view");
+
+    const modal = document.createElement("div");
+    modal.className = "modal";
+
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Add ${category[0].toUpperCase() + category.substring(1, category.length - 1)}</h2>
+          <button class="close-btn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <form id="botForm">
+            <div class="form-group">
+              ${(!fs.readdirSync(`./prebuilt/${category}`).length) ? `<span style="color: #d1d1d1;">No ${category} found</span>` : fs.readdirSync(`./prebuilt/${category}`).map((subcategory) => `
+                <div class="category-header" style="
+                  text-transform: uppercase;
+                  font-size: 12px;
+                  font-weight: 500;
+                  letter-spacing: 0.5px;
+                  color: #8e9297;
+                  display: flex;
+                  align-items: center;
+                  user-select: none;
+                  transition: background 0.2s;
+                  border-bottom: 1px solid #8e929726;
+                  padding-bottom: 2.5px;
+                  margin-bottom: 10px;
+                  cursor: text;
+                ">
+                  ${Array.from(subcategory).map((character) => (this.isEmoji(character)) ? `<span style="
+                    transform: translateY(-0.75px);
+                    margin-right: 3.25px;
+                  ">${this.escapeHtml(character)}</span>` : this.escapeHtml(character)).join("")}
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.375rem; margin-bottom: 15px;">
+                  ${fs.readdirSync(`./prebuilt/${category}/${subcategory}`).map((interactionItem) => `
+                    <div class="setting-item interaction-item" style="width: fit-content; padding: 0.25rem 0.55rem; cursor: pointer; margin: 0; font-size: 0.9rem;">${interactionItem.substring(0, interactionItem.length - 3)}</div>
+                  `).join("\n")}
+                </div>
+              `).join("\n")}
+            </div>
+            <div class="form-actions" style="margin-top: 0;">
+              <button type="submit" class="submit-btn" style="opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none;"></button>
+              <button type="button" class="cancel-btn">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    modal.querySelectorAll(".interaction-item").forEach((interactionItem) => {
+      interactionItem.addEventListener("click", () => {
+        interactionItem.classList.toggle("active");
+
+        if (!Array.from(modal.querySelectorAll(".interaction-item")).filter((interactionItem) => interactionItem.classList.contains("active")).length) {
+          modal.querySelector(".submit-btn").style.opacity = "0";
+          modal.querySelector(".submit-btn").style.pointerEvents = "none";
+        } else {
+          modal.querySelector(".submit-btn").style.opacity = "1";
+          modal.querySelector(".submit-btn").style.pointerEvents = "auto";
+          modal.querySelector(".submit-btn").textContent = `Add ${category[0].toUpperCase() + category.substring(1, category.length - 1) + ((Array.from(modal.querySelectorAll(".interaction-item")).filter((interactionItem) => interactionItem.classList.contains("active")).length === 1) ? "" : "s")}`;
+        };
+      });
+    });
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add("show"), 10);
+
+    const closeModal = () => {
+      modal.classList.remove("show");
+      setTimeout(() => modal.remove(), 300);
+    };
+
+    modal.querySelector(".close-btn").addEventListener("click", closeModal);
+    modal.querySelector(".cancel-btn").addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    const form = modal.querySelector("#botForm");
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      Array.from(modal.querySelectorAll(".interaction-item")).filter((interactionItem) => interactionItem.classList.contains("active")).forEach((interactionItem) => {
+        fs.copyFileSync(`./prebuilt/${category}/${interactionItem.parentElement.previousElementSibling.textContent.trim()}/${interactionItem.textContent.trim()}.js`, path.join(process.cwd(), "bots", bot.id.toString(), category, `${interactionItem.textContent.trim()}.js`));
+      });
+
+      workbenchMainView.querySelector(".workbench-section").innerHTML = `
+        <h3 style="flex-direction: row; margin-bottom: 1rem;">
+          <i class="fas fa-code"></i>Commands
+          <button class="add-command-btn" style="right: 67.5px;">
+            <i class="fas fa-plus"></i>
+            Add Command
+          </button>
+          <button class="add-command-btn" style="right: 25px; padding: 0.55rem 0.65rem;">
+            <i class="fas fa-upload"></i>
+          </button>
+        </h3>
+        ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).length) ? `<span style="color: grey;">No commands found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).map((command) => (command.endsWith(".js")) ? `
+          <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem; cursor: pointer;" data-category="commands">${this.escapeHtml(command.substring(0, command.length - 3))}</div>
+        ` : "").join("")}
+        <h3 style="flex-direction: row; margin-bottom: 1rem; margin-top: 2rem;">
+          <i class="fas fa-calendar-days"></i>Events
+          <button class="add-command-btn" style="right: 67.5px;">
+            <i class="fas fa-plus"></i>
+            Add Event
+          </button>
+          <button class="add-command-btn" style="right: 25px; padding: 0.55rem 0.65rem;">
+            <i class="fas fa-upload"></i>
+          </button>
+        </h3>
+        ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).length) ? `<span style="color: grey;">No events found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).map((command) => (command.endsWith(".js")) ? `
+          <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem; cursor: pointer;" data-category="events">${this.escapeHtml(command.substring(0, command.length - 3).replace(/[^a-zA-Z]+$/, "")) + ((command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/)}</code>` : "")}</div>
+        ` : "").join("")}
+      `;
+
+      workbenchMainView.querySelectorAll(".add-command-btn").forEach((button, index) => {
+        button.addEventListener("click", () => {
+          if ((index % 2) === 0) {
+            this.addInteractionItem(workspaceView, bot, (!index) ? "commands" : "events");
+          };
+        });
+      });
+
+      workbenchMainView.querySelectorAll(".workbench-section .setting-item").forEach((command) => {
+        command.addEventListener("click", () => {
+          delete require.cache[require.resolve(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js"))];
+          const variables = Object.entries(require(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js")).variables);
+
+          workbenchEditorView.innerHTML = `
+            <h3 class="command-header">
+              <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i>${command.textContent.trim().replace(/[^A-Za-z]/g, "")}
+              <button class="add-command-btn" style="position: absolute; right: 39.5px;">
+                <i class="fas fa-code"></i>
+                Edit in code lab
+              </button>
+              <button class="add-command-btn" style="position: absolute; right: 0; padding: 0.55rem 0.65rem;">
+                <i class="fas fa-trash"></i>
+              </button>
+            </h3>
+            ${(!variables.length) ? `
+                <div class="command-item setting-item">
+                  <label style="color: grey; cursor: text;">
+                    No variables found
+                  </label>
+                </div>
+              ` : variables.map(([id, { title = "", description = "", type = "text", datalist = null, options = {}, properties = {} } = {}] = [], index) => `
+              <div class="command-item setting-item" style="margin-bottom: 1rem;" data-id="${this.escapeHtml(id)}">
+                ${(type === "switch") ? `
+                  <label>
+                    <span>${this.escapeHtml(title)}</span>
+                    <input type="checkbox" ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}/>
+                  </label>
+                  ${
+                    (description) ? `
+                      <div class="setting-description">
+                        ${this.escapeHtml(description)}
+                      </div>
+                    ` : ""
+                  }
+                ` : `
+                  <label style="flex-direction: column;">
+                    <span style="text-align: left; position: absolute; left: 0;">${this.escapeHtml(title)}</span>
+                    ${
+                      (description) ? `
+                        <div class="setting-description" style="margin-top: 1.675rem; position: absolute; left: 0;">
+                          ${this.escapeHtml(description)}
+                        </div>
+                      ` : ""
+                    }
+                    ${(type === "textarea") ? `
+                      <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}</textarea>
+                    ` : ((type === "select") ? `
+                      <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                        ${Object.entries(options).map(([optionId, optionName]) => `
+                          <option value="${optionId}">${optionName}</option>
+                        `)}
+                      </select>
+                    ` : `
+                      <input type="${type.replace("switch", "checkbox").replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                    `)}
+                  </label>
+                `}
+                ${(datalist) ? `
+                  <datalist id="workbench-datalist-${index}">
+                    ${datalist.map((value) => `
+                      <option value="${value}"></option>
+                    `)}
+                  </datalist>
+                ` : ""}
+              </div>
+            `).join("")}
+          `;
+
+          workbenchEditorView.querySelectorAll(".command-header button").forEach((button) => {
+            button.addEventListener("click", () => {
+              if (button.querySelector("i").className === "fas fa-code") {
+                this.getFileTreeItem(editorView, command.dataset.category).click();
+                this.getFileTreeItem(editorView, `${command.dataset.category}/${command.textContent.trim()}.js`).click();
+
+                Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).find((tab) => tab.querySelector("i").className === "fas fa-code").classList.add("active");
+                workbenchView.style.display = "none";
+                editorView.style.visibility = "visible";
+                editorView.style.animation = "slideUp 0.5s ease";
+                setTimeout(() => {
+                  editorView.style.animation = "none";
+                }, 500);
+                editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.remove("animationless"));
+              } else if (button.querySelector("i").className === "fas fa-trash") {
+                try {
+                  this.confirm(`Delete ${command.dataset.category[0].toUpperCase() + command.dataset.category.substring(1, command.dataset.category.length - 1)}`, `Are you sure you want to delete ${command.textContent.trim()}?`).then(() => {
+                    fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${command.textContent.trim()}.js`));
+
+                    if (workbenchMainView.querySelector(`.workbench-section .setting-item[data-category="${command.dataset.category}"]`).length === 1) {
+                      const noItems = document.createElement("span");
+                      noItems.style.color = "grey";
+                      noItems.textContent = `No ${command.dataset.category} found`;
+                      workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.insertBefore(noItems, workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.nextElementSibling);
+                    };
+
+                    workbenchEditorView.style.display = "none";
+                    workbenchMainView.style.display = "block";
+                    workbenchMainView.style.animation = "0.5s ease 0s 1 normal none running slideUp";
+                    setTimeout(() => workbenchMainView.style.removeProperty("animation"), 500);
+                    Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).find((tab) => tab.querySelector("i").className === "fas fa-tools").classList.add("active");
+
+                    command.remove();
+                  }).catch(() => {});
+                } catch (err) {console.log(err);};
+              };
+            });
+          });
+
+          workbenchEditorView.querySelectorAll(".command-item.setting-item").forEach((commandItem) => {
+            if (!commandItem.dataset.id) return;
+
+            commandItem.querySelector("input, textarea, select").addEventListener("change", (e) => {
+              if (!e.target.reportValidity()) return;
+
+              if (!configFile) (configFile = {});
+              if (!configFile.variables) (configFile.variables = {});
+              if (!configFile.variables[command.dataset.category]) (configFile.variables[command.dataset.category] = {});
+              if (!configFile.variables[command.dataset.category][command.textContent.trim()]) (configFile.variables[command.dataset.category][command.textContent.trim()] = {});
+              configFile.variables[command.dataset.category][command.textContent.trim()][commandItem.dataset.id] = ((e.target.tagName === "INPUT") && (e.target.type === "checkbox")) ? e.target.checked : ((["number", "range"].includes(e.target.type)) ? parseInt(e.target.value) : e.target.value);
+
+              fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
+            });
+          });
+
+          workbenchMainView.style.display = "none";
+          workbenchEditorView.style.display = "block";
+          workspaceView.querySelectorAll(".workspace-tabs button").forEach((activeTab) => activeTab.classList.remove("active"));
+        });
+      });
 
       closeModal();
     });
@@ -3188,7 +3462,7 @@ class LocalBotify {
             <div class="form-group">
               <label for="botName">Bot Name</label>
               <div style="display: flex; flex-direction: row;">
-                <button type="button" id="botAvatar" style="width: fit-content; border-top-right-radius: 0; border-bottom-right-radius: 0;">
+                <button type="button" id="botAvatar" style="width: fit-content; border-top-right-radius: 0; border-bottom-right-radius: 0; cursor: pointer;">
                   <span${(!this.isEmoji(bot?.avatar)) ? ` style="opacity: 0.6;"` : ""}>${(this.isEmoji(bot?.avatar)) ? this.escapeHtml(bot?.avatar) : "🤖"}</span$>
                 </button>
                 <input type="text" id="botName" value="${(bot) ? this.escapeHtml(bot.name) : ""}" required style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
@@ -3716,7 +3990,7 @@ class LocalBotify {
     form.addEventListener("submit", (e) => {
       e.preventDefault();
 
-      fetch("/api/v1/store/report", {
+      fetch("/api/v1/reports/add", {
         method: "POST",
         headers: {
           'Content-Type': 'application/json'

@@ -1154,6 +1154,15 @@ body {
   font-size: 0.9rem;
 }
 
+.interaction-item:hover {
+  transform: translateY(-2.5px);
+}
+
+.interaction-item.active {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: var(--discord-primary);
+}
+
 .code-editor-view {
   position: fixed;
   top: 35px;
