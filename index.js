@@ -216,6 +216,31 @@ const createWindow = () => {
     return resultHtml;
   });
 
+  window.on("close", (e) => {
+    e.preventDefault();
+
+    if (tray) return (tray.destroy(), tray = null);
+    window.hide();
+    window.setSkipTaskbar(true);
+    tray = new Tray(path.join(__dirname, "assets/favicon.png"));
+    tray.setToolTip("LocalBotify");
+    tray.setContextMenu(Menu.buildFromTemplate([
+      {
+        label: "Show",
+        click: () => {
+          window.show();
+          window.setSkipTaskbar(false);
+          tray.destroy();
+          tray = null;
+        }
+      },
+      {
+        label: "Exit",
+        click: () => app.quit()
+      }
+    ]));
+  });
+
   if (app.isPackaged) {
     window.webContents.once("did-finish-load", () => {
       window.webContents.on("before-input-event", (_, input) => {
@@ -226,11 +251,20 @@ const createWindow = () => {
         });
       });
     });
+
+    app.setLoginItemSettings({
+      openAtLogin: true,
+      path: app.getPath("exe"),
+      args: [
+        "--startup"
+      ]
+    });
   };
 };
 
 app.whenReady().then(() => {
   createWindow();
+
   app.on("activate", () => {
     if (!BrowserWindow.getAllWindows().length) createWindow();
   });

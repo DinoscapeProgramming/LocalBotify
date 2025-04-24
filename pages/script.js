@@ -1988,18 +1988,22 @@ class LocalBotify {
     suiteMainView.querySelector("#assistantSection form").addEventListener("submit", (e) => {
       e.preventDefault();
 
-      fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), `${suiteMainView.querySelector("#assistantSection form select").value.toLowerCase()}s`), (eventType) => {
+      const category = `${suiteMainView.querySelector("#assistantSection form select").value.toLowerCase()}s`;
+      const fileName = `${suiteMainView.querySelector("#assistantSection form input").value}.js`;
+      const prompt = suiteMainView.querySelector("#assistantSection form textarea").value;
+
+      suiteMainView.querySelector("#assistantSection form select").value = "Command";
+      suiteMainView.querySelector("#assistantSection form input").value = "";
+      suiteMainView.querySelector("#assistantSection form textarea").value = "";
+
+      fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), category), (eventType) => {
         if (eventType !== "rename") return;
 
-        this.getFileTreeItem(editorView, `${suiteMainView.querySelector("#assistantSection form select").value.toLowerCase()}s`).click();
-        this.getFileTreeItem(editorView, `${suiteMainView.querySelector("#assistantSection form select").value.toLowerCase()}s/${suiteMainView.querySelector("#assistantSection form input").value}.js`).click();
-
-        setTimeout(() => {
-          this.fileWatcher.close();
-        }, 100);
+        this.getFileTreeItem(editorView, category).click();
+        this.getFileTreeItem(editorView, `${category}/${fileName}`).click();
       });
 
-      fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), `${suiteMainView.querySelector("#assistantSection form select").value.toLowerCase()}s`, `${suiteMainView.querySelector("#assistantSection form input").value}.js`), "", "utf8");
+      fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), category, fileName), "", "utf8");
 
       workbenchMainView.querySelector(".workbench-section").innerHTML = `
         <h3 style="flex-direction: row; margin-bottom: 1rem;">
@@ -2170,14 +2174,6 @@ class LocalBotify {
         editorView.style.animation = "none";
       }, 500);
       editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.remove("animationless"));
-
-      const category = `${suiteMainView.querySelector("#assistantSection form select").value.toLowerCase()}s`;
-      const fileName = `${suiteMainView.querySelector("#assistantSection form input").value}.js`;
-      const prompt = suiteMainView.querySelector("#assistantSection form textarea").value;
-
-      suiteMainView.querySelector("#assistantSection form select").value = "Command";
-      suiteMainView.querySelector("#assistantSection form input").value = "";
-      suiteMainView.querySelector("#assistantSection form textarea").value = "";
 
       const assistant = document.createElement("iframe");
       assistant.style.position = "absolute";
@@ -3200,7 +3196,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
               `).join("\n")}
             </div>
             <div class="form-actions" style="margin-top: 0;">
-              <button type="submit" class="submit-btn" style="opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none;"></button>
+              <button type="submit" class="submit-btn" style="opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.2s ease; pointer-events: none;"></button>
               <button type="button" class="cancel-btn">Cancel</button>
             </div>
           </form>
@@ -4107,7 +4103,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     const parsedMarkdown = await ipcRenderer.invoke("parseMarkdown", this.escapeHtml(await (await fetch(`https://raw.githubusercontent.com/${match[1]}/${match[2]}/refs/heads/main/README.md`)).text()));
 
     modal.innerHTML = `
-      <div class="modal-content">
+      <div class="modal-content" style="border-radius: 12.5px;">
         <div class="modal-body markdown-body" style="padding-top: 0; background-color: #151618; border: 1px solid #1f1f1f;">
           <button class="close-btn" style="float: right; transform: translateY(15px);">
             <i class="fas fa-times"></i>
@@ -4142,7 +4138,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
       link.addEventListener("click", (e) => {
         e.preventDefault();
 
-        childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + e.target.href + `"`, (process.platform === "win32") ? {
+        childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + link.href + `"`, (process.platform === "win32") ? {
           shell: "powershell.exe"
         } : {});
       });
@@ -4403,7 +4399,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
       };
     });
 
-    window.addEventListener("beforeunload", () => {
+    window.addEventListener("beforeunload", (e) => {
       const path = require("path");
 
       fs.readdirSync(path.join(process.cwd(), "bots")).forEach((botId) => {
@@ -4432,7 +4428,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     const parsedMarkdown = await ipcRenderer.invoke("parseMarkdown", await (await fetch("https://raw.githubusercontent.com/DinoscapeProgramming/LocalBotify-Announcements/refs/heads/main/Announcement.md")).text());
 
     modal.innerHTML = `
-      <div class="modal-content">
+      <div class="modal-content" style="border-radius: 12.5px;">
         <div class="modal-body markdown-body" style="padding-top: 0; background-color: #151618; border: 1px solid #1f1f1f;">
           <button class="close-btn" style="float: right; transform: translateY(15px);">
             <i class="fas fa-times"></i>
@@ -4464,7 +4460,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
       link.addEventListener("click", (e) => {
         e.preventDefault();
 
-        childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + e.target.href + `"`, (process.platform === "win32") ? {
+        childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + link.href + `"`, (process.platform === "win32") ? {
           shell: "powershell.exe"
         } : {});
       });
