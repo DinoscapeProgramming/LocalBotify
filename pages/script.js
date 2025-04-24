@@ -1118,12 +1118,9 @@ class LocalBotify {
           ">
             <h3 style="flex-direction: row; margin-bottom: 1rem;">
               <i class="fas fa-code"></i>Commands
-              <button class="add-command-btn" style="right: 67.5px;">
+              <button class="add-command-btn" style="right: 25px;">
                 <i class="fas fa-plus"></i>
                 Add Command
-              </button>
-              <button class="add-command-btn" style="right: 25px; padding: 0.55rem 0.65rem;">
-                <i class="fas fa-upload"></i>
               </button>
             </h3>
             ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).length) ? `<span style="color: grey;">No commands found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).map((command) => (command.endsWith(".js")) ? `
@@ -1131,12 +1128,9 @@ class LocalBotify {
             ` : "").join("")}
             <h3 style="flex-direction: row; margin-bottom: 1rem; margin-top: 2rem;">
               <i class="fas fa-calendar-days"></i>Events
-              <button class="add-command-btn" style="right: 67.5px;">
+              <button class="add-command-btn" style="right: 25px;">
                 <i class="fas fa-plus"></i>
                 Add Event
-              </button>
-              <button class="add-command-btn" style="right: 25px; padding: 0.55rem 0.65rem;">
-                <i class="fas fa-upload"></i>
               </button>
             </h3>
             ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).length) ? `<span style="color: grey;">No events found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).map((command) => (command.endsWith(".js")) ? `
@@ -1431,9 +1425,7 @@ class LocalBotify {
 
     workbenchMainView.querySelectorAll(".add-command-btn").forEach((button, index) => {
       button.addEventListener("click", () => {
-        if ((index % 2) === 0) {
-          this.addInteractionItem(workspaceView, bot, (!index) ? "commands" : "events");
-        };
+        this.addInteractionItem(workspaceView, bot, (!index) ? "commands" : "events");
       });
     });
 
@@ -2009,6 +2001,166 @@ class LocalBotify {
 
       fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), `${suiteMainView.querySelector("#assistantSection form select").value.toLowerCase()}s`, `${suiteMainView.querySelector("#assistantSection form input").value}.js`), "", "utf8");
 
+      workbenchMainView.querySelector(".workbench-section").innerHTML = `
+        <h3 style="flex-direction: row; margin-bottom: 1rem;">
+          <i class="fas fa-code"></i>Commands
+          <button class="add-command-btn" style="right: 25px;">
+            <i class="fas fa-plus"></i>
+            Add Command
+          </button>
+        </h3>
+        ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).length) ? `<span style="color: grey;">No commands found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).map((command) => (command.endsWith(".js")) ? `
+          <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem; cursor: pointer;" data-category="commands">${this.escapeHtml(command.substring(0, command.length - 3))}</div>
+        ` : "").join("")}
+        <h3 style="flex-direction: row; margin-bottom: 1rem; margin-top: 2rem;">
+          <i class="fas fa-calendar-days"></i>Events
+          <button class="add-command-btn" style="right: 25px;">
+            <i class="fas fa-plus"></i>
+            Add Event
+          </button>
+        </h3>
+        ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).length) ? `<span style="color: grey;">No events found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).map((command) => (command.endsWith(".js")) ? `
+          <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem; cursor: pointer;" data-category="events">${this.escapeHtml(command.substring(0, command.length - 3).replace(/[^a-zA-Z]+$/, "")) + ((command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/)}</code>` : "")}</div>
+        ` : "").join("")}
+      `;
+
+      workbenchMainView.querySelectorAll(".add-command-btn").forEach((button, index) => {
+        button.addEventListener("click", () => {
+          this.addInteractionItem(workspaceView, bot, (!index) ? "commands" : "events");
+        });
+      });
+
+      workbenchMainView.querySelectorAll(".workbench-section .setting-item").forEach((command) => {
+        command.addEventListener("click", () => {
+          delete require.cache[require.resolve(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js"))];
+          const variables = Object.entries(require(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js")).variables);
+
+          workbenchEditorView.innerHTML = `
+            <h3 class="command-header">
+              <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i>${command.textContent.trim().replace(/[^A-Za-z]/g, "")}
+              <button class="add-command-btn" style="position: absolute; right: 39.5px;">
+                <i class="fas fa-code"></i>
+                Edit in code lab
+              </button>
+              <button class="add-command-btn" style="position: absolute; right: 0; padding: 0.55rem 0.65rem;">
+                <i class="fas fa-trash"></i>
+              </button>
+            </h3>
+            ${(!variables.length) ? `
+                <div class="command-item setting-item">
+                  <label style="color: grey; cursor: text;">
+                    No variables found
+                  </label>
+                </div>
+              ` : variables.map(([id, { title = "", description = "", type = "text", datalist = null, options = {}, properties = {} } = {}] = [], index) => `
+              <div class="command-item setting-item" style="margin-bottom: 1rem;" data-id="${this.escapeHtml(id)}">
+                ${(type === "switch") ? `
+                  <label>
+                    <span>${this.escapeHtml(title)}</span>
+                    <input type="checkbox" ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}/>
+                  </label>
+                  ${
+                    (description) ? `
+                      <div class="setting-description">
+                        ${this.escapeHtml(description)}
+                      </div>
+                    ` : ""
+                  }
+                ` : `
+                  <label style="flex-direction: column;">
+                    <span style="text-align: left; position: absolute; left: 0;">${this.escapeHtml(title)}</span>
+                    ${
+                      (description) ? `
+                        <div class="setting-description" style="margin-top: 1.675rem; position: absolute; left: 0;">
+                          ${this.escapeHtml(description)}
+                        </div>
+                      ` : ""
+                    }
+                    ${(type === "textarea") ? `
+                      <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}</textarea>
+                    ` : ((type === "select") ? `
+                      <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                        ${Object.entries(options).map(([optionId, optionName]) => `
+                          <option value="${optionId}">${optionName}</option>
+                        `)}
+                      </select>
+                    ` : `
+                      <input type="${type.replace("switch", "checkbox").replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                    `)}
+                  </label>
+                `}
+                ${(datalist) ? `
+                  <datalist id="workbench-datalist-${index}">
+                    ${datalist.map((value) => `
+                      <option value="${value}"></option>
+                    `)}
+                  </datalist>
+                ` : ""}
+              </div>
+            `).join("")}
+          `;
+
+          workbenchEditorView.querySelectorAll(".command-header button").forEach((button) => {
+            button.addEventListener("click", () => {
+              if (button.querySelector("i").className === "fas fa-code") {
+                this.getFileTreeItem(editorView, command.dataset.category).click();
+                this.getFileTreeItem(editorView, `${command.dataset.category}/${command.textContent.trim()}.js`).click();
+
+                Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).find((tab) => tab.querySelector("i").className === "fas fa-code").classList.add("active");
+                workbenchView.style.display = "none";
+                editorView.style.visibility = "visible";
+                editorView.style.animation = "slideUp 0.5s ease";
+                setTimeout(() => {
+                  editorView.style.animation = "none";
+                }, 500);
+                editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.remove("animationless"));
+              } else if (button.querySelector("i").className === "fas fa-trash") {
+                try {
+                  this.confirm(`Delete ${command.dataset.category[0].toUpperCase() + command.dataset.category.substring(1, command.dataset.category.length - 1)}`, `Are you sure you want to delete ${command.textContent.trim()}?`).then(() => {
+                    fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${command.textContent.trim()}.js`));
+
+                    if (workbenchMainView.querySelector(`.workbench-section .setting-item[data-category="${command.dataset.category}"]`).length === 1) {
+                      const noItems = document.createElement("span");
+                      noItems.style.color = "grey";
+                      noItems.textContent = `No ${command.dataset.category} found`;
+                      workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.insertBefore(noItems, workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.nextElementSibling);
+                    };
+
+                    workbenchEditorView.style.display = "none";
+                    workbenchMainView.style.display = "block";
+                    workbenchMainView.style.animation = "0.5s ease 0s 1 normal none running slideUp";
+                    setTimeout(() => workbenchMainView.style.removeProperty("animation"), 500);
+                    Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).find((tab) => tab.querySelector("i").className === "fas fa-tools").classList.add("active");
+
+                    command.remove();
+                  }).catch(() => {});
+                } catch (err) {console.log(err);};
+              };
+            });
+          });
+
+          workbenchEditorView.querySelectorAll(".command-item.setting-item").forEach((commandItem) => {
+            if (!commandItem.dataset.id) return;
+
+            commandItem.querySelector("input, textarea, select").addEventListener("change", (e) => {
+              if (!e.target.reportValidity()) return;
+
+              if (!configFile) (configFile = {});
+              if (!configFile.variables) (configFile.variables = {});
+              if (!configFile.variables[command.dataset.category]) (configFile.variables[command.dataset.category] = {});
+              if (!configFile.variables[command.dataset.category][command.textContent.trim()]) (configFile.variables[command.dataset.category][command.textContent.trim()] = {});
+              configFile.variables[command.dataset.category][command.textContent.trim()][commandItem.dataset.id] = ((e.target.tagName === "INPUT") && (e.target.type === "checkbox")) ? e.target.checked : ((["number", "range"].includes(e.target.type)) ? parseInt(e.target.value) : e.target.value);
+
+              fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
+            });
+          });
+
+          workbenchMainView.style.display = "none";
+          workbenchEditorView.style.display = "block";
+          workspaceView.querySelectorAll(".workspace-tabs button").forEach((activeTab) => activeTab.classList.remove("active"));
+        });
+      });
+
       Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).forEach((tab) => tab.classList.remove("active"));
       Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).find((tab) => tab.querySelector("i").className === "fas fa-code").classList.add("active");
       workbenchView.style.display = "none";
@@ -2022,6 +2174,10 @@ class LocalBotify {
       const category = `${suiteMainView.querySelector("#assistantSection form select").value.toLowerCase()}s`;
       const fileName = `${suiteMainView.querySelector("#assistantSection form input").value}.js`;
       const prompt = suiteMainView.querySelector("#assistantSection form textarea").value;
+
+      suiteMainView.querySelector("#assistantSection form select").value = "Command";
+      suiteMainView.querySelector("#assistantSection form input").value = "";
+      suiteMainView.querySelector("#assistantSection form textarea").value = "";
 
       const assistant = document.createElement("iframe");
       assistant.style.position = "absolute";
@@ -2073,23 +2229,23 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     });
 
     new Chart(suiteMainView.querySelector("#analyticsChart"), {
-      type: 'line',
+      type: "line",
       data: {
         labels: labels,
         datasets: [
           {
-            label: 'Servers',
+            label: "Servers",
             data: serverData,
-            borderColor: 'rgba(54, 162, 235, 1)',
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: "rgba(54, 162, 235, 1)",
+            backgroundColor: "rgba(54, 162, 235, 0.2)",
             fill: true,
             tension: 0.3
           },
           {
-            label: 'Users',
+            label: "Users",
             data: userData,
-            borderColor: 'rgba(255, 99, 132, 1)',
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderColor: "rgba(255, 99, 132, 1)",
+            backgroundColor: "rgba(255, 99, 132, 0.2)",
             fill: true,
             tension: 0.3
           }
@@ -2099,10 +2255,16 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         responsive: true,
         scales: {
           x: {
-            title: { display: true, text: 'Date' }
+            title: {
+              display: true,
+              text: "Date"
+            }
           },
           y: {
-            title: { display: true, text: 'Count' },
+            title: {
+              display: true,
+              text: "Count"
+            },
             beginAtZero: true
           }
         }
@@ -3086,12 +3248,9 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
       workbenchMainView.querySelector(".workbench-section").innerHTML = `
         <h3 style="flex-direction: row; margin-bottom: 1rem;">
           <i class="fas fa-code"></i>Commands
-          <button class="add-command-btn" style="right: 67.5px;">
+          <button class="add-command-btn" style="right: 25px;">
             <i class="fas fa-plus"></i>
             Add Command
-          </button>
-          <button class="add-command-btn" style="right: 25px; padding: 0.55rem 0.65rem;">
-            <i class="fas fa-upload"></i>
           </button>
         </h3>
         ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).length) ? `<span style="color: grey;">No commands found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).map((command) => (command.endsWith(".js")) ? `
@@ -3099,12 +3258,9 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         ` : "").join("")}
         <h3 style="flex-direction: row; margin-bottom: 1rem; margin-top: 2rem;">
           <i class="fas fa-calendar-days"></i>Events
-          <button class="add-command-btn" style="right: 67.5px;">
+          <button class="add-command-btn" style="right: 25px;">
             <i class="fas fa-plus"></i>
             Add Event
-          </button>
-          <button class="add-command-btn" style="right: 25px; padding: 0.55rem 0.65rem;">
-            <i class="fas fa-upload"></i>
           </button>
         </h3>
         ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).length) ? `<span style="color: grey;">No events found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).map((command) => (command.endsWith(".js")) ? `
@@ -3114,9 +3270,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
       workbenchMainView.querySelectorAll(".add-command-btn").forEach((button, index) => {
         button.addEventListener("click", () => {
-          if ((index % 2) === 0) {
-            this.addInteractionItem(workspaceView, bot, (!index) ? "commands" : "events");
-          };
+          this.addInteractionItem(workspaceView, bot, (!index) ? "commands" : "events");
         });
       });
 
