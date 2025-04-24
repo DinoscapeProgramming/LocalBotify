@@ -1231,7 +1231,7 @@ class LocalBotify {
                   </select>
                   <input style="margin-top: 0.35rem; margin-bottom: 0.5rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter command name..." required>
                 </div>
-                <textarea style="height: 150px; margin-top: 0.25rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter prompt..." required></textarea>
+                <textarea style="height: 150px; margin-top: 0.25rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter prompt..."></textarea>
                 <button type="submit" style="margin-top: 0.5rem; margin-bottom: 0.375rem; background-color: #b7841d; resize: vertical; cursor: pointer; font-family: cursive; height: 2.55rem; display: flex; justify-content: center; align-items: center; font-size: 15px; box-shadow: 0 4px 10px rgb(255 215 0 / 16%);" placeholder="Enter prompt...">
                   <span style="margin-bottom: 2.25px;">Generate <span style="margin-left: 2.5px;">🪄</span></span>
                 </button>
@@ -1946,7 +1946,7 @@ class LocalBotify {
           });
         });
 
-        ((document.querySelector(".file-tree-item.active.active-file")) ? document.querySelector(".file-tree-item.active.active-file").parentElement : ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").nextElementSibling : document.querySelector(".file-tree")).appendChild(newFolderTreeItem));
+        ((document.querySelector(".file-tree-item.active.active-file")) ? document.querySelector(".file-tree-item.active.active-file").parentElement : ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").nextElementSibling : document.querySelector(".file-tree"))).appendChild(newFolderTreeItem);
         ((document.querySelector(".file-tree-item.active.active-file")) ? document.querySelector(".file-tree-item.active.active-file").parentElement : ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").nextElementSibling : document.querySelector(".file-tree"))).appendChild(newFolderTreeContent);
         newFolderTreeItem.querySelector("span").focus();
       });
@@ -1996,12 +1996,19 @@ class LocalBotify {
       suiteMainView.querySelector("#assistantSection form input").value = "";
       suiteMainView.querySelector("#assistantSection form textarea").value = "";
 
-      fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), category), (eventType) => {
+      const fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), category), (eventType) => {
         if (eventType !== "rename") return;
 
         this.getFileTreeItem(editorView, category).click();
         this.getFileTreeItem(editorView, `${category}/${fileName}`).click();
+
+        fileWatcher.close();
       });
+
+      if (fs.existsSync(path.join(process.cwd(), "bots", bot.id.toString(), category, fileName))) {
+        this.getFileTreeItem(editorView, category).click();
+        this.getFileTreeItem(editorView, `${category}/${fileName}`).click();
+      };
 
       fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), category, fileName), "", "utf8");
 
@@ -2201,6 +2208,8 @@ Based on this guide, create a complete and clean implementation of a new Discord
 • Output code only
 • No explanation, no markdown formatting (no triple backticks)
 • The code should be fully functional and ready to be dropped into a user’s bot using the guide's structure
+• If possible, use embeds to give the responses you give a professional look
+• Do not use variables to let any user specify their command arguments. Instead, use them to customize the bot responses / behaviour globally (e.g. response messages).
 
 **The result should include:**
 

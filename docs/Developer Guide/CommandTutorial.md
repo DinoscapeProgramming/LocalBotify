@@ -4,7 +4,17 @@ Writing commands for the bot is straightforward and powerful. Just follow the st
 
 ---
 
-## 🗂️ 1. Create Your Command File
+## 📦 1. Know your environment
+
+Knowing the right versions of the packages you're using is essential to using the right methods.
+
+| Package    | Version    |
+|------------|------------|
+| discord.js | 14.18.0    |
+
+---
+
+## 🗂️ 2. Create Your Command File
 
 Navigate to the bot’s `commands/` directory and create a new file.  
 **The file name becomes the command name.**
@@ -17,7 +27,7 @@ Navigate to the bot’s `commands/` directory and create a new file.
 
 ---
 
-## 🎨 2. Write Your Description
+## 🎨 3. Write Your Description
 
 Descriptions are necessary for the help command, but aren't required. This is how to provide one:
 
@@ -27,7 +37,7 @@ module.exports = {
 };
 ```
 
-## 🛡️ 3. Set Your Permissions
+## 🛡️ 4. Set Your Permissions
 
 Permissions will influence the bot's invite link accordingly:
 
@@ -47,13 +57,21 @@ module.exports = {
 
 ---
 
-## 🧩 4. Define Your Variables
+## 🧩 5. Define Your Variables
 
-Variables are used to make the command customizable from the dashboard or config. Here's the full structure:
+Variables are used to make the command customizable globally. This means the bot owner can customize their bot's behaviour on all servers while the guild members have no access to these variables at all. **Do not use variables to let any user specify their command arguments, that's a fundamental misunderstanding of how they work.** Here's the full structure:
 
 ```js
 module.exports = {
   description: "Check the bot's response time",
+
+  permissions: [
+    "SEND_MESSAGES",
+    "MANAGE_MESSAGES",
+    "EMBED_LINKS",
+    "ATTACH_FILES",
+    "READ_MESSAGE_HISTORY"
+  ],
 
   variables: {
     responseMessage: {
@@ -119,7 +137,7 @@ You can enhance each variable using a `properties` object.
 
 ---
 
-## 🧠 5. Define the Command Logic
+## 🧠 6. Define the Command Logic
 
 Here’s the full structure again for clarity:
 
@@ -129,6 +147,14 @@ const { commandType } = require("../../../node_modules/localbotify/index.js");
 
 module.exports = {
   description: "Check the bot's response time",
+
+  permissions: [
+    "SEND_MESSAGES",
+    "MANAGE_MESSAGES",
+    "EMBED_LINKS",
+    "ATTACH_FILES",
+    "READ_MESSAGE_HISTORY"
+  ],
 
   variables: {
     responseMessage: {
@@ -150,7 +176,7 @@ module.exports = {
 };
 ```
 
-## 🔧 6. Register the Slash Command
+## 🔧 7. Register the Slash Command
 
 Define the `slashCommand` property like this:
 
@@ -160,6 +186,14 @@ const { commandType } = require("../../../node_modules/localbotify/index.js");
 
 module.exports = {
   description: "Check the bot's response time",
+
+  permissions: [
+    "SEND_MESSAGES",
+    "MANAGE_MESSAGES",
+    "EMBED_LINKS",
+    "ATTACH_FILES",
+    "READ_MESSAGE_HISTORY"
+  ],
 
   variables: {
     responseMessage: {
