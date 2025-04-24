@@ -1214,6 +1214,36 @@ class LocalBotify {
 
       <div class="workbench-view suite-view">
         <div id="suiteMainView">
+          <div id="assistantSection" class="workbench-section settings-section" style="
+            padding: 1.5rem 2rem;
+            margin-top: 1.75rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-md);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            box-shadow: none;
+            overflow-x: auto;
+            overflow-y: hidden;
+          ">
+            <h3 style="flex-direction: row; margin-bottom: 1rem;">
+              <i class="fas fa-robot"></i>AI Assistant
+            </h3>
+            <div class="command-item setting-item" style="padding: 0; background-color: transparent;">
+              <form>
+                <div style="display: flex; flex-direction: row;">
+                  <select style="margin-top: 0.35rem; margin-bottom: 0.5rem; margin-right: 0.625rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical; cursor: pointer;">
+                    <option style="background-color: #151618;" selected>Command</option>
+                    <option style="background-color: #151618;">Event</option>
+                  </select>
+                  <input style="margin-top: 0.35rem; margin-bottom: 0.5rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter command name..." required>
+                </div>
+                <textarea style="height: 150px; margin-top: 0.25rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter prompt..." required></textarea>
+                <button type="submit" style="margin-top: 0.5rem; margin-bottom: 0.375rem; background-color: #b7841d; resize: vertical; cursor: pointer; font-family: cursive; height: 2.55rem; display: flex; justify-content: center; align-items: center; font-size: 15px; box-shadow: 0 4px 10px rgb(255 215 0 / 16%);" placeholder="Enter prompt...">
+                  <span style="margin-bottom: 2.25px;">Generate <span style="margin-left: 2.5px;">🪄</span></span>
+                </button>
+              </form>
+            </div>
+          </div>
           <div id="analyticsSection" class="workbench-section settings-section" style="
             padding: 1.5rem 2rem;
             padding-bottom: 4.75rem;
@@ -1605,7 +1635,7 @@ class LocalBotify {
       });
     });
 
-    fs.watch(path.join(process.cwd(), "bots", bot.id.toString()), (eventType) => {
+    this.watchDirectoryRecursive(path.join(process.cwd(), "bots", bot.id.toString()), (eventType) => {
       if (eventType !== "rename") return;
 
       const activeFile = this.getFilePath(editorView.querySelector(".file-tree-item.active-file")) || "";
@@ -1957,6 +1987,89 @@ class LocalBotify {
       chartScript.addEventListener("load", resolve);
 
       document.head.appendChild(chartScript);
+    });
+
+    suiteMainView.querySelector("#assistantSection form select").addEventListener("change", (e) => {
+      suiteMainView.querySelector("#assistantSection form input").placeholder = `Enter ${e.target.value.toLowerCase()} name...`;
+    });
+
+    suiteMainView.querySelector("#assistantSection form").addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), `${suiteMainView.querySelector("#assistantSection form select").value.toLowerCase()}s`), (eventType) => {
+        if (eventType !== "rename") return;
+
+        this.getFileTreeItem(editorView, `${suiteMainView.querySelector("#assistantSection form select").value.toLowerCase()}s`).click();
+        this.getFileTreeItem(editorView, `${suiteMainView.querySelector("#assistantSection form select").value.toLowerCase()}s/${suiteMainView.querySelector("#assistantSection form input").value}.js`).click();
+
+        setTimeout(() => {
+          this.fileWatcher.close();
+        }, 100);
+      });
+
+      fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), `${suiteMainView.querySelector("#assistantSection form select").value.toLowerCase()}s`, `${suiteMainView.querySelector("#assistantSection form input").value}.js`), "", "utf8");
+
+      Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).forEach((tab) => tab.classList.remove("active"));
+      Array.from(workspaceView.querySelectorAll(".workspace-tabs button")).find((tab) => tab.querySelector("i").className === "fas fa-code").classList.add("active");
+      workbenchView.style.display = "none";
+      editorView.style.visibility = "visible";
+      editorView.style.animation = "slideUp 0.5s ease";
+      setTimeout(() => {
+        editorView.style.animation = "none";
+      }, 500);
+      editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.remove("animationless"));
+
+      const category = `${suiteMainView.querySelector("#assistantSection form select").value.toLowerCase()}s`;
+      const fileName = `${suiteMainView.querySelector("#assistantSection form input").value}.js`;
+      const prompt = suiteMainView.querySelector("#assistantSection form textarea").value;
+
+      const assistant = document.createElement("iframe");
+      assistant.style.position = "absolute";
+      assistant.style.top = "0";
+      assistant.style.left = "0";
+      assistant.style.width = "100vw";
+      assistant.style.height = "100vh";
+      assistant.style.border = "none";
+      assistant.style.filter = "invert(95%) hue-rotate(180deg)";
+      assistant.src = process.env.SERVER + "/ai";
+
+      assistant.addEventListener("load", () => {
+        assistant.contentWindow.postMessage(`You are a skilled software engineer helping to build a Discord bot using a specific development guide. Use the following guide as a reference for best practices, structure, and implementation style:
+
+**Guide (as Markdown):**
+${fs.readFileSync(`./docs/Developer Guide/${category[0].toUpperCase() + category.substring(1, category.length - 1)}Tutorial.md`, "utf8")}
+
+Based on this guide, create a complete and clean implementation of a new Discord bot ${category.substring(0, category.length - 1)}.
+
+• ${category[0].toUpperCase() + category.substring(1, category.length - 1)} Name: ${fileName.substring(0, fileName.length - 3)}
+• Description / Prompt: ${prompt}
+
+**Important Instructions:**
+
+• Output code only
+• No explanation, no markdown formatting (no triple backticks)
+• The code should be fully functional and ready to be dropped into a user’s bot using the guide's structure
+
+**The result should include:**
+
+• Full code using the guide’s recommended structure
+• Explanations for any key parts if needed
+• Use of best practices from the guide
+
+Make sure it is ready to be integrated into the bot codebase with minimal changes.`, "*");
+      });
+
+      document.body.appendChild(assistant);
+
+      window.onmessage = ({ data }) => {
+        if (data === null) {
+          assistant.remove();
+          fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), category, fileName), this.editor.getValue(), "utf8");
+        } else {
+          assistant.style.display = "none";
+          this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), category, fileName), "utf8") + (data || ""));
+        };
+      };
     });
 
     new Chart(suiteMainView.querySelector("#analyticsChart"), {
@@ -4453,6 +4566,18 @@ class LocalBotify {
         fs.copyFileSync(source, destination);
       };
     } catch {};
+  };
+
+  watchDirectoryRecursive(directory, callback) {
+    const path = require("path");
+
+    fs.watch(directory, callback);
+
+    fs.readdirSync(directory, { withFileTypes: true }).forEach((entry) => {
+      if (entry.isDirectory()) {
+        this.watchDirectoryRecursive(path.join(directory, entry.name), callback);
+      };
+    });
   };
 
   getFlatFileList(bot, directory) {

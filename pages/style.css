@@ -1130,6 +1130,23 @@ body {
   transform: none !important;
 }
 
+.command-item button {
+  background-color: var(--discord-darker);
+  border: 2px solid transparent;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  color: var(--discord-text);
+  margin-top: 0.75rem;
+  width: 100%;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  margin-top: -2.5px;
+}
+
+.command-item button:hover {
+  background-color: #b7841dc9 !important;
+}
+
 .add-command-btn {
   position: fixed;
   display: flex;
