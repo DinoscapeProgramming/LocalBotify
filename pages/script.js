@@ -507,10 +507,6 @@ class LocalBotify {
                     body: JSON.stringify({
                       id: bot.id
                     })
-                  })
-                  .then((response) => response.json())
-                  .then(({ err }) => {
-                    if (err) return this.showToast(err, "error");
                   }).catch(() => {});
                 }).catch(() => {});
               }).catch(() => {});
@@ -913,6 +909,7 @@ class LocalBotify {
       codeEditorStylesheet.className = "code-editor-script";
       document.head.appendChild(codeEditorStylesheet);
     });
+
     let codeEditorScript = document.createElement("script");
     codeEditorScript.defer = true;
     codeEditorScript.src = "../packages/codemirror/codemirror.js";
@@ -1231,11 +1228,46 @@ class LocalBotify {
                   </select>
                   <input style="margin-top: 0.35rem; margin-bottom: 0.5rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter command name..." required>
                 </div>
-                <textarea style="height: 150px; margin-top: 0.25rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter prompt..."></textarea>
-                <button type="submit" style="margin-top: 0.5rem; margin-bottom: 0.375rem; background-color: #b7841d; resize: vertical; cursor: pointer; font-family: cursive; height: 2.55rem; display: flex; justify-content: center; align-items: center; font-size: 15px; box-shadow: 0 4px 10px rgb(255 215 0 / 16%);" placeholder="Enter prompt...">
+                <textarea style="margin-top: 0.25rem; height: 150px; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter prompt..."></textarea>
+                <button type="submit" class="generate-btn" style="margin-top: 0.5rem; margin-bottom: 0.375rem; background-color: #b7841d; resize: vertical; cursor: pointer; font-family: cursive; height: 2.55rem; display: flex; justify-content: center; align-items: center; font-size: 15px; box-shadow: 0 4px 10px rgb(255 215 0 / 16%);" placeholder="Enter prompt...">
                   <span style="margin-bottom: 2.25px;">Generate <span style="margin-left: 2.5px;">🪄</span></span>
                 </button>
               </form>
+            </div>
+          </div>
+          <div id="collaborationSection" class="workbench-section settings-section" style="
+            padding: 1.5rem 2rem;
+            margin-top: 1.75rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-md);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            box-shadow: none;
+            overflow-x: auto;
+            overflow-y: hidden;
+          ">
+            <h3 style="flex-direction: row; margin-bottom: 1rem;">
+              <i class="fas fa-user-group"></i>Collaboration
+            </h3>
+            <div class="setting-item" style="margin-top: 20px; margin-bottom: 0.25rem;">
+              <label data-tooltip="Develop your bot together with your friends">
+                <span>Private Join Link</span>
+                <input type="checkbox" id="privateJoinLink">
+              </label>
+              <div class="setting-description">
+                Anyone with this link can edit files
+              </div>
+            </div>
+            <div class="command-item setting-item" style="display: none; padding: 0; background-color: transparent;">
+              <div style="display: flex; flex-direction: row;">
+                <input style="margin-top: 0.35rem; margin-bottom: 0.375rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; border-top-right-radius: 0; border-bottom-right-radius: 0;" readonly>
+                <button class="copy-btn" style="border: 2px solid transparent; padding: 0.75rem 1rem; border-top-left-radius: 0; border-top-right-radius: var(--radius-md); border-bottom-left-radius: 0; border-bottom-right-radius: var(--radius-md); color: var(--discord-text); width: fit-content; font-size: 0.95rem; transition: all 0.2s ease; margin-top: 0.35rem; margin-bottom: 0.375rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; cursor: pointer;">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+              <p style="font-size: 0.875rem; font-family: system-ui; margin-top: 0.125rem; margin-left: 1.75px; color: #d1d1d1a6;">
+                Want to revoke access to this link? <span class="regenerate-link" style="color: var(--discord-primary); transition: color 0.2s ease; cursor: pointer;">Generate a new link</span>
+              </p>
             </div>
           </div>
           <div id="analyticsSection" class="workbench-section settings-section" style="
@@ -1282,9 +1314,9 @@ class LocalBotify {
                 <i class="fas fa-arrow-up-right-from-square"></i>
               </button>
             </h3>
-            <div class="grid-container">
+            <div class="grid-container" style="margin-top: 20px;">
               ${
-                (!(bot.features || []).length) ? `<span style="color: grey; margin-bottom: -0.5rem;">No features found</span>` : (bot.features || []).map((feature) => `
+                (bot.features || []).map((feature) => `
                   <div class="card" data-id="${this.escapeHtml(feature.id.toString())}">
                     <i class="fas fa-xmark" style="
                       float: right;
@@ -1299,6 +1331,13 @@ class LocalBotify {
                   </div>
                 `).join("\n")
               }
+              <div class="card">
+                <div class="icon">
+                  <i class="fas fa-robot"></i>
+                </div>
+                <p class="title">Powered by LocalBotify.app</p>
+                <p class="description">Built using LocalBotify for speed, flexibility, and total control — no code needed.</p>
+              </div>
             </div>
           </div>
           <div id="vanityLinksSection" class="workbench-section settings-section" style="
@@ -1533,7 +1572,7 @@ class LocalBotify {
 
                   command.remove();
                 }).catch(() => {});
-              } catch (err) {console.log(err);};
+              } catch {};
             };
           });
         });
@@ -1740,7 +1779,7 @@ class LocalBotify {
                 span.style.cursor = "pointer";
                 span.contentEditable = false;
                 newFileTreeItem.dataset.filename = span.textContent.trim();
-                fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
+                fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)));
 
                 newFileTreeItem.click();
               });
@@ -1754,7 +1793,7 @@ class LocalBotify {
                 span.style.cursor = "pointer";
                 span.contentEditable = false;
                 newFileTreeItem.dataset.filename = span.textContent.trim();
-                fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
+                fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)));
 
                 newFileTreeItem.click();
               });
@@ -1841,7 +1880,7 @@ class LocalBotify {
                 span.style.cursor = "pointer";
                 span.contentEditable = false;
                 newFileTreeItem.dataset.filename = span.textContent.trim();
-                fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
+                fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)));
 
                 newFileTreeItem.click();
               });
@@ -1855,7 +1894,7 @@ class LocalBotify {
                 span.style.cursor = "pointer";
                 span.contentEditable = false;
                 newFileTreeItem.dataset.filename = span.textContent.trim();
-                fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
+                fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)));
 
                 newFileTreeItem.click();
               });
@@ -2145,7 +2184,7 @@ class LocalBotify {
 
                     command.remove();
                   }).catch(() => {});
-                } catch (err) {console.log(err);};
+                } catch {};
               };
             });
           });
@@ -2231,6 +2270,67 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), category, fileName), "utf8") + (data || ""));
         };
       };
+    });
+
+    suiteMainView.querySelector("#collaborationSection #privateJoinLink").addEventListener("change", () => {
+      if (suiteMainView.querySelector("#collaborationSection #privateJoinLink").checked) {
+        const socketScript = document.createElement("script");
+        socketScript.defer = true;
+        socketScript.src = process.env.SERVER + "/socket.io/socket.io.js";
+
+        socketScript.addEventListener("load", () => {
+          this.socket = io(process.env.SERVER);
+
+          this.socket.emit("createRoom");
+
+          this.socket.on("createRoom", (id) => {
+            suiteMainView.querySelector("#collaborationSection .command-item").style.display = "block";
+            suiteMainView.querySelector("#collaborationSection .command-item input").value = `${process.env.SERVER}/sessions/${encodeURIComponent(id)}`;
+
+            this.socket.on("retrieveFileSystem", () => {
+              this.socket.emit("retrieveFileSystem", this.getFlatFileList(path.join(process.cwd(), "bots", bot.id.toString())));
+            });
+
+            this.socket.on("retrieveFileContent", (fileName) => {
+              this.socket.emit("retrieveFileContent", [
+                fileName,
+                fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), fileName), "utf8") || ""
+              ]);
+            });
+
+            this.socket.on("newFileSystem", ([fileAction, fileNames]) => {
+              switch (fileAction) {
+                case "createFile":
+                  fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), fileNames[0]), "", "utf8");
+                  break;
+                case "createFolder":
+                  fs.mkdirSync(path.join(process.cwd(), "bots", bot.id.toString(), fileNames[0]));
+                  break;
+                case "delete":
+                  fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), fileNames[0]));
+                  break;
+                case "rename":
+                  fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), fileNames[0]), path.join(process.cwd(), "bots", bot.id.toString(), fileNames[1]));
+                  break;
+              };
+            });
+
+            this.socket.on("newFileContent", ([fileName, fileContent]) => {
+              fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), fileName), fileContent, "utf8");
+            });
+          });
+        });
+
+        document.head.appendChild(socketScript);
+      } else {
+        if (!this.socket) return;
+
+        this.socket.disconnect();
+      };
+    });
+
+    suiteMainView.querySelector("#collaborationSection .command-item input").addEventListener("click", () => {
+      suiteMainView.querySelector("#collaborationSection .command-item input").select();
     });
 
     new Chart(suiteMainView.querySelector("#analyticsChart"), {
@@ -2449,14 +2549,90 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
           suiteMainView.querySelector("#landingPageSection .grid-container").appendChild(featureCard);
         } else if (button.querySelector("i").className === "fas fa-upload") {
+          this.prompt("Publish Landing Page", "Enter custom subdomain...", null, bot.landingPages).then((subdomain) => {
+            if (!subdomain) return;
 
+            const embed = document.createElement("iframe");
+            embed.style.position = "absolute";
+            embed.style.top = "0";
+            embed.style.left = "0";
+            embed.style.width = "100vw";
+            embed.style.height = "100vh";
+            embed.style.border = "none";
+            embed.style.filter = "invert(95%) hue-rotate(180deg)";
+            embed.src = process.env.SERVER + "/landingPage";
+
+            embed.addEventListener("load", () => {
+              embed.contentWindow.postMessage({
+                subdomain,
+                id: bot.id || Date.now(),
+                name: bot.name || "",
+                description: bot.description || "",
+                stats: [
+                  Object.fromEntries(
+                    (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/statistics.txt")) || "Servers: 0\nUsers: 0").split("\n").filter((line) => line).map((line) => {
+                      const [key, value] = line.split(":").map((part) => part.trim());
+                      return [key.toLowerCase(), Number(value)];
+                    })
+                  ).users,
+                  Number(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/messages.txt"), "utf8") || "0"),
+                  Object.fromEntries(
+                    (this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/statistics.txt")) || "Servers: 0\nUsers: 0").split("\n").filter((line) => line).map((line) => {
+                      const [key, value] = line.split(":").map((part) => part.trim());
+                      return [key.toLowerCase(), Number(value)];
+                    })
+                  ).servers
+                ],
+                invite: fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/invite.txt"), "utf8") || "https://localbotify.app",
+                features: bot.features.map((feature) => [
+                  feature.icon || "star",
+                  feature.name || "",
+                  feature.description || ""
+                ])
+              }, "*");
+            });
+
+            document.body.appendChild(embed);
+
+            window.onmessage = ({ data: { err, finished } }) => {
+              if (!finished) {
+                embed.style.display = "none";
+              } else {
+                embed.remove();
+
+                if (err) {
+                  this.showToast(err, "error");
+                } else {
+                  this.showToast(`Created landing page: ${subdomain}.puter.site`, "success");
+
+                  if (!bot.landingPages) (bot.landingPages = []);
+                  if (!bot.landingPages.includes(subdomain)) bot.landingPages.push(subdomain);
+
+                  const index = this.bots.findIndex((b) => b.id === bot.id);
+                  this.bots[index] = bot;
+
+                  this.saveBots();
+
+                  this.confirm("Open Landing Page", "Would you like to open the landing page you just created?", null, "Open").then(() => {
+                    const childProcess = require("child_process");
+
+                    childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + `https://${subdomain}.puter.site"`, (process.platform === "win32") ? {
+                      shell: "powershell.exe"
+                    } : {});
+                  }).catch(() => {});
+                };
+              };
+            };
+          }).catch(() => {});
         } else if (button.querySelector("i").className === "fas fa-arrow-up-right-from-square") {
-
+          this.showLandingPageModal(bot);
         };
       });
     });
 
     suiteMainView.querySelectorAll("#landingPageSection .grid-container .card").forEach((featureCard) => {
+      if (!featureCard.dataset.id) return;
+
       featureCard.querySelector("i").addEventListener("click", () => {
         if (!bot.features) (bot.features = []);
         bot.features = bot.features.filter((feature) => feature.id.toString() !== featureCard.dataset.id);
@@ -3383,7 +3559,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
                     command.remove();
                   }).catch(() => {});
-                } catch (err) {console.log(err);};
+                } catch {};
               };
             });
           });
@@ -3414,6 +3590,66 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     });
   };
 
+  showLandingPageModal(bot) {
+    const childProcess = require("child_process");
+
+    const modal = document.createElement("div");
+    modal.className = "modal";
+
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Open Landing Page</h2>
+          <button class="close-btn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <form id="botForm">
+            <div class="form-group">
+              ${(!bot.landingPages) ? `<span style="color: #d1d1d1;">No landing pages found</span>` : (bot.landingPages || []).map((landingPage) => `
+                <div class="setting-item landing-page-item" style="margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.375rem 1rem; cursor: pointer; background-color: var(--discord-darker);">
+                  https://${this.escapeHtml(landingPage)}.puter.site
+                  <div>
+                    <i class="fas fa-copy"></i>
+                  </div>
+                </div>
+              `).join("\n")}
+            </div>
+            <div class="form-actions" style="margin-top: 0;">
+              <button type="button" class="cancel-btn">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    modal.querySelectorAll(".form-group .setting-item.landing-page-item").forEach((item) => {
+      item.addEventListener("click", () => {
+        if (item.querySelector("div").matches(":hover")) {
+          navigator.clipboard.writeText(item.textContent.trim());
+          this.showToast("Copied to clipboard", "success", 2000);
+        } else {
+          childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + item.textContent.trim() + `"`, (process.platform === "win32") ? {
+            shell: "powershell.exe"
+          } : {});
+        };
+      });
+    });
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add("show"), 10);
+
+    const closeModal = () => {
+      modal.classList.remove("show");
+      setTimeout(() => modal.remove(), 300);
+    };
+
+    modal.querySelector(".close-btn").addEventListener("click", closeModal);
+    modal.querySelector(".cancel-btn").addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+  };
+
   generateFileTree(dir) {
     const path = require("path");
 
@@ -3437,6 +3673,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         });
       };
     };
+
     return result;
   };
 
@@ -3609,7 +3846,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
             span.style.cursor = "pointer";
             span.contentEditable = false;
             item.dataset.filename = span.textContent.trim();
-            fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8");
+            fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)));
 
             item.click();
           });
@@ -3623,7 +3860,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
             span.style.cursor = "pointer";
             span.contentEditable = false;
             item.dataset.filename = span.textContent.trim();
-            fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8");
+            fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)));
 
             item.click();
           });
@@ -3670,11 +3907,13 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
             helpView.querySelectorAll(".markdown-body a").forEach((link) => {
               link.addEventListener("click", (e) => {
-                e.preventDefault();
+                if (this.isUrl(link.href)) {
+                  e.preventDefault();
 
-                childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + e.target.href + `"`, (process.platform === "win32") ? {
-                  shell: "powershell.exe"
-                } : {});
+                  childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + link.href + `"`, (process.platform === "win32") ? {
+                    shell: "powershell.exe"
+                  } : {});
+                };
               });
             });
 
@@ -3850,6 +4089,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         description: form.querySelector("#botDescription").value,
         initialized: (bot) ? bot.initialized : false,
         features: (bot) ? bot.features :  [],
+        landingPages: [],
         vanityLinks: (bot) ? bot.vanityLinks :  []
       };
 
@@ -4145,17 +4385,31 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
     modal.querySelectorAll(".form-group a").forEach((link) => {
       link.addEventListener("click", (e) => {
-        e.preventDefault();
+        if (this.isUrl(link.href)) {
+          e.preventDefault();
 
-        childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + link.href + `"`, (process.platform === "win32") ? {
-          shell: "powershell.exe"
-        } : {});
+          childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + link.href + `"`, (process.platform === "win32") ? {
+            shell: "powershell.exe"
+          } : {});
+        };
       });
     });
 
     if (parsedMarkdown.match(/<pre><code class="(language-[^"]+)">([\s\S]*?)<\/code><\/pre>/gs)) {
       ipcRenderer.invoke("highlightSyntax", parsedMarkdown).then((syntaxHighlightedMarkdown) => {
         modal.querySelector(".form-group").innerHTML = syntaxHighlightedMarkdown;
+
+        modal.querySelectorAll(".form-group a").forEach((link) => {
+          link.addEventListener("click", (e) => {
+            if (this.isUrl(link.href)) {
+              e.preventDefault();
+
+              childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + link.href + `"`, (process.platform === "win32") ? {
+                shell: "powershell.exe"
+              } : {});
+            };
+          });
+        });
       });
     };
 
@@ -4219,7 +4473,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
             <div class="form-group">
               <label for="reportReason">Reason</label>
               <select id="reportReason">
-                <option disabled selected hidden>Select a reason</option>
+                <option value disabled selected hidden>Select a reason</option>
                 <option value="malicious">🚨 Malicious Behavior</option>
                 <option value="tosViolation">👮 Violating Discord Terms of Service</option>
                 <option value="privacyAbuse">🔒 Privacy / Data Abuse</option>
@@ -4262,25 +4516,36 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     form.addEventListener("submit", (e) => {
       e.preventDefault();
 
-      fetch("/api/v1/reports/add", {
-        method: "POST",
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          id: bot.id,
-          reason: modal.querySelector("#reportReason").value || "other",
-          context: modal.querySelector("#reportContext").value || null
+      if (!modal.querySelector("#reportReason").value) {
+        modal.querySelector("#reportReason").setCustomValidity("Fill out this field.");
+        modal.querySelector("#reportReason").reportValidity();
+      } else if (!modal.querySelector("#reportContext").value) {
+        modal.querySelector("#reportContext").setCustomValidity("Fill out this field.");
+        modal.querySelector("#reportContext").reportValidity();
+      } else {
+        modal.querySelector("#reportReason").setCustomValidity("");
+        modal.querySelector("#reportContext").setCustomValidity("");
+
+        fetch(process.env.SERVER + "/api/v1/reports/add", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            id: bot.id,
+            reason: modal.querySelector("#reportReason").value || "other",
+            context: modal.querySelector("#reportContext").value || null
+          })
         })
-      })
-      .then((response) => response.json())
-      .then(({ err } = {}) => {
-        if (err) return this.showToast(err, "error");
+        .then((response) => response.json())
+        .then(({ err } = {}) => {
+          if (err) return this.showToast(err, "error");
 
-        this.showToast("Reported bot", "success");
-      }).catch(() => {});
+          this.showToast("Reported bot", "success");
+        }).catch(() => {});
 
-      closeModal();
+        closeModal();
+      };
     });
   };
 
@@ -4467,17 +4732,31 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
     modal.querySelectorAll(".form-group a").forEach((link) => {
       link.addEventListener("click", (e) => {
-        e.preventDefault();
+        if (this.isUrl(link.href)) {
+          e.preventDefault();
 
-        childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + link.href + `"`, (process.platform === "win32") ? {
-          shell: "powershell.exe"
-        } : {});
+          childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + link.href + `"`, (process.platform === "win32") ? {
+            shell: "powershell.exe"
+          } : {});
+        };
       });
     });
 
     if (parsedMarkdown.match(/<pre><code class="(language-[^"]+)">([\s\S]*?)<\/code><\/pre>/gs)) {
       ipcRenderer.invoke("highlightSyntax", parsedMarkdown).then((syntaxHighlightedMarkdown) => {
         modal.querySelector(".form-group").innerHTML = syntaxHighlightedMarkdown;
+
+        modal.querySelectorAll(".form-group a").forEach((link) => {
+          link.addEventListener("click", (e) => {
+            if (this.isUrl(link.href)) {
+              e.preventDefault();
+
+              childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + link.href + `"`, (process.platform === "win32") ? {
+                shell: "powershell.exe"
+              } : {});
+            };
+          });
+        });
       });
     };
 
@@ -4503,7 +4782,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     });
   };
 
-  alert(title, message = "", mode) {
+  alert(title, message = "", mode, buttonText) {
     return new Promise((resolve, reject) => {
       const modal = document.createElement("div");
       modal.className = "modal";
@@ -4521,7 +4800,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
               </div>
               <div class="form-actions">
                 <button type="submit" class="submit-btn${(mode === "dangerous") ? ` submit-report-btn" style="background-color: var(--discord-red);"` : `"`}>
-                  Ok / Roger
+                  ${this.escapeHtml(buttonText || "Ok / Roger")}
                 </button>
               </div>
             </form>
@@ -4554,7 +4833,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     });
   };
 
-  confirm(title, message = "", mode) {
+  confirm(title, message = "", mode, buttonText) {
     return new Promise((resolve, reject) => {
       const modal = document.createElement("div");
       modal.className = "modal";
@@ -4572,7 +4851,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
               </div>
               <div class="form-actions">
                 <button type="submit" class="submit-btn${(mode === "dangerous") ? ` submit-report-btn" style="background-color: var(--discord-red);"` : `"`}>
-                  ${this.escapeHtml(title)}
+                  ${this.escapeHtml(buttonText || title)}
                 </button>
                 <button type="button" class="cancel-btn">Cancel</button>
               </div>
@@ -4607,10 +4886,15 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     });
   };
 
-  prompt(title, placeholder = "", mode) {
+  prompt(title, placeholder = "", mode, datalist) {
     return new Promise((resolve, reject) => {
       const modal = document.createElement("div");
       modal.className = "modal";
+
+      let id;
+      if (datalist) {
+        id = Date.now();
+      };
 
       modal.innerHTML = `
         <div class="modal-content">
@@ -4621,7 +4905,14 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           <div class="modal-body">
             <form id="botForm">
               <div class="form-group">
-                <input type="text" id="formInput" placeholder="${placeholder}"></input>
+                <input type="text" id="formInput" placeholder="${placeholder}"${(datalist) ? ` list="datalist-${id.toString()}"` : ""}></input>
+                ${(datalist) ? `
+                  <datalist id="datalist-${id.toString()}">
+                    ${datalist.map((option) => `
+                      <option>${this.escapeHtml(option)}</option>
+                    `).join("\n")}
+                  </datalist>
+                ` : ""}
               </div>
               <div class="form-actions" style="margin-top: 0;">
                 <button type="submit" class="submit-btn${(mode === "dangerous") ? ` submit-report-btn" style="background-color: var(--discord-red);"` : `"`}>
@@ -4691,7 +4982,16 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     document.body.removeChild(testElement);
 
     return content && (content !== "none") && (content !== '""');
-  }
+  };
+
+  isUrl(url) {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    };
+  };
 
   readFileSafelySync(path) {
     try {
@@ -4720,7 +5020,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           const sourcePath = path.join(source, entry);
           const destinationPath = path.join(destination, entry);
           this.copyRecursiveSync(sourcePath, destinationPath);
-        }
+        };
       } else {
         fs.copyFileSync(source, destination);
       };

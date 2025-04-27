@@ -4,19 +4,9 @@ Writing commands for the bot is straightforward and powerful. Just follow the st
 
 ---
 
-## 📦 1. Know your environment
+## 🗂️ 1. Create Your Command File
 
-Knowing the right versions of the packages you're using is essential to using the right methods.
-
-| Package    | Version    |
-|------------|------------|
-| discord.js | 14.18.0    |
-
----
-
-## 🗂️ 2. Create Your Command File
-
-Navigate to the bot’s `commands/` directory and create a new file.  
+Navigate to the bot's `commands/` directory and create a new file.  
 **The file name becomes the command name.**
 
 > 📌 Example:  
@@ -27,7 +17,7 @@ Navigate to the bot’s `commands/` directory and create a new file.
 
 ---
 
-## 🎨 3. Write Your Description
+## 🎨 2. Write Your Description
 
 Descriptions are necessary for the help command, but aren't required. This is how to provide one:
 
@@ -37,7 +27,7 @@ module.exports = {
 };
 ```
 
-## 🛡️ 4. Set Your Permissions
+## 🛡️ 3. Set Your Permissions
 
 Permissions will influence the bot's invite link accordingly:
 
@@ -57,7 +47,7 @@ module.exports = {
 
 ---
 
-## 🧩 5. Define Your Variables
+## 🧩 4. Define Your Variables
 
 Variables are used to make the command customizable globally. This means the bot owner can customize their bot's behaviour on all servers while the guild members have no access to these variables at all. **Do not use variables to let any user specify their command arguments, that's a fundamental misunderstanding of how they work.** Here's the full structure:
 
@@ -137,13 +127,35 @@ You can enhance each variable using a `properties` object.
 
 ---
 
-## 🧠 6. Define the Command Logic
+## 🧠 5. Define the Command Logic
 
-Here’s the full structure again for clarity:
+### 📦 Environment
+
+Knowing the right versions of the packages you're using is essential to using the right methods. These packages come preshipped with LocalBotify and can be imported using by defining a custom `requireCore()` function. If this list doesn't contain your desired package, use `require()` instead.
+
+| Package                  | Version    |
+|--------------------------|------------|
+| @lydell/node-pty         | ^1.1.0     |
+| @teeny-tiny/dotenv       | ^1.0.10    |
+| @teeny-tiny/open         | ^1.1.4     |
+| @xterm/xterm             | ^5.5.0     |
+| discord.js               | ^14.18.0   |
+| localbotify              | ^2.1.0     |
+| markdown-wasm            | ^1.2.0     |
+| node-cron                | ^3.0.3     |
+| node-fetch               | ^3.3.2     |
+| pantry.js                | ^1.0.7     |
+| shiki                    | ^3.3.0     |
+| unzipper                 | ^0.12.3    |
+
+---
+
+Here's the full structure again for clarity:
 
 ```js
-const Discord = require("../../../node_modules/discord.js/src/index.js");
-const { commandType } = require("../../../node_modules/localbotify/index.js");
+const requireCore = (module) => require("../../../" + require("path").join(`node_modules/${module}`, JSON.parse(require("fs").readFileSync(`./node_modules/${module}/package.json`, "utf8") || "{}").main || "index.js").replaceAll("\\", "/"));
+const Discord = requireCore("discord.js");
+const { commandType } = requireCore("localbotify");
 
 module.exports = {
   description: "Check the bot's response time",
@@ -176,13 +188,14 @@ module.exports = {
 };
 ```
 
-## 🔧 7. Register the Slash Command
+## 🔧 6. Register the Slash Command
 
 Define the `slashCommand` property like this:
 
 ```js
-const Discord = require("../../../node_modules/discord.js/src/index.js");
-const { commandType } = require("../../../node_modules/localbotify/index.js");
+const requireCore = (module) => require("../../../" + require("path").join(`node_modules/${module}`, JSON.parse(require("fs").readFileSync(`./node_modules/${module}/package.json`, "utf8") || "{}").main || "index.js").replaceAll("\\", "/"));
+const Discord = requireCore("discord.js");
+const { commandType } = requireCore("localbotify");
 
 module.exports = {
   description: "Check the bot's response time",

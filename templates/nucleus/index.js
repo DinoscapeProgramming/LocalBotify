@@ -6,7 +6,7 @@ require(`../../${fs.readdirSync(path.dirname(path.dirname(__dirname))).includes(
 const { REST, Routes, Client, GatewayIntentBits, PresenceUpdateStatus, ActivityType } = require(`../../${fs.readdirSync(path.dirname(path.dirname(__dirname))).includes("LocalBotify.exe") ? "resources/app.asar.unpacked/" : ""}node_modules/discord.js/src/index.js`);
 const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 const PERMISSIONS = require("./data/permissions.json");
-let config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
+let config = JSON.parse(fs.readFileSync("./config.json", "utf8") || "{}");
 
 const client = new Client({
   intents: [
@@ -17,7 +17,9 @@ const client = new Client({
 });
 
 client.once("ready", () => {
-  fs.writeFileSync("./channels/invite.txt", `https://discord.com/oauth2/authorize?client_id=${client.user.id}&scope=bot+applications.commands&permissions=${Array.from(new Set([
+  config = JSON.parse(fs.readFileSync("./config.json", "utf8") || "{}");
+
+  fs.writeFileSync("./channels/invite.txt", `https://discord.com/oauth2/authorize?client_id=${client.user.id}&scope=bot${(config.slashCommands) ? "+applications.commands" : ""}&permissions=${Array.from(new Set([
     ...[
       "VIEW_CHANNEL",
       "SEND_MESSAGES"
@@ -65,7 +67,7 @@ ${lines.map(center).join('\n')}
   fs.watch("./config.json", (eventType) => {
     if (eventType !== "change") return;
 
-    config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
+    config = JSON.parse(fs.readFileSync("./config.json", "utf8") || "{}");
 
     if (JSON.stringify(config.status) !== JSON.stringify(JSON.parse(fs.readFileSync("./config.json", "utf8")).status)) {
       client.user.setStatus(PresenceUpdateStatus[config?.status?.[0] || "Online"]);
@@ -88,7 +90,7 @@ ${lines.map(center).join('\n')}
 });
 
 client.on("messageCreate", (message) => {
-  config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
+  config = JSON.parse(fs.readFileSync("./config.json", "utf8") || "{}");
   if (message.author.bot || !message.content.startsWith(config.prefix)) return;
 
   let command = message.content.toLowerCase();
@@ -128,7 +130,7 @@ client.on("messageCreate", (message) => {
 client.on("interactionCreate", (interaction) => {
   if (interaction.user.bot) return;
 
-  config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
+  config = JSON.parse(fs.readFileSync("./config.json", "utf8") || "{}");
 
   let commandName = interaction.commandName;
 
@@ -169,7 +171,7 @@ client.on("guildMemberAdd", () => updateStatistics(client));
 fs.readdirSync("./events").forEach((event) => {
   if (!event.endsWith(".js")) return;
   client.on(event.substring(0, event.length - 3).replace(/[^A-Za-z]/g, ""), (...args) => {
-    config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
+    config = JSON.parse(fs.readFileSync("./config.json", "utf8") || "{}");
 
     delete require.cache[require.resolve(`./events/${event}`)];
     const eventFile = require(`./events/${event}`);

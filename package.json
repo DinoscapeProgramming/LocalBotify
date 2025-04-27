@@ -14,15 +14,15 @@
   "dependencies": {
     "@lydell/node-pty": "^1.1.0",
     "@teeny-tiny/dotenv": "^1.0.10",
-    "@xterm/addon-fit": "^0.10.0",
+    "@teeny-tiny/open": "^1.1.4",
     "@xterm/xterm": "^5.5.0",
-    "chokidar": "^4.0.3",
     "discord.js": "^14.18.0",
     "localbotify": "^2.1.0",
     "markdown-wasm": "^1.2.0",
+    "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
-    "request": "^2.88.2",
-    "shiki": "^3.2.2",
+    "pantry.js": "^1.0.7",
+    "shiki": "^3.3.0",
     "unzipper": "^0.12.3"
   },
   "devDependencies": {

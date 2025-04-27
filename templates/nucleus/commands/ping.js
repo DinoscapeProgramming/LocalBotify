@@ -1,5 +1,6 @@
-const { EmbedBuilder, SlashCommandBuilder } = require("../../../node_modules/discord.js/src/index.js");
-const { commandType } = require("../../../node_modules/localbotify/index.js");
+const requireCore = (module) => require("../../../" + require("path").join(`node_modules/${module}`, JSON.parse(require("fs").readFileSync(`./node_modules/${module}/package.json`, "utf8") || "{}").main || "index.js").replaceAll("\\", "/"));
+const { EmbedBuilder, SlashCommandBuilder } = requireCore("discord.js");
+const { commandType } = requireCore("localbotify");
 
 module.exports = {
   description: "Check the bot's response time",

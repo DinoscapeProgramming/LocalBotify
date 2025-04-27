@@ -611,7 +611,6 @@ body {
   padding: 0.75rem 1rem;
   border-radius: var(--radius-md);
   color: var(--discord-text);
-  margin-top: 0.75rem;
   width: 100%;
   font-size: 0.95rem;
   transition: all 0.2s ease;
@@ -1130,7 +1129,7 @@ body {
   transform: none !important;
 }
 
-.command-item button {
+.command-item .generate-btn {
   background-color: var(--discord-darker);
   border: 2px solid transparent;
   padding: 0.75rem 1rem;
@@ -1143,8 +1142,14 @@ body {
   margin-top: -2.5px;
 }
 
-.command-item button:hover {
+.command-item .generate-btn:hover {
   background-color: #b7841dc9 !important;
+}
+
+.command-item .copy-btn:focus {
+  outline: none;
+  border-color: var(--discord-primary) !important;
+  box-shadow: 0 0 0 3px rgb(88 101 242 / 20%);
 }
 
 .add-command-btn {
@@ -1548,6 +1553,10 @@ body {
   outline: none;
 }
 
+#collaborationSection .regenerate-link:hover {
+  color: #4752c4 !important;
+}
+
 #landingPageSection .grid-container {
   display: grid;
   grid-template-columns: 1fr;
@@ -1577,18 +1586,26 @@ body {
   background-color: #3a3b3e;
 }
 
-#landingPageSection .icon {
+#landingPageSection .card .icon {
   color: #9b59b6;
   margin-bottom: 1rem;
 }
 
-#landingPageSection .icon i {
+#landingPageSection .card .icon i {
   font-size: 1.5rem;
   cursor: pointer;
 }
 
-#landingPageSection .icon i:hover {
+#landingPageSection .card:last-child .icon i {
+  cursor: default;
+}
+
+#landingPageSection .card .icon i:hover {
   opacity: 0.8;
+}
+
+#landingPageSection .card:last-child .icon i {
+  opacity: 1;
 }
 
 #landingPageSection .title {
@@ -1606,6 +1623,28 @@ body {
   content: attr(placeholder);
   pointer-events: none;
   opacity: 0.75;
+}
+
+.landing-page-item div {
+  float: right;
+  padding: 7.5px;
+  padding-left: 10px;
+  padding-right: 12.5px;
+  margin-top: -6.5px;
+  margin-right: -17.5px;
+  font-size: 15px;
+  border-left: 1px solid #ffffff24;
+  border-top-right-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+  transition: background-color 0.2s ease;
+}
+
+.landing-page-item div:hover {
+  background-color: #ffffff1a;
+}
+
+.landing-page-item div i {
+  transform: translateX(1px);
 }
 
 #vanityLinksSection .setting-item:last-child {
