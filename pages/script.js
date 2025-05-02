@@ -2288,7 +2288,30 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
             suiteMainView.querySelector("#collaborationSection .command-item input").value = `${process.env.SERVER}/sessions/${encodeURIComponent(id)}`;
 
             this.socket.on("retrieveFileSystem", () => {
-              this.socket.emit("retrieveFileSystem", this.getFlatFileList(path.join(process.cwd(), "bots", bot.id.toString())));
+              this.socket.emit("retrieveFileSystem", [
+                this.getFlatFileList(bot, path.join(process.cwd(), "bots", bot.id.toString())),
+                ((dir) => {
+                  const files = fs.readdirSync(dir);
+                  if (files.includes("index.js")) return "index.js";
+                  if (files.includes("package.json")) {
+                    try {
+                      const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+                      if (packageJson.main && fs.existsSync(path.join(dir, packageJson.main))) return packageJson.main;
+                      return "package.json";
+                    } catch {
+                      return "package.json";
+                    };
+                  };
+                  const firstJsFile = files.find((file) => file.endsWith(".js"));
+                  if (firstJsFile) return firstJsFile;
+                  const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
+                  if (firstNonFolder) return firstNonFolder;
+                  const firstFile = this.getFlatFileList(dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
+                  if (firstFile) return firstFile.substring(2);
+                  return null;
+                })(path.join(process.cwd(), "bots", bot.id.toString())),
+                this.editor.getValue()
+              ]);
             });
 
             this.socket.on("retrieveFileContent", (fileName) => {
@@ -2318,19 +2341,39 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
             this.socket.on("newFileContent", ([fileName, fileContent]) => {
               fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), fileName), fileContent, "utf8");
             });
+
+            this.socket.on("newLink", (newId) => {
+              id = newId;
+
+              suiteMainView.querySelector("#collaborationSection .command-item input").value = `${process.env.SERVER}/sessions/${encodeURIComponent(newId)}`;
+            });
           });
         });
 
         document.head.appendChild(socketScript);
       } else {
-        if (!this.socket) return;
+        suiteMainView.querySelector("#collaborationSection .command-item").style.display = "none";
 
-        this.socket.disconnect();
+        if (this.socket) {
+          this.socket.disconnect();
+          this.socket = null;
+        };
       };
     });
 
     suiteMainView.querySelector("#collaborationSection .command-item input").addEventListener("click", () => {
       suiteMainView.querySelector("#collaborationSection .command-item input").select();
+    });
+
+    suiteMainView.querySelector("#collaborationSection .command-item .copy-btn").addEventListener("click", () => {
+      navigator.clipboard.writeText(suiteMainView.querySelector("#collaborationSection .command-item input").value);
+      this.showToast("Copied to clipboard", "success", 2000);
+    });
+
+    suiteMainView.querySelector("#collaborationSection .command-item .regenerate-link").addEventListener("click", () => {
+      if (!this.socket) return;
+
+      this.socket.emit("newLink");
     });
 
     new Chart(suiteMainView.querySelector("#analyticsChart"), {
@@ -3186,7 +3229,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                 <input type="text" id="botName" value="${this.escapeHtml(bot.name || "")}" required style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
               </div>
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 0.55rem;">
               <label for="botDescription">Description (optional)</label>
               <textarea id="botDescription" value="${this.escapeHtml(bot.description || "")}"></textarea>
             </div>
@@ -3979,7 +4022,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                 <input type="text" id="botName" value="${(bot) ? this.escapeHtml(bot.name) : ""}" required style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
               </div>
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 0.55rem;">
               <label for="botDescription">Description (optional)</label>
               <textarea id="botDescription">${(bot) ? this.escapeHtml(bot.description) : ""}</textarea>
             </div>
