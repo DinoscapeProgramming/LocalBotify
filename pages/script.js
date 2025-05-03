@@ -944,7 +944,7 @@ class LocalBotify {
           };
         });
 
-        if (this.editor.getScrollerElement().scrollHeight > this.editor.getScrollerElement().clientHeight) editorView.querySelector(".editor-play-btn").style.right = "calc(0.5rem + 5px)";
+        if (this.editor.getScrollerElement().scrollHeight > this.editor.getScrollerElement().clientHeight) (editorView.querySelector(".editor-play-btn").style.right = "calc(0.5rem + 5px)");
       });
       document.head.appendChild(codeEditorModeScript);
     });
