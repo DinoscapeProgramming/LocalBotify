@@ -932,8 +932,10 @@ class LocalBotify {
           autoCloseTags: true
         });
 
-        this.editor.on("change", () => {
+        this.editor.on("change", (_, change) => {
           editorView.querySelector(".editor-play-btn").style.right = (this.editor.getScrollerElement().scrollHeight > this.editor.getScrollerElement().clientHeight) ? "calc(0.5rem + 5px)" : "calc(0.5rem - 2.5px)";
+
+          if (change.origin !== "+input") return;
 
           const activeFile = editorView.querySelector(".file-tree-item.active-file");
 
@@ -1178,7 +1180,7 @@ class LocalBotify {
               if (firstJsFile) return firstJsFile;
               const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
               if (firstNonFolder) return firstNonFolder;
-              const firstFile = this.getFlatFileList(dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
+              const firstFile = this.getFlatFileList(bot, dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
               if (firstFile) return firstFile.substring(2);
               return null;
             })(path.join(process.cwd(), "bots", bot.id.toString()))), "utf8")) : ""}</textarea>
@@ -1252,7 +1254,7 @@ class LocalBotify {
             <div class="setting-item" style="margin-top: 20px; margin-bottom: 0.25rem;">
               <label data-tooltip="Develop your bot together with your friends">
                 <span>Private Join Link</span>
-                <input type="checkbox" id="privateJoinLink">
+                <input type="checkbox" id="privateJoinLink"${((this.collaborationSessions || {})[bot.id.toString()]) ? " checked" : ""}>
               </label>
               <div class="setting-description">
                 Anyone with this link can edit files
@@ -1616,7 +1618,7 @@ class LocalBotify {
         if (firstJsFile) return firstJsFile;
         const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
         if (firstNonFolder) return firstNonFolder;
-        const firstFile = this.getFlatFileList(dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
+        const firstFile = this.getFlatFileList(bot, dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
         if (firstFile) return firstFile.substring(2);
         return null;
       })(path.join(process.cwd(), "bots", bot.id.toString()));
@@ -1676,7 +1678,13 @@ class LocalBotify {
     });
 
     this.watchDirectoryRecursive(path.join(process.cwd(), "bots", bot.id.toString()), (eventType) => {
-      if ((eventType !== "rename") || (JSON.stringify(this.getFlatFileList(bot, path.join(process.cwd(), "bots", bot.id.toString()))) === this.parseFileTree(editorView.querySelector(".file-tree")))) return;
+      if (eventType !== "rename") return;
+
+      if (this.collaborationSessions[bot.id.toString()]) {
+        this.collaborationSockets[bot.id.toString()].emit("newFileSystem", this.getFlatFileList(bot, path.join(process.cwd(), "bots", bot.id.toString())));
+      };
+
+      if (JSON.stringify(this.getFlatFileList(bot, path.join(process.cwd(), "bots", bot.id.toString()))) === this.parseFileTree(editorView.querySelector(".file-tree"))) return;
 
       const activeItem = this.getFilePath(editorView.querySelector(".file-tree-item.active")) || "";
       const activeFile = this.getFilePath(editorView.querySelector(".file-tree-item.active-file")) || "";
@@ -1700,7 +1708,7 @@ class LocalBotify {
         if (firstJsFile) return firstJsFile;
         const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
         if (firstNonFolder) return firstNonFolder;
-        const firstFile = this.getFlatFileList(dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
+        const firstFile = this.getFlatFileList(bot, dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
         if (firstFile) return firstFile.substring(2);
         return null;
       })(path.join(process.cwd(), "bots", bot.id.toString())))).classList.add(...[
@@ -2471,12 +2479,98 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                   if (firstJsFile) return firstJsFile;
                   const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
                   if (firstNonFolder) return firstNonFolder;
-                  const firstFile = this.getFlatFileList(dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
+                  const firstFile = this.getFlatFileList(bot, dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
                   if (firstFile) return firstFile.substring(2);
                   return null;
                 })(path.join(process.cwd(), "bots", bot.id.toString())),
-                this.editor.getValue()
+                fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ((dir) => {
+                  const files = fs.readdirSync(dir);
+                  if (files.includes("index.js")) return "index.js";
+                  if (files.includes("package.json")) {
+                    try {
+                      const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+                      if (packageJson.main && fs.existsSync(path.join(dir, packageJson.main))) return packageJson.main;
+                      return "package.json";
+                    } catch {
+                      return "package.json";
+                    };
+                  };
+                  const firstJsFile = files.find((file) => file.endsWith(".js"));
+                  if (firstJsFile) return firstJsFile;
+                  const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
+                  if (firstNonFolder) return firstNonFolder;
+                  const firstFile = this.getFlatFileList(bot, dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
+                  if (firstFile) return firstFile.substring(2);
+                  return null;
+                })(path.join(process.cwd(), "bots", bot.id.toString()))), "utf8")
               ]);
+
+              if (!this.collaborationWatchers) (this.collaborationWatchers = {});
+              this.collaborationWatchers[bot.id.toString()] = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), ((dir) => {
+                const files = fs.readdirSync(dir);
+                if (files.includes("index.js")) return "index.js";
+                if (files.includes("package.json")) {
+                  try {
+                    const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+                    if (packageJson.main && fs.existsSync(path.join(dir, packageJson.main))) return packageJson.main;
+                    return "package.json";
+                  } catch {
+                    return "package.json";
+                  };
+                };
+                const firstJsFile = files.find((file) => file.endsWith(".js"));
+                if (firstJsFile) return firstJsFile;
+                const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
+                if (firstNonFolder) return firstNonFolder;
+                const firstFile = this.getFlatFileList(bot, dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
+                if (firstFile) return firstFile.substring(2);
+                return null;
+              })(path.join(process.cwd(), "bots", bot.id.toString()))), (eventType) => {
+                if (eventType !== "change") return;
+
+                this.collaborationSockets[bot.id.toString()].emit("newFileContent", [
+                  ((dir) => {
+                    const files = fs.readdirSync(dir);
+                    if (files.includes("index.js")) return "index.js";
+                    if (files.includes("package.json")) {
+                      try {
+                        const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+                        if (packageJson.main && fs.existsSync(path.join(dir, packageJson.main))) return packageJson.main;
+                        return "package.json";
+                      } catch {
+                        return "package.json";
+                      };
+                    };
+                    const firstJsFile = files.find((file) => file.endsWith(".js"));
+                    if (firstJsFile) return firstJsFile;
+                    const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
+                    if (firstNonFolder) return firstNonFolder;
+                    const firstFile = this.getFlatFileList(bot, dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
+                    if (firstFile) return firstFile.substring(2);
+                    return null;
+                  })(path.join(process.cwd(), "bots", bot.id.toString())),
+                  fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ((dir) => {
+                    const files = fs.readdirSync(dir);
+                    if (files.includes("index.js")) return "index.js";
+                    if (files.includes("package.json")) {
+                      try {
+                        const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+                        if (packageJson.main && fs.existsSync(path.join(dir, packageJson.main))) return packageJson.main;
+                        return "package.json";
+                      } catch {
+                        return "package.json";
+                      };
+                    };
+                    const firstJsFile = files.find((file) => file.endsWith(".js"));
+                    if (firstJsFile) return firstJsFile;
+                    const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
+                    if (firstNonFolder) return firstNonFolder;
+                    const firstFile = this.getFlatFileList(bot, dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
+                    if (firstFile) return firstFile.substring(2);
+                    return null;
+                  })(path.join(process.cwd(), "bots", bot.id.toString()))), "utf8")
+                ]);
+              });
             });
 
             this.collaborationSockets[bot.id.toString()].on("retrieveFileContent", (fileName) => {
@@ -2484,6 +2578,16 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                 fileName,
                 fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), fileName), "utf8") || ""
               ]);
+
+              this.collaborationSockets[bot.id.toString()].close();
+              this.collaborationWatchers[bot.id.toString()] = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), fileName), (eventType) => {
+                if (eventType !== "change") return;
+
+                this.collaborationSockets[bot.id.toString()].emit("newFileContent", [
+                  fileName,
+                  fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), fileName), "utf8")
+                ]);
+              });
             });
 
             this.collaborationSockets[bot.id.toString()].on("newFileSystem", ([fileAction, fileNames]) => {
@@ -2505,8 +2609,12 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
             this.collaborationSockets[bot.id.toString()].on("newFileContent", ([fileName, fileContent]) => {
               if (fileName === this.getFilePath(editorView.querySelector(".file-tree .file-tree-item.active-file"))) {
+                if (fileContent === this.editor.getValue()) return;
+
                 this.editor.setValue(fileContent);
               } else {
+                if (fileContent === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), fileName), "utf8")) return;
+
                 fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), fileName), fileContent, "utf8");
               };
             });
@@ -2514,7 +2622,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
             this.collaborationSockets[bot.id.toString()].on("newLink", (newId) => {
               id = newId;
 
-              suiteMainView.querySelector("#collaborationSection .command-item input").value = `${process.env.SERVER}/sessions/${encodeURIComponent(newId)}`;
+              document.querySelector("#collaborationSection .command-item input").value = `${process.env.SERVER}/sessions/${encodeURIComponent(newId)}`;
             });
           });
         });
