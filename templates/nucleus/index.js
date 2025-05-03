@@ -13,7 +13,7 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent
-  ], // --> remember to activate intents in developer portal settings too!
+  ], // --> remember to activate intents in the developer portal settings too!
 });
 
 client.once("ready", () => {
@@ -61,7 +61,7 @@ ${lines.map(center).join('\n')}
 
   rest.put(
     Routes.applicationCommands(client.user.id),
-    { body: (config.slashCommands ?? true) ? fs.readdirSync("./commands").map((command) => require("./commands/" + command)).filter(({ slashCommand }) => slashCommand).map(({ slashCommand }) => slashCommand) : [] }
+    { body: (config.slashCommands ?? true) ? fs.readdirSync("./commands").map((command) => require("./commands/" + command)).filter(({ slashCommand }) => slashCommand).map(({ description, slashCommand }) => slashCommand.setDescription(description || "")) : [] }
   );
 
   fs.watch("./config.json", (eventType) => {
@@ -83,7 +83,7 @@ ${lines.map(center).join('\n')}
 
       rest.put(
         Routes.applicationCommands(client.user.id),
-        { body: (config.slashCommands ?? true) ? fs.readdirSync("./commands").map((command) => require("./commands/" + command)).filter(({ slashCommand }) => slashCommand).map(({ slashCommand }) => slashCommand) : [] }
+        { body: (config.slashCommands ?? true) ? fs.readdirSync("./commands").map((command) => require("./commands/" + command)).filter(({ slashCommand }) => slashCommand).map(({ description, slashCommand }) => slashCommand.setDescription(description || "")) : [] }
       );
     };
   });
@@ -99,6 +99,8 @@ client.on("messageCreate", (message) => {
   if (fs.readdirSync("./commands").includes(`${commandName}.js`)) {
     delete require.cache[require.resolve(`./commands/${commandName}.js`)];
     const commandFile = require(`./commands/${commandName}.js`);
+
+    message.respond = (...args) => message.channel.send(args);
 
     commandFile.command({
       ...{
@@ -137,6 +139,8 @@ client.on("interactionCreate", (interaction) => {
   if (fs.readdirSync("./commands").includes(`${commandName}.js`)) {
     delete require.cache[require.resolve(`./commands/${commandName}.js`)];
     const commandFile = require(`./commands/${commandName}.js`);
+    
+    interaction.respond = (...args) => interaction.reply(args);
 
     commandFile.command({
       ...{
