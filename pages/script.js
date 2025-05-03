@@ -1258,9 +1258,9 @@ class LocalBotify {
                 Anyone with this link can edit files
               </div>
             </div>
-            <div class="command-item setting-item" style="display: none; padding: 0; background-color: transparent;">
+            <div class="command-item setting-item" style="display: ${((this.collaborationSessions || {})[bot.id.toString()]) ? "block" : "none"}; padding: 0; background-color: transparent;">
               <div style="display: flex; flex-direction: row;">
-                <input style="margin-top: 0.35rem; margin-bottom: 0.375rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; border-top-right-radius: 0; border-bottom-right-radius: 0;" readonly>
+                <input style="margin-top: 0.35rem; margin-bottom: 0.375rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; border-top-right-radius: 0; border-bottom-right-radius: 0;" ${((this.collaborationSessions || {})[bot.id.toString()]) ? `value="${this.escapeHtml(`${process.env.SERVER}/sessions/${encodeURIComponent(this.collaborationSessions[bot.id.toString()])}`)}" ` : ""}readonly>
                 <button class="copy-btn" style="border: 2px solid transparent; padding: 0.75rem 1rem; border-top-left-radius: 0; border-top-right-radius: var(--radius-md); border-bottom-left-radius: 0; border-bottom-right-radius: var(--radius-md); color: var(--discord-text); width: fit-content; font-size: 0.95rem; transition: all 0.2s ease; margin-top: 0.35rem; margin-bottom: 0.375rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; cursor: pointer;">
                   <i class="fas fa-copy"></i>
                 </button>
@@ -1656,8 +1656,17 @@ class LocalBotify {
       playBtn.addEventListener("click", () => {
         ipcRenderer.send("terminalData", [
           bot.id,
-          (playBtn.children[0].className === "fas fa-stop") ? "\x03\x03" : (((bot.initialized) ? "" : ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.initialization || "") + "; ")) + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`)
+          (playBtn.children[0].className === "fas fa-stop") ? "\x03" : (((bot.initialized) ? "" : ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.initialization || "") + "; ")) + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`)
         ]);
+
+        if (playBtn.children[0].className === "fas fa-stop") {
+          setTimeout(() => {
+            ipcRenderer.send("terminalData", [
+              bot.id,
+              "\x03"
+            ]);
+          }, 500);
+        };
 
         workspaceView.querySelectorAll("#workbench-play-btn, .editor-play-btn").forEach((changedPlayBtn) => {
           changedPlayBtn.children[0].className = (changedPlayBtn.children[0].className === "fas fa-stop") ? "fas fa-play" : "fas fa-stop";
@@ -1667,14 +1676,15 @@ class LocalBotify {
     });
 
     this.watchDirectoryRecursive(path.join(process.cwd(), "bots", bot.id.toString()), (eventType) => {
-      if (eventType !== "rename") return;
+      if ((eventType !== "rename") || (JSON.stringify(this.getFlatFileList(bot, path.join(process.cwd(), "bots", bot.id.toString()))) === this.parseFileTree(editorView.querySelector(".file-tree")))) return;
 
+      const activeItem = this.getFilePath(editorView.querySelector(".file-tree-item.active")) || "";
       const activeFile = this.getFilePath(editorView.querySelector(".file-tree-item.active-file")) || "";
       const newFile = this.getFlatFileList(bot, path.join(process.cwd(), "bots", bot.id.toString())).filter((file) => !this.parseFileTree(editorView.querySelector(".file-tree")).includes(file))[0]?.slice(2) || "";
 
       editorView.querySelector(".file-tree").innerHTML = this.renderFileTree(this.generateFileTree(path.join(process.cwd(), "bots", bot.id.toString())));
 
-      (this.getFileTreeItem(editorView, activeFile) || this.getFileTreeItem(editorView, newFile) || this.getFileTreeItem(editorView, ((dir) => {
+      (this.getFileTreeItem(editorView, activeItem) || this.getFileTreeItem(editorView, activeFile) || this.getFileTreeItem(editorView, newFile) || this.getFileTreeItem(editorView, ((dir) => {
         const files = fs.readdirSync(dir);
         if (files.includes("index.js")) return "index.js";
         if (files.includes("package.json")) {
@@ -1693,7 +1703,14 @@ class LocalBotify {
         const firstFile = this.getFlatFileList(dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
         if (firstFile) return firstFile.substring(2);
         return null;
-      })(path.join(process.cwd(), "bots", bot.id.toString())))).classList.add("active");
+      })(path.join(process.cwd(), "bots", bot.id.toString())))).classList.add(...[
+        ...[
+          "active"
+        ],
+        ...(activeItem !== activeFile) ? [] : [
+          "active-file"
+        ]
+      ]);
 
       this.setupFileTreeListeners(editorView, bot);
     });
@@ -1732,8 +1749,7 @@ class LocalBotify {
             const fileItems = editorView.querySelectorAll(".file-tree-item");
 
             fileItems.forEach((i) => i.classList.remove("active", "active-file"));
-            newFileTreeItem.classList.add("active");
-            newFileTreeItem.classList.add("active-file");
+            newFileTreeItem.classList.add("active", "active-file");
 
             this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
             this.editor.clearHistory();
@@ -1806,7 +1822,7 @@ class LocalBotify {
                 try {
                   fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
                 } catch {};
-              });
+              }).catch(() => {});
             });
 
             document.body.appendChild(contextMenu);
@@ -1835,8 +1851,7 @@ class LocalBotify {
             const fileItems = editorView.querySelectorAll(".file-tree-item");
 
             fileItems.forEach((i) => i.classList.remove("active", "active-file"));
-            newFileTreeItem.classList.add("active");
-            newFileTreeItem.classList.add("active-file");
+            newFileTreeItem.classList.add("active", "active-file");
 
             this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
             this.editor.clearHistory();
@@ -1907,7 +1922,7 @@ class LocalBotify {
                 try {
                   fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
                 } catch {};
-              });
+              }).catch(() => {});
             });
 
             document.body.appendChild(contextMenu);
@@ -1959,11 +1974,84 @@ class LocalBotify {
           fs.mkdirSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)));
 
           newFolderTreeItem.addEventListener("click", () => {
+            const fileItems = editorView.querySelectorAll(".file-tree-item");
+
             fileItems.forEach((i) => i.classList.remove("active"));
             newFolderTreeItem.classList.add("active");
 
             newFolderTreeItem.nextElementSibling.style.display = (newFolderTreeItem.nextElementSibling.style.display === "none") ? "block" : "none";
           });
+
+          newFolderTreeItem.addEventListener("contextmenu", (e) => {
+            if (document.body.querySelector(".file-tree-context-menu")) document.body.querySelector(".file-tree-context-menu").remove();
+
+            const contextMenu = document.createElement("div");
+            contextMenu.className = "file-tree-context-menu";
+
+            contextMenu.innerHTML = `
+              <div class="context-menu-rename-btn">
+                <i class="fas fa-pen" style="margin-right: 8.75px;"></i>Rename
+              </div>
+              <div class="context-menu-delete-btn">
+                <i class="fas fa-trash" style="margin-right: 10.5px;"></i>Delete
+              </div>
+            `;
+
+            contextMenu.style.top = `${e.clientY}px`;
+            contextMenu.style.left = `${e.clientX}px`;
+
+            contextMenu.querySelector(".context-menu-rename-btn").addEventListener("click", () => {
+              const oldFilePath = this.getFilePath(item);
+
+              const span = newFolderTreeItem.querySelector("span");
+              span.style.cursor = "text";
+              span.contentEditable = true;
+              span.focus();
+              span.addEventListener("blur", () => {
+                if (!span.textContent.trim()) return newFolderTreeItem.remove();
+                if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+
+                span.style.cursor = "pointer";
+                span.contentEditable = false;
+                newFolderTreeItem.dataset.filename = span.textContent.trim();
+                fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)));
+
+                newFolderTreeItem.click();
+              });
+
+              span.addEventListener("keydown", (e) => {
+                if (e.key !== "Enter") return;
+
+                if (!span.textContent.trim()) return newFolderTreeItem.remove();
+                if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+
+                span.style.cursor = "pointer";
+                span.contentEditable = false;
+                newFolderTreeItem.dataset.filename = span.textContent.trim();
+                fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)));
+
+                newFolderTreeItem.click();
+              });
+            });
+
+            contextMenu.querySelector(".context-menu-delete-btn").addEventListener("click", () => {
+              this.confirm("Delete File", `Are you sure you want to delete ${this.escapeHtml(newFolderTreeItem.dataset.filename || newFolderTreeItem.querySelector("span").textContent.trim())}?`).then(() => {
+                item.remove();
+
+                try {
+                  fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)), "utf8");
+                } catch {};
+              }).catch(() => {});
+            });
+
+            document.body.appendChild(contextMenu);
+
+            window.addEventListener("click", () => {
+              contextMenu.remove();
+            });
+          });
+
+          newFolderTreeItem.click();
         });
 
         newFolderTreeItem.querySelector("span").addEventListener("keydown", (e) => {
@@ -1978,11 +2066,84 @@ class LocalBotify {
           fs.mkdirSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)));
 
           newFolderTreeItem.addEventListener("click", () => {
+            const fileItems = editorView.querySelectorAll(".file-tree-item");
+
             fileItems.forEach((i) => i.classList.remove("active"));
             newFolderTreeItem.classList.add("active");
 
             newFolderTreeItem.nextElementSibling.style.display = (newFolderTreeItem.nextElementSibling.style.display === "none") ? "block" : "none";
           });
+
+          newFolderTreeItem.addEventListener("contextmenu", (e) => {
+            if (document.body.querySelector(".file-tree-context-menu")) document.body.querySelector(".file-tree-context-menu").remove();
+
+            const contextMenu = document.createElement("div");
+            contextMenu.className = "file-tree-context-menu";
+
+            contextMenu.innerHTML = `
+              <div class="context-menu-rename-btn">
+                <i class="fas fa-pen" style="margin-right: 8.75px;"></i>Rename
+              </div>
+              <div class="context-menu-delete-btn">
+                <i class="fas fa-trash" style="margin-right: 10.5px;"></i>Delete
+              </div>
+            `;
+
+            contextMenu.style.top = `${e.clientY}px`;
+            contextMenu.style.left = `${e.clientX}px`;
+
+            contextMenu.querySelector(".context-menu-rename-btn").addEventListener("click", () => {
+              const oldFilePath = this.getFilePath(item);
+
+              const span = newFolderTreeItem.querySelector("span");
+              span.style.cursor = "text";
+              span.contentEditable = true;
+              span.focus();
+              span.addEventListener("blur", () => {
+                if (!span.textContent.trim()) return newFolderTreeItem.remove();
+                if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+
+                span.style.cursor = "pointer";
+                span.contentEditable = false;
+                newFolderTreeItem.dataset.filename = span.textContent.trim();
+                fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)));
+
+                newFolderTreeItem.click();
+              });
+
+              span.addEventListener("keydown", (e) => {
+                if (e.key !== "Enter") return;
+
+                if (!span.textContent.trim()) return newFolderTreeItem.remove();
+                if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+
+                span.style.cursor = "pointer";
+                span.contentEditable = false;
+                newFolderTreeItem.dataset.filename = span.textContent.trim();
+                fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), oldFilePath), path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)));
+
+                newFolderTreeItem.click();
+              });
+            });
+
+            contextMenu.querySelector(".context-menu-delete-btn").addEventListener("click", () => {
+              this.confirm("Delete File", `Are you sure you want to delete ${this.escapeHtml(newFolderTreeItem.dataset.filename || newFolderTreeItem.querySelector("span").textContent.trim())}?`).then(() => {
+                item.remove();
+
+                try {
+                  fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)), "utf8");
+                } catch {};
+              }).catch(() => {});
+            });
+
+            document.body.appendChild(contextMenu);
+
+            window.addEventListener("click", () => {
+              contextMenu.remove();
+            });
+          });
+
+          newFolderTreeItem.click();
         });
 
         ((document.querySelector(".file-tree-item.active.active-file")) ? document.querySelector(".file-tree-item.active.active-file").parentElement : ((document.querySelector(".file-tree-item.active")) ? document.querySelector(".file-tree-item.active").nextElementSibling : document.querySelector(".file-tree"))).appendChild(newFolderTreeItem);
@@ -2279,16 +2440,20 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         socketScript.src = process.env.SERVER + "/socket.io/socket.io.js";
 
         socketScript.addEventListener("load", () => {
-          this.socket = io(process.env.SERVER);
+          if (!this.collaborationSockets) (this.collaborationSockets = {});
+          this.collaborationSockets[bot.id.toString()] = io(process.env.SERVER);
 
-          this.socket.emit("createRoom");
+          this.collaborationSockets[bot.id.toString()].emit("createRoom");
 
-          this.socket.on("createRoom", (id) => {
+          this.collaborationSockets[bot.id.toString()].on("createRoom", (id) => {
             suiteMainView.querySelector("#collaborationSection .command-item").style.display = "block";
             suiteMainView.querySelector("#collaborationSection .command-item input").value = `${process.env.SERVER}/sessions/${encodeURIComponent(id)}`;
 
-            this.socket.on("retrieveFileSystem", () => {
-              this.socket.emit("retrieveFileSystem", [
+            if (!this.collaborationSessions) (this.collaborationSessions = {});
+            this.collaborationSessions[bot.id.toString()] = id;
+
+            this.collaborationSockets[bot.id.toString()].on("retrieveFileSystem", () => {
+              this.collaborationSockets[bot.id.toString()].emit("retrieveFileSystem", [
                 this.getFlatFileList(bot, path.join(process.cwd(), "bots", bot.id.toString())),
                 ((dir) => {
                   const files = fs.readdirSync(dir);
@@ -2314,14 +2479,14 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
               ]);
             });
 
-            this.socket.on("retrieveFileContent", (fileName) => {
-              this.socket.emit("retrieveFileContent", [
+            this.collaborationSockets[bot.id.toString()].on("retrieveFileContent", (fileName) => {
+              this.collaborationSockets[bot.id.toString()].emit("retrieveFileContent", [
                 fileName,
                 fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), fileName), "utf8") || ""
               ]);
             });
 
-            this.socket.on("newFileSystem", ([fileAction, fileNames]) => {
+            this.collaborationSockets[bot.id.toString()].on("newFileSystem", ([fileAction, fileNames]) => {
               switch (fileAction) {
                 case "createFile":
                   fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), fileNames[0]), "", "utf8");
@@ -2338,11 +2503,15 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
               };
             });
 
-            this.socket.on("newFileContent", ([fileName, fileContent]) => {
-              fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), fileName), fileContent, "utf8");
+            this.collaborationSockets[bot.id.toString()].on("newFileContent", ([fileName, fileContent]) => {
+              if (fileName === this.getFilePath(editorView.querySelector(".file-tree .file-tree-item.active-file"))) {
+                this.editor.setValue(fileContent);
+              } else {
+                fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), fileName), fileContent, "utf8");
+              };
             });
 
-            this.socket.on("newLink", (newId) => {
+            this.collaborationSockets[bot.id.toString()].on("newLink", (newId) => {
               id = newId;
 
               suiteMainView.querySelector("#collaborationSection .command-item input").value = `${process.env.SERVER}/sessions/${encodeURIComponent(newId)}`;
@@ -2354,9 +2523,13 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
       } else {
         suiteMainView.querySelector("#collaborationSection .command-item").style.display = "none";
 
-        if (this.socket) {
-          this.socket.disconnect();
-          this.socket = null;
+        if ((this.collaborationSockets || {})[bot.id.toString()]) {
+          this.collaborationSockets[bot.id.toString()].disconnect();
+          this.collaborationSockets[bot.id.toString()] = null;
+        };
+
+        if ((this.collaborationSessions || {})[bot.id.toString()]) {
+          this.collaborationSessions[bot.id.toString()] = null;
         };
       };
     });
@@ -2371,9 +2544,9 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     });
 
     suiteMainView.querySelector("#collaborationSection .command-item .regenerate-link").addEventListener("click", () => {
-      if (!this.socket) return;
+      if (!this.collaborationSockets[bot.id.toString()]) return;
 
-      this.socket.emit("newLink");
+      this.collaborationSockets[bot.id.toString()].emit("newLink");
     });
 
     new Chart(suiteMainView.querySelector("#analyticsChart"), {
@@ -3779,6 +3952,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
   getFilePath(fileItem) {
     let path = [];
+
     while (fileItem && !fileItem.classList.contains("file-tree")) {
       if (fileItem.classList.contains("file-tree-item")) {
         let span = fileItem.querySelector("span");
@@ -3793,6 +3967,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         fileItem = fileItem.parentElement;
       };
     };
+
     return path.join("/");
   };
 
@@ -3839,8 +4014,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           item.nextElementSibling.style.display = (item.nextElementSibling.style.display === "none") ? "block" : "none";
         } else {
           editorView.querySelectorAll(".file-tree-item").forEach((i) => i.classList.remove("active", "active-file"));
-          item.classList.add("active");
-          item.classList.add("active-file");
+          item.classList.add("active", "active-file");
 
           this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"));
           this.editor.clearHistory();
@@ -3910,13 +4084,13 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         });
 
         contextMenu.querySelector(".context-menu-delete-btn").addEventListener("click", () => {
-          this.confirm("Delete File", `Are you sure you want to delete ${this.escapeHtml(item.dataset.filename || item.querySelector("span").textContent.trim())}?`).then(() => {
+          this.confirm(`Delete ${(item.dataset.filename) ? "File" : "Folder"}`, `Are you sure you want to delete ${this.escapeHtml(item.dataset.filename || item.querySelector("span").textContent.trim())}?`).then(() => {
             item.remove();
 
             try {
               fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8");
             } catch {};
-          });
+          }).catch(() => {});
         });
 
         document.body.appendChild(contextMenu);

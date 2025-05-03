@@ -320,7 +320,7 @@ body {
 }
 
 ::-webkit-scrollbar-corner {
-  background-color: transparent;
+  background-color: var(--discord-dark);
 }
 
 @keyframes slideIn {
@@ -1410,6 +1410,10 @@ body {
 /*.editor-content .CodeMirror-line {
   filter: hue-rotate(160deg);
 }*/
+
+.editor-content .CodeMirror-scrollbar-filler {
+  background-color: var(--discord-dark);
+}
 
 .editor-content-missing {
   position: absolute;
