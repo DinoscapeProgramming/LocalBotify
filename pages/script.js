@@ -1251,25 +1251,28 @@ class LocalBotify {
             <h3 style="flex-direction: row; margin-bottom: 1rem;">
               <i class="fas fa-user-group"></i>Collaboration
             </h3>
-            <div class="setting-item" style="margin-top: 20px; margin-bottom: 0.25rem;">
-              <label data-tooltip="Develop your bot together with your friends">
-                <span>Private Join Link</span>
-                <input type="checkbox" id="privateJoinLink"${((this.collaborationSessions || {})[bot.id.toString()]) ? " checked" : ""}>
-              </label>
-              <div class="setting-description">
-                Anyone with this link can edit files
+            <span class="missing-internet-connection" style="display: ${(navigator.onLine) ? "none" : "block"}; color: grey;">No internet connection</span>
+            <div class="private-join-link" style="display: ${(navigator.onLine) ? "block" : "none"};">
+              <div class="setting-item" style="margin-top: 20px; margin-bottom: 0.25rem;">
+                <label data-tooltip="Develop your bot together with your friends">
+                  <span>Private Join Link</span>
+                  <input type="checkbox" id="privateJoinLink"${((this.collaborationSessions || {})[bot.id.toString()]) ? " checked" : ""}>
+                </label>
+                <div class="setting-description">
+                  Anyone with this link can edit files
+                </div>
               </div>
-            </div>
-            <div class="command-item setting-item" style="display: ${((this.collaborationSessions || {})[bot.id.toString()]) ? "block" : "none"}; padding: 0; background-color: transparent;">
-              <div style="display: flex; flex-direction: row;">
-                <input style="margin-top: 0.35rem; margin-bottom: 0.375rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; border-top-right-radius: 0; border-bottom-right-radius: 0;" ${((this.collaborationSessions || {})[bot.id.toString()]) ? `value="${this.escapeHtml(`${process.env.SERVER}/sessions/${encodeURIComponent(this.collaborationSessions[bot.id.toString()])}`)}" ` : ""}readonly>
-                <button class="copy-btn" style="border: 2px solid transparent; padding: 0.75rem 1rem; border-top-left-radius: 0; border-top-right-radius: var(--radius-md); border-bottom-left-radius: 0; border-bottom-right-radius: var(--radius-md); color: var(--discord-text); width: fit-content; font-size: 0.95rem; transition: all 0.2s ease; margin-top: 0.35rem; margin-bottom: 0.375rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; cursor: pointer;">
-                  <i class="fas fa-copy"></i>
-                </button>
+              <div class="command-item setting-item" style="display: ${((this.collaborationSessions || {})[bot.id.toString()]) ? "block" : "none"}; padding: 0; background-color: transparent;">
+                <div style="display: flex; flex-direction: row;">
+                  <input style="margin-top: 0.35rem; margin-bottom: 0.375rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; border-top-right-radius: 0; border-bottom-right-radius: 0;" ${((this.collaborationSessions || {})[bot.id.toString()]) ? `value="${this.escapeHtml(`${process.env.SERVER}/sessions/${encodeURIComponent(this.collaborationSessions[bot.id.toString()])}`)}" ` : ""}readonly>
+                  <button class="copy-btn" style="border: 2px solid transparent; padding: 0.75rem 1rem; border-top-left-radius: 0; border-top-right-radius: var(--radius-md); border-bottom-left-radius: 0; border-bottom-right-radius: var(--radius-md); color: var(--discord-text); width: fit-content; font-size: 0.95rem; transition: all 0.2s ease; margin-top: 0.35rem; margin-bottom: 0.375rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; cursor: pointer;">
+                    <i class="fas fa-copy"></i>
+                  </button>
+                </div>
+                <p style="font-size: 0.875rem; font-family: system-ui; margin-top: 0.125rem; margin-left: 1.75px; color: #d1d1d1a6;">
+                  Want to revoke access to this link? <span class="regenerate-link" style="color: var(--discord-primary); transition: color 0.2s ease; cursor: pointer;">Generate a new link</span>
+                </p>
               </div>
-              <p style="font-size: 0.875rem; font-family: system-ui; margin-top: 0.125rem; margin-left: 1.75px; color: #d1d1d1a6;">
-                Want to revoke access to this link? <span class="regenerate-link" style="color: var(--discord-primary); transition: color 0.2s ease; cursor: pointer;">Generate a new link</span>
-              </p>
             </div>
           </div>
           <div id="analyticsSection" class="workbench-section settings-section" style="
@@ -2441,6 +2444,28 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
       };
     });
 
+    window.addEventListener("online", () => {
+      suiteMainView.querySelector("#collaborationSection .missing-internet-connection").style.display = "none";
+      suiteMainView.querySelector("#collaborationSection .private-join-link").style.display = "block";
+      suiteMainView.querySelector("#collaborationSection #privateJoinLink").checked = false;
+      suiteMainView.querySelector("#collaborationSection .command-item").style.display = "none";
+
+      if ((this.collaborationRooms || {})[bot.id.toString()]) {
+        this.collaborationRooms[bot.id.toString()] = null;
+      };
+    });
+
+    window.addEventListener("offline", () => {
+      suiteMainView.querySelector("#collaborationSection .missing-internet-connection").style.display = "block";
+      suiteMainView.querySelector("#collaborationSection .private-join-link").style.display = "none";
+      suiteMainView.querySelector("#collaborationSection #privateJoinLink").checked = false;
+      suiteMainView.querySelector("#collaborationSection .command-item").style.display = "none";
+
+      if ((this.collaborationRooms || {})[bot.id.toString()]) {
+        this.collaborationRooms[bot.id.toString()] = null;
+      };
+    });
+
     suiteMainView.querySelector("#collaborationSection #privateJoinLink").addEventListener("change", () => {
       if (suiteMainView.querySelector("#collaborationSection #privateJoinLink").checked) {
         const socketScript = document.createElement("script");
@@ -2624,6 +2649,16 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
               document.querySelector("#collaborationSection .command-item input").value = `${process.env.SERVER}/sessions/${encodeURIComponent(newId)}`;
             });
+          });
+
+          this.collaborationSockets[bot.id.toString()].on("disconnect", () => {
+            suiteMainView.querySelector("#collaborationSection .command-item").style.display = "none";
+
+            this.collaborationSockets[bot.id.toString()] = null;
+
+            if ((this.collaborationSessions || {})[bot.id.toString()]) {
+              this.collaborationSessions[bot.id.toString()] = null;
+            };
           });
         });
 
