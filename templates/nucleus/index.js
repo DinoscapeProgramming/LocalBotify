@@ -1,3 +1,8 @@
+global.isLocalBotify = (require("path").basename(require("path").join(process.cwd(), "..")) === "bots");
+global.isPackaged = (global.isLocalBotify) ? require("fs").existsSync(require("path").join(process.cwd(), "../../resources/app.asar.unpackaged/node_modules")) : null;
+global.importCore = (global.isLocalBotify) ? ((module) => import(require("path").join(process.cwd(), (global.isPackaged) ? "../../resources/app.asar.unpackaged/node_modules" : "../../node_modules", module, JSON.parse(require("fs").readFileSync(require("path").join(process.cwd(), (global.isPackaged) ? "../../resources/app.asar.unpackaged/node_modules" : "../../node_modules", module, "package.json"), "utf8") || "{}").main || "index.js"))) : ((module) => import(module));
+global.requireCore = (global.isLocalBotify) ? ((module) => require(require("path").join(process.cwd(), (global.isPackaged) ? "../../resources/app.asar.unpackaged/node_modules" : "../../node_modules", module, JSON.parse(require("fs").readFileSync(require("path").join(process.cwd(), (global.isPackaged) ? "../../resources/app.asar.unpackaged/node_modules" : "../../node_modules", module, "package.json"), "utf8") || "{}").main || "index.js"))) : require;
+
 const updateStatus = require("./trackers/status.js");
 const updateStatistics = require("./trackers/statistics.js");
 const fs = require("fs");

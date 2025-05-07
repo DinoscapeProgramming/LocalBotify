@@ -935,7 +935,7 @@ class LocalBotify {
         this.editor.on("change", (_, change) => {
           editorView.querySelector(".editor-play-btn").style.right = (this.editor.getScrollerElement().scrollHeight > this.editor.getScrollerElement().clientHeight) ? "calc(0.5rem + 5px)" : "calc(0.5rem - 2.5px)";
 
-          if (change.origin !== "+input") return;
+          if (change.origin === "setValue") return;
 
           const activeFile = editorView.querySelector(".file-tree-item.active-file");
 

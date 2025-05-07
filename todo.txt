@@ -1,10 +1,6 @@
-- Pro Suite (Cloud Hosting, Analytics, Bot Sites, Collaboration, etc.)
 - Fix website
-- Add bot store
-- Add command & event store
+- Add prebuilt commands & events
 - Write documentation
-- Working LocalBotify server
-- Add developer portal
 - Figure out Stripe
 
 - LAUNCH!!! 🔥🔥🔥

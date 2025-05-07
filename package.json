@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "postinstall": "electron-builder install-app-deps"
   },
   "keywords": [],
   "author": "",
@@ -28,7 +29,7 @@
   "devDependencies": {
     "@electron/rebuild": "^3.7.1",
     "electron": "^34.2.0",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^26.0.12"
   },
   "build": {
     "appId": "localbotify",
@@ -48,8 +49,7 @@
       "!**/license",
       "!**/.github/**",
       "!**/*.bak",
-      "!**/.vscode/**",
-      "!**/tools/**/*"
+      "!**/.vscode/**"
     ],
     "nsis": {
       "installerIcon": "assets/favicon.ico",
@@ -60,7 +60,7 @@
     },
     "asarUnpack": [
       "**/node_modules/**",
-      "**/tools/${platform}/*"
+      "**/tools/node/**/*"
     ]
   }
 }
