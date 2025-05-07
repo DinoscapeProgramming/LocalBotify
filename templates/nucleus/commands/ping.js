@@ -1,4 +1,3 @@
-const requireCore = (module) => require("../../../" + require("path").join(`node_modules/${module}`, JSON.parse(require("fs").readFileSync(`./node_modules/${module}/package.json`, "utf8") || "{}").main || "index.js").replaceAll("\\", "/"));
 const { EmbedBuilder, SlashCommandBuilder } = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
 
