@@ -1,0 +1,46 @@
+if (!global.requireCore) (global.requireCore = () => ({}));
+
+const { EmbedBuilder, SlashCommandBuilder } = requireCore("discord.js");
+const { commandType } = requireCore("localbotify");
+const fs = require("fs");
+const categories = require("../data/categories.json");
+
+module.exports = {
+  description: "View all available commands",
+  variables: {
+    header: {
+      title: "Header",
+      description: "The header of the response embed",
+      type: "text"
+    }
+  },
+  slashCommand: (SlashCommandBuilder) ? (new SlashCommandBuilder()
+    .setName("help")) : null,
+  command: async ({
+    header,
+    footer
+  }, client, event) => {
+    const embed = new EmbedBuilder()
+      .setColor(0x00bfff)
+      .setTitle(header || "📖  Help Menu")
+      .setDescription("Here are all available commands, grouped by category:")
+      .addFields(
+        ...[
+          ...Object.entries(categories).map(([name, commands]) => ({
+            name,
+            value: fs.readdirSync("./commands").filter((command) => commands.includes(command.substring(0, command.length - 3))).map((command) => `\`${command.substring(0, command.length - 3)}\``).join(" ")
+          })).filter(({ value }) => value.length),
+          ...[
+            (fs.readdirSync("./commands").filter((command) => !Object.values(categories).flat().includes(command.substring(0, command.length - 3))).length) ? {
+              name: "🧰  Miscellaneous",
+              value: fs.readdirSync("./commands").filter((command) => !Object.values(categories).flat().includes(command.substring(0, command.length - 3))).map((command) => `\`${command.substring(0, command.length - 3)}\``).join(" ")
+            } : {}
+          ]
+        ]
+      )
+      .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
+      .setTimestamp();
+
+    event.respond({ content: null, embeds: [embed] });
+  }
+};

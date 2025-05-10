@@ -131,7 +131,7 @@ You can enhance each variable using a `properties` object.
 
 ### 📦 Environment
 
-Knowing the right versions of the packages you're using is essential to using the right methods. These packages come preshipped with LocalBotify and can be imported using LocalBotify's custom `requireCore()` and `importCore()` function. If this list doesn't contain your desired package, use `require()` instead, requiring manual installation.
+Knowing the right versions of the packages you're using is essential to using the right methods. These packages come preshipped with LocalBotify and can be imported using LocalBotify's custom `requireCore()` and `importCore()` function (define empty functions for them at the top to ensure the variables can be loaded inside the LocalBotify workbench). If this list doesn't contain your desired package, use `require()` instead, requiring manual installation.
 
 | Package                  | Version    |
 |--------------------------|------------|
@@ -150,9 +150,13 @@ Knowing the right versions of the packages you're using is essential to using th
 
 ---
 
+Instead of having to differentiate between messages and interactions, the event's `respond()` method is always binded to the corresponding reply function (`message.channel.send()` for messages; `interaction.reply()` for interactions).
+
 Here's the full structure again for clarity:
 
 ```js
+if (!global.requireCore) (global.requireCore = () => ({}));
+
 const Discord = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
 
@@ -178,20 +182,18 @@ module.exports = {
   },
 
   command: (variables, client, event) => {
-    if (commandType(event) === "message") {
-      event.channel.send(variables.responseMessage);
-    } else if (commandType(event) === "interaction") {
-      event.reply(variables.responseMessage)
-    };
+    event.respond(variables.responseMessage);
   }
 };
 ```
 
 ## 🔧 6. Register the Slash Command
 
-Define the `slashCommand` property like this:
+The description will be applied automatically using the description you specified. Define the `slashCommand` property like this:
 
 ```js
+if (!global.requireCore) (global.requireCore = () => ({}));
+
 const Discord = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
 
@@ -217,16 +219,11 @@ module.exports = {
   },
 
   command: (variables, client, event) => {
-    if (commandType(event) === "message") {
-      event.channel.send(variables.responseMessage);
-    } else if (commandType(event) === "interaction") {
-      event.reply(variables.responseMessage)
-    };
+    event.respond(variables.responseMessage)
   },
 
-  slashCommand: new Discord.SlashCommandBuilder()
-    .setName("ping")
-    .setDescription("Check the bot's response time")
+  slashCommand: (Discord.SlashCommandBuilder) ? (new Discord.SlashCommandBuilder()
+    .setName("ping")) : null
 };
 ```
 

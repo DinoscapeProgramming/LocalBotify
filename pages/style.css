@@ -613,7 +613,7 @@ body {
   color: var(--discord-text);
   width: 100%;
   font-size: 0.95rem;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease;
   margin-top: -2.5px;
 }
 

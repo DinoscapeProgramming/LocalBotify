@@ -1672,7 +1672,7 @@ class LocalBotify {
               editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.remove("animationless"));
             } else if (button.querySelector("i").className === "fas fa-trash") {
               try {
-                this.confirm(`Delete ${command.dataset.category[0].toUpperCase() + command.dataset.category.substring(1, command.dataset.category.length - 1)}`, `Are you sure you want to delete ${command.textContent.trim()}?`).then(() => {
+                this.confirm(`Delete ${command.dataset.category[0].toUpperCase() + command.dataset.category.substring(1, command.dataset.category.length - 1)}`, `Are you sure you want to delete ${command.textContent.trim()}?`, "dangerous").then(() => {
                   fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${command.textContent.trim()}.js`));
 
                   if (workbenchMainView.querySelector(`.workbench-section .setting-item[data-category="${command.dataset.category}"]`).length === 1) {
@@ -1940,7 +1940,7 @@ class LocalBotify {
             });
 
             contextMenu.querySelector(".context-menu-delete-btn").addEventListener("click", () => {
-              this.confirm("Delete File", `Are you sure you want to delete ${this.escapeHtml(newFileTreeItem.dataset.filename || newFileTreeItem.querySelector("span").textContent.trim())}?`).then(() => {
+              this.confirm("Delete File", `Are you sure you want to delete ${this.escapeHtml(newFileTreeItem.dataset.filename || newFileTreeItem.querySelector("span").textContent.trim())}?`, "dangerous").then(() => {
                 item.remove();
 
                 try {
@@ -2040,7 +2040,7 @@ class LocalBotify {
             });
 
             contextMenu.querySelector(".context-menu-delete-btn").addEventListener("click", () => {
-              this.confirm("Delete File", `Are you sure you want to delete ${this.escapeHtml(newFileTreeItem.dataset.filename || newFileTreeItem.querySelector("span").textContent.trim())}?`).then(() => {
+              this.confirm("Delete File", `Are you sure you want to delete ${this.escapeHtml(newFileTreeItem.dataset.filename || newFileTreeItem.querySelector("span").textContent.trim())}?`, "dangerous").then(() => {
                 item.remove();
 
                 try {
@@ -2159,7 +2159,7 @@ class LocalBotify {
             });
 
             contextMenu.querySelector(".context-menu-delete-btn").addEventListener("click", () => {
-              this.confirm("Delete File", `Are you sure you want to delete ${this.escapeHtml(newFolderTreeItem.dataset.filename || newFolderTreeItem.querySelector("span").textContent.trim())}?`).then(() => {
+              this.confirm("Delete File", `Are you sure you want to delete ${this.escapeHtml(newFolderTreeItem.dataset.filename || newFolderTreeItem.querySelector("span").textContent.trim())}?`, "dangerous").then(() => {
                 item.remove();
 
                 try {
@@ -2251,7 +2251,7 @@ class LocalBotify {
             });
 
             contextMenu.querySelector(".context-menu-delete-btn").addEventListener("click", () => {
-              this.confirm("Delete File", `Are you sure you want to delete ${this.escapeHtml(newFolderTreeItem.dataset.filename || newFolderTreeItem.querySelector("span").textContent.trim())}?`).then(() => {
+              this.confirm("Delete File", `Are you sure you want to delete ${this.escapeHtml(newFolderTreeItem.dataset.filename || newFolderTreeItem.querySelector("span").textContent.trim())}?`, "dangerous").then(() => {
                 item.remove();
 
                 try {
@@ -2451,7 +2451,7 @@ class LocalBotify {
                 editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.remove("animationless"));
               } else if (button.querySelector("i").className === "fas fa-trash") {
                 try {
-                  this.confirm(`Delete ${command.dataset.category[0].toUpperCase() + command.dataset.category.substring(1, command.dataset.category.length - 1)}`, `Are you sure you want to delete ${command.textContent.trim()}?`).then(() => {
+                  this.confirm(`Delete ${command.dataset.category[0].toUpperCase() + command.dataset.category.substring(1, command.dataset.category.length - 1)}`, `Are you sure you want to delete ${command.textContent.trim()}?`, "dangerous").then(() => {
                     fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${command.textContent.trim()}.js`));
 
                     if (workbenchMainView.querySelector(`.workbench-section .setting-item[data-category="${command.dataset.category}"]`).length === 1) {
@@ -3255,7 +3255,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                 navigator.clipboard.writeText(shortenedUrlItem.textContent.trim());
                 this.showToast("Copied to clipboard", "success", 2000);
               } else if (button.querySelector("i").className === "fas fa-trash") {
-                this.confirm("Delete Vanity Link", `Are you sure you want to delete ${shortenedUrlItem.textContent.trim()}?\nThis will not deactivate the link itself.`).then(() => {
+                this.confirm("Delete Vanity Link", `Are you sure you want to delete ${shortenedUrlItem.textContent.trim()}?\nThis will not deactivate the link itself.`, "dangerous").then(() => {
                   shortenedUrlItem.remove();
                   if (!suiteMainView.querySelector("#vanityLinksSection .setting-shortenedUrlItem")) {
                     const noLinks = document.createElement("span");
@@ -3478,7 +3478,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
               navigator.clipboard.writeText(item.textContent.trim());
               this.showToast("Copied to clipboard", "success", 2000);
             } else if (button.querySelector("i").className === "fas fa-trash") {
-              this.confirm("Delete Vanity Link", `Are you sure you want to delete ${item.textContent.trim()}?\nThis will not deactivate the link itself.`).then(() => {
+              this.confirm("Delete Vanity Link", `Are you sure you want to delete ${item.textContent.trim()}?\nThis will not deactivate the link itself.`, "dangerous").then(() => {
                 item.remove();
                 if (!suiteMainView.querySelector("#vanityLinksSection .setting-item")) {
                   const noLinks = document.createElement("span");
@@ -4013,7 +4013,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                 editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.remove("animationless"));
               } else if (button.querySelector("i").className === "fas fa-trash") {
                 try {
-                  this.confirm(`Delete ${command.dataset.category[0].toUpperCase() + command.dataset.category.substring(1, command.dataset.category.length - 1)}`, `Are you sure you want to delete ${command.textContent.trim()}?`).then(() => {
+                  this.confirm(`Delete ${command.dataset.category[0].toUpperCase() + command.dataset.category.substring(1, command.dataset.category.length - 1)}`, `Are you sure you want to delete ${command.textContent.trim()}?`, "dangerous").then(() => {
                     fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${command.textContent.trim()}.js`));
 
                     if (workbenchMainView.querySelector(`.workbench-section .setting-item[data-category="${command.dataset.category}"]`).length === 1) {
@@ -4340,7 +4340,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         });
 
         contextMenu.querySelector(".context-menu-delete-btn").addEventListener("click", () => {
-          this.confirm(`Delete ${(item.dataset.filename) ? "File" : "Folder"}`, `Are you sure you want to delete ${this.escapeHtml(item.dataset.filename || item.querySelector("span").textContent.trim())}?`).then(() => {
+          this.confirm(`Delete ${(item.dataset.filename) ? "File" : "Folder"}`, `Are you sure you want to delete ${this.escapeHtml(item.dataset.filename || item.querySelector("span").textContent.trim())}?`, "dangerous").then(() => {
             item.remove();
 
             try {

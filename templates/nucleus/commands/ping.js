@@ -1,3 +1,5 @@
+if (!global.requireCore) (global.requireCore = () => ({}));
+
 const { EmbedBuilder, SlashCommandBuilder } = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
 
@@ -10,16 +12,15 @@ module.exports = {
       type: "text"
     }
   },
-  slashCommand: new SlashCommandBuilder()
-    .setName("ping")
-    .setDescription("Check the bot's response time"),
+  slashCommand: (SlashCommandBuilder) ? (new SlashCommandBuilder()
+    .setName("ping")) : null,
   command: async ({
     header,
     footer
   }, client, event) => {
     const start = Date.now();
 
-    const sent = await ((commandType(event) === "message") ? event.channel.send("Pinging...") : event.reply("Pinging..."));
+    const sent = await event.respond("Pinging...");
 
     const end = Date.now();
 
@@ -30,8 +31,16 @@ module.exports = {
       .setColor(0x00bfff)
       .setTitle(header || "🏓  Pong!")
       .addFields(
-        { name: "Bot Latency", value: `${latency}ms`, inline: true },
-        { name: "API Latency", value: `${apiLatency}ms`, inline: true }
+        {
+          name: "Bot Latency",
+          value: `${latency}ms`,
+          inline: true
+        },
+        {
+          name: "API Latency",
+          value: `${apiLatency}ms`,
+          inline: true
+        }
       )
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
       .setTimestamp();

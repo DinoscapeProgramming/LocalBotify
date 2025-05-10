@@ -1,0 +1,74 @@
+{
+  "🛠️  Moderation": [
+    "ban",
+    "clear",
+    "kick",
+    "lock",
+    "mute",
+    "slowmode",
+    "timeout",
+    "unlock",
+    "unmute",
+    "warn",
+    "warnings"
+  ],
+  "🧑‍🤝‍🧑  User Utilities" : [
+    "avatar",
+    "ping",
+    "roleinfo",
+    "serverinfo",
+    "uptime",
+    "userinfo"
+  ],
+  "🎉  Fun": [
+    "8ball",
+    "cat",
+    "coinflip",
+    "dog",
+    "joke",
+    "meme",
+    "rate",
+    "roll"
+  ],
+  "📈  Levels & Economy": [
+    "balance",
+    "bot",
+    "daily",
+    "give",
+    "leaderboard",
+    "rank",
+    "shop",
+    "work"
+  ],
+  "🎮  Games" : [
+    "guessnumber",
+    "hangman",
+    "rps",
+    "tictactoe",
+    "trivia",
+    "wordle"
+  ],
+  "🔧  Configuration": [
+    "disable",
+    "enable",
+    "permissions",
+    "setlogchannel",
+    "setprefix",
+    "setwelcome"
+  ],
+  "📌  Info": [
+    "botinfo",
+    "help",
+    "invite",
+    "support"
+  ],
+  "🔍  Search": [
+    "anime",
+    "definition",
+    "stock",
+    "translate",
+    "weather",
+    "wiki",
+    "youtube"
+  ]
+}
