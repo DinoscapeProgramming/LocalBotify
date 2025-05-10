@@ -3,12 +3,12 @@ global.isPackaged = (global.isLocalBotify) ? require("fs").existsSync(require("p
 global.importCore = (global.isLocalBotify) ? ((module) => import(require("path").join(process.cwd(), (global.isPackaged) ? "../../resources/app.asar.unpackaged/node_modules" : "../../node_modules", module, JSON.parse(require("fs").readFileSync(require("path").join(process.cwd(), (global.isPackaged) ? "../../resources/app.asar.unpackaged/node_modules" : "../../node_modules", module, "package.json"), "utf8") || "{}").main || "index.js"))) : ((module) => import(module));
 global.requireCore = (global.isLocalBotify) ? ((module) => require(require("path").join(process.cwd(), (global.isPackaged) ? "../../resources/app.asar.unpackaged/node_modules" : "../../node_modules", module, JSON.parse(require("fs").readFileSync(require("path").join(process.cwd(), (global.isPackaged) ? "../../resources/app.asar.unpackaged/node_modules" : "../../node_modules", module, "package.json"), "utf8") || "{}").main || "index.js"))) : require;
 
+requireCore("@teeny-tiny/dotenv").config();
 const updateStatus = require("./trackers/status.js");
 const updateStatistics = require("./trackers/statistics.js");
 const fs = require("fs");
 const path = require("path");
-require(`../../${fs.readdirSync(path.dirname(path.dirname(__dirname))).includes("LocalBotify.exe") ? "resources/app.asar.unpacked/" : ""}node_modules/@teeny-tiny/dotenv/index.js`).config();
-const { REST, Routes, Client, GatewayIntentBits, PresenceUpdateStatus, ActivityType } = require(`../../${fs.readdirSync(path.dirname(path.dirname(__dirname))).includes("LocalBotify.exe") ? "resources/app.asar.unpacked/" : ""}node_modules/discord.js/src/index.js`);
+const { REST, Routes, Client, GatewayIntentBits, PresenceUpdateStatus, ActivityType } = requireCore("discord.js");
 const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 const PERMISSIONS = require("./data/permissions.json");
 let config = JSON.parse(fs.readFileSync("./config.json", "utf8") || "{}");
@@ -34,20 +34,26 @@ client.once("ready", () => {
   ].flat())).reduce((acc, permission) => acc | PERMISSIONS[permission], 0).toString()}`, "utf8");
 
   const lines = [
-    `🤖 ${client.user.username} is online!`,
-    `🚀 Ready to serve your server!`,
+    `🤖  ${client.user.username} is online!`,
+    `🚀  Ready to serve your server!`,
     `🔗 Invite Link:`,
-    fs.readFileSync("./channels/invite.txt", "utf8")
+    fs.readFileSync("./channels/invite.txt", "utf8") || ""
   ];
 
-  const boxWidth = Math.max(...lines.map(line => line.length)) + 4; // Padding
+  const boxWidth = Math.max(...lines.map(line => line.length)) + 4;
   const horizontal = '═'.repeat(boxWidth);
+
+  const hasEmoji = (text) => {
+    const emojiRegex = /(?:\p{Emoji}(?:\p{Emoji_Modifier}|\uFE0F)?(?:\u200D\p{Emoji})*)/gu;
+    const numberOrSpecialCharRegex = /^[0-9]$|[.*+?^${}()|[\]\\]/;
+    return Array.from(text).map((character) => emojiRegex.test(character) && !numberOrSpecialCharRegex.test(character)).includes(true);
+  };
 
   const center = (text) => {
     const totalPadding = boxWidth - text.length;
     const left = Math.ceil(totalPadding / 2);
     const right = Math.floor(totalPadding / 2);
-    return '║' + ' '.repeat(left) + text + ' '.repeat(right) + '║';
+    return '║' + ' '.repeat(left) + text + ' '.repeat(right + Number(hasEmoji(text))) + '║';
   };
 
   console.log('\x1b[36m%s\x1b[0m', `

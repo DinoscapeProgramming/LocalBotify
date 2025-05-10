@@ -4,7 +4,7 @@ Object.assign(process.env, require("fs").readFileSync(require("path").join(__dir
     [accumulator[0]]: JSON.parse(accumulator[1].trim().replaceAll(/\{([^}]+)\}/g, (_, expression) => eval(expression)))
   }
 }), {}));
-const { app, BrowserWindow, ipcMain, dialog, Tray, Menu, autoUpdater } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, Tray, Menu, autoUpdater, nativeTheme } = require("electron");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
@@ -22,7 +22,7 @@ const createWindow = () => {
     title: "LocalBotify",
     icon: path.join(__dirname, "assets/favicon.png"),
     autoHideMenuBar: true,
-    skipTaskbar: ((app.getLoginItemSettings().wasOpenedAtLogin || process.argv.includes("--startup")) && ((fs.readFileSync(path.join(process.resourcesPath, "autoLaunchType.txt"), "utf8") || "foreground") === "background")),
+    skipTaskbar: ((app.getLoginItemSettings().wasOpenedAtLogin || process.argv.includes("--startup"))),
     webPreferences: {
       nodeIntegration: true,
       nodeIntegrationInWorker: true,
@@ -34,7 +34,7 @@ const createWindow = () => {
   if (tray || (!app.getLoginItemSettings().wasOpenedAtLogin && !process.argv.includes("--startup"))) {
     window.show();
   } else {
-    tray = new Tray(path.join(__dirname, "assets/favicon.ico"));
+    tray = new Tray(path.join(__dirname, "assets/favicon.png"));
     tray.setToolTip("Remote Control");
     tray.setContextMenu(Menu.buildFromTemplate([
       {
@@ -93,7 +93,6 @@ const createWindow = () => {
 
     ptyProcesses[botId] = require("@lydell/node-pty").spawn((require("os").platform() === "win32") ? "powershell.exe" : "bash", [], {
       name: "xterm-color",
-      cols: 80,
       rows: Math.round(200 / 17),
       cwd: path.join(process.cwd(), "bots", botId.toString()),
       env: process.env
@@ -107,6 +106,12 @@ const createWindow = () => {
         ]);
       } catch {};
     });
+  });
+
+  ipcMain.on("resizeTerminal", (_, [botId, cols]) => {
+    try {
+      ptyProcesses[botId].resize(cols, Math.round(200 / 17));
+    } catch {};
   });
 
   ipcMain.on("terminalData", (_, [botId, data]) => {
@@ -125,7 +130,7 @@ const createWindow = () => {
 
     ptyProcesses[botId] = require("@lydell/node-pty").spawn((require("os").platform() === "win32") ? "powershell.exe" : "bash", [], {
       name: "xterm-color",
-      cols: 80,
+      cols: 165,
       rows: Math.round(200 / 17),
       cwd: path.join(process.cwd(), "bots", botId.toString()),
       env: process.env
@@ -264,6 +269,8 @@ const createWindow = () => {
 
 app.whenReady().then(() => {
   createWindow();
+
+  nativeTheme.themeSource = "dark";
 
   app.on("activate", () => {
     if (!BrowserWindow.getAllWindows().length) createWindow();

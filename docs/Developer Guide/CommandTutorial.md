@@ -131,7 +131,7 @@ You can enhance each variable using a `properties` object.
 
 ### 📦 Environment
 
-Knowing the right versions of the packages you're using is essential to using the right methods. These packages come preshipped with LocalBotify and can be imported using by defining a custom `requireCore()` function. If this list doesn't contain your desired package, use `require()` instead.
+Knowing the right versions of the packages you're using is essential to using the right methods. These packages come preshipped with LocalBotify and can be imported using LocalBotify's custom `requireCore()` and `importCore()` function. If this list doesn't contain your desired package, use `require()` instead, requiring manual installation.
 
 | Package                  | Version    |
 |--------------------------|------------|
@@ -153,7 +153,6 @@ Knowing the right versions of the packages you're using is essential to using th
 Here's the full structure again for clarity:
 
 ```js
-const requireCore = (module) => require("../../../" + require("path").join(`node_modules/${module}`, JSON.parse(require("fs").readFileSync(`./node_modules/${module}/package.json`, "utf8") || "{}").main || "index.js").replaceAll("\\", "/"));
 const Discord = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
 
@@ -193,7 +192,6 @@ module.exports = {
 Define the `slashCommand` property like this:
 
 ```js
-const requireCore = (module) => require("../../../" + require("path").join(`node_modules/${module}`, JSON.parse(require("fs").readFileSync(`./node_modules/${module}/package.json`, "utf8") || "{}").main || "index.js").replaceAll("\\", "/"));
 const Discord = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
 

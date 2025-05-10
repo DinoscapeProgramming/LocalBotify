@@ -1,2 +1,4 @@
 .env
+node
+node.bat
 node_modules

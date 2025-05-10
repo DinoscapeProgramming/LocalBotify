@@ -1473,10 +1473,19 @@ body {
 .editor-terminal .xterm {
   padding: 10px;
   margin-top: -24px;
+  background-color: #000;
 }
 
 .editor-terminal .xterm-viewport {
+  display: none;
+  background-color: transparent !important;
   overflow-y: auto !important;
+  z-index: 1;
+}
+
+.editor-terminal .xterm-scroll-area {
+  cursor: text;
+  visibility: visible !important;
 }
 
 .editor-terminal .xterm-rows {

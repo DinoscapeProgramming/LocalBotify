@@ -278,7 +278,7 @@ class LocalBotify {
           card.querySelector(".bot-stats .stat-value").style.color = (newStatus.toLowerCase() === "online") ? "var(--discord-green)" : "var(--discord-red)";
           card.querySelector(".bot-stats .stat-value").childNodes[2].textContent = ` ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1).toLowerCase()}`;
 
-          if (JSON.parse(localStorage.getItem("settings") || "{}").statusNotifications ?? true) {
+          if (JSON.parse(localStorage.getItem("settings") || "{}").statusNotifications) {
             const title = (newStatus.toLowerCase() === "online") ? `✅ ${bot.name} Started` : `❌ ${bot.name} Stopped`;
 
             const body = (newStatus.toLowerCase() === "online") ? `🟢 ${bot.name} is now running and connected. 🟢` : `🔴 ${bot.name} has stopped or crashed. 🔴`;
@@ -309,7 +309,7 @@ class LocalBotify {
       if ((fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels")) || []).includes("error.txt")) {
         fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), "channels/error.txt"), (eventType) => {
           try {
-            if ((eventType !== "change") || !(JSON.parse(localStorage.getItem("settings") || "{}").errorNotifications ?? true) || (Number((fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/error.txt"), "utf8") || "").split("\n")[0]) === this.lastError)) return;
+            if ((eventType !== "change") || !(JSON.parse(localStorage.getItem("settings") || "{}").errorNotifications) || (Number((fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/error.txt"), "utf8") || "").split("\n")[0]) === this.lastError)) return;
 
             this.lastError = Number((fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/error.txt"), "utf8") || "").split("\n")[0]);
 
@@ -724,7 +724,7 @@ class LocalBotify {
         <div class="setting-item">
           <label data-tooltip="Get notified about errors">
             <span>Error Notifications</span>
-            <input type="checkbox" id="errorNotifications" ${(storedSettings.errorNotifications ?? true) ? "checked" : ""}/>
+            <input type="checkbox" id="errorNotifications" ${(storedSettings.errorNotifications) ? "checked" : ""}/>
           </label>
           <div class="setting-description">
             Receive notifications when errors occur
@@ -733,7 +733,7 @@ class LocalBotify {
         <div class="setting-item">
           <label data-tooltip="Get notified about status changes">
             <span>Status Notifications</span>
-            <input type="checkbox" id="statusNotifications" ${(storedSettings.statusNotifications ?? true) ? "checked" : ""}/>
+            <input type="checkbox" id="statusNotifications" ${(storedSettings.statusNotifications) ? "checked" : ""}/>
           </label>
           <div class="setting-description">
             Receive notifications when bot status changes
@@ -750,26 +750,11 @@ class LocalBotify {
         </div>
       </div>
 
-      <div class="settings-section">
+      <div id="upgradeForm" class="settings-section">
         <h3><i class="fas fa-trophy"></i>Pro Plan</h3>
-        <div class="setting-item">
-          <label data-tooltip="Pro plan activation token">
-            <span>Activation Token</span>
-            <input type="text" id="activationToken" value="${fs.readFileSync(path.join(process.cwd(), "ACTIVATION_TOKEN.txt"), "utf8") || ""}" placeholder="Enter activation token..." />
-          </label>
-          <div class="setting-description">
-            Activate LocalBotify's pro plan using your activation token
-          </div>
-        </div>
-        <div class="setting-item">
-          <label data-tooltip="Terminate pro subscription">
-            <span>Cancel Subscription</span>
-            <input type="text" id="cancelSubscription" placeholder="Enter activation token..." />
-          </label>
-          <div class="setting-description">
-            Cancel your pro subscription using your activation token
-          </div>
-        </div>
+        <button id="activateProToken" class="submit-btn" style="width: 100%; margin-top: -0.25rem; padding-top: 0.75rem; padding-bottom: 0.75rem; border-radius: var(--radius-md);">
+          <i class="fas fa-trophy" style="margin-right: 7.5px;"></i>Activate using token
+        </button>
       </div>
 
       <button class="settings-save-btn">
@@ -777,6 +762,91 @@ class LocalBotify {
         Save Changes
       </button>
     `;
+
+    settings.querySelector("#activateProToken").addEventListener("click", () => {
+      this.prompt("Activate LocalBotify Pro", "Enter token...").then((token) => {
+        fetch(process.env.SERVER + "/api/v1/pro/activate", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            token
+          })
+        })
+        .then((response) => response.json())
+        .then(({ err, file }) => {
+          if (err) return this.showToast(err, "error");
+
+          fs.writeFileSync(path.join(process.cwd(), "index.pro.html"), `
+            <!DOCTYPE html>
+            <html lang="en">
+              <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>LocalBotify</title>
+                <link rel="stylesheet" href="./style.css" />
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+                <script defer type="module" src="${path.join(process.cwd(), "script.pro.js")}"></script>
+              </head>
+              <body>
+                <div class="app">
+                  <aside class="sidebar">
+                    <div class="sidebar-header">
+                      <i class="fab fa-discord"></i>
+                      <h2>LocalBotify</h2>
+                    </div>
+                    <nav class="sidebar-nav">
+                      <button class="nav-item active">
+                        <i class="fas fa-robot"></i>
+                        <span>My Bots</span>
+                      </button>
+                      <button class="nav-item">
+                        <i class="fas fa-plus"></i>
+                        <span>Create New</span>
+                      </button>
+                      <button class="nav-item">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Bot Store</span>
+                      </button>
+                      <button class="nav-item" style="margin-top: calc(100vh - 417.5px);">
+                        <i class="fas fa-comments"></i>
+                        <span>Feedback</span>
+                      </button>
+                      <button class="nav-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                      </button>
+                      <button class="nav-item">
+                        <i class="fas fa-question-circle"></i>
+                        <span>Help</span>
+                      </button>
+                    </nav>
+                  </aside>
+                  <div class="sidebar-resizer"></div>
+                  <main class="main-content">
+                    <header class="main-header">
+                      <div class="search-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search bots..." />
+                      </div>
+                      <button class="create-btn">
+                        <i class="fas fa-plus"></i>
+                        Create Bot
+                      </button>
+                    </header>
+
+                    <div class="bot-grid" id="botGrid"></div>
+                  </main>
+                </div>
+              </body>
+            </html>
+          `, "utf8");
+
+          fs.writeFileSync(path.join(process.cwd(), "script.pro.js"), file, "utf8");
+        });
+      }).catch(() => {});
+    });
 
     const saveBtn = settings.querySelector(".settings-save-btn");
     saveBtn.addEventListener("click", () => {
@@ -962,14 +1032,27 @@ class LocalBotify {
     script.defer = true;
     script.src = "../node_modules/@xterm/xterm/lib/xterm.js";
     script.addEventListener("load", () => {
+      let character = document.createElement("span");
+      character.textContent = "W";
+      character.style.visibility = "hidden";
+      character.style.position = "absolute";
+      character.style.fontFamily = "Consolas, courier-new, courier, monospace";
+      character.style.fontSize = "15px";
+      document.body.appendChild(character);
+
       let terminal = new Terminal({
+        cols: Math.floor((document.querySelector(".editor-terminal").clientWidth - 24) / character.getBoundingClientRect().width),
         rows: Math.round(200 / 17)
       });
-      /*let fitAddon = new FitAddon();
-      terminal.loadAddon(fitAddon);*/
+
       let currentLine = "";
 
+      ipcRenderer.send("resizeTerminal", [bot.id, Math.floor((document.querySelector(".editor-terminal").clientWidth - 24) / character.getBoundingClientRect().width)]);
+
+      document.body.removeChild(character);
+
       terminal.open(document.querySelector(".editor-terminal"));
+
       terminal.onKey((data) => {
         currentLine += data.key;
         ipcRenderer.send("terminalData", [
@@ -978,14 +1061,41 @@ class LocalBotify {
         ]);
       });
 
+      terminal.attachCustomKeyEventHandler((e) => {
+        if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === "c")) {
+          if (terminal.getSelection()) {
+            navigator.clipboard.writeText(terminal.getSelection());
+            return false;
+          };
+
+          return true;
+        };
+
+        return true;
+      });
+
+      window.addEventListener("resize", () => {
+        let character = document.createElement("span");
+        character.textContent = "W";
+        character.style.visibility = "hidden";
+        character.style.position = "absolute";
+        character.style.fontFamily = "Consolas, courier-new, courier, monospace";
+        character.style.fontSize = "15px";
+        document.body.appendChild(character);
+
+        terminal.resize(Math.floor((document.querySelector(".editor-terminal").clientWidth - 24) / character.getBoundingClientRect().width), terminal.rows);
+
+        ipcRenderer.send("resizeTerminal", [bot.id, Math.floor((document.querySelector(".editor-terminal").clientWidth - 24) / character.getBoundingClientRect().width)]);
+
+        document.body.removeChild(character);
+      });
+
       ipcRenderer.on("terminalData", (_, [botId, data]) => {
         if (botId !== bot.id) return;
         try {
           terminal.write(data);
         } catch {};
       });
-
-      // fitAddon.fit();
     });
 
     document.head.appendChild(stylesheet);
@@ -1264,7 +1374,7 @@ class LocalBotify {
               </div>
               <div class="command-item setting-item" style="display: ${((this.collaborationSessions || {})[bot.id.toString()]) ? "block" : "none"}; padding: 0; background-color: transparent;">
                 <div style="display: flex; flex-direction: row;">
-                  <input style="margin-top: 0.35rem; margin-bottom: 0.375rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; border-top-right-radius: 0; border-bottom-right-radius: 0;" ${((this.collaborationSessions || {})[bot.id.toString()]) ? `value="${this.escapeHtml(`${process.env.SERVER}/sessions/${encodeURIComponent(this.collaborationSessions[bot.id.toString()])}`)}" ` : ""}readonly>
+                  <input style="margin-top: 0.35rem; margin-bottom: 0.375rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; border-top-right-radius: 0; border-bottom-right-radius: 0;" ${((this.collaborationSessions || {})[bot.id.toString()]) ? `value="${this.escapeHtml(`${process.env.SERVER}/sessions/${encodeURIComponent((this.collaborationSessions || {})[bot.id.toString()])}`)}" ` : ""}readonly>
                   <button class="copy-btn" style="border: 2px solid transparent; padding: 0.75rem 1rem; border-top-left-radius: 0; border-top-right-radius: var(--radius-md); border-bottom-left-radius: 0; border-bottom-right-radius: var(--radius-md); color: var(--discord-text); width: fit-content; font-size: 0.95rem; transition: all 0.2s ease; margin-top: 0.35rem; margin-bottom: 0.375rem; min-height: 3.15rem; font-family: system-ui; background-color: #00000030; cursor: pointer;">
                     <i class="fas fa-copy"></i>
                   </button>
@@ -1391,6 +1501,7 @@ class LocalBotify {
           tab.classList.add("currentView");
 
           editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.add("animationless"));
+          editorView.querySelector(".editor-terminal .xterm-viewport").style.display = "none";
           editorView.style.visibility = "hidden";
           suiteView.style.display = "none";
           workbenchView.style.display = "block";
@@ -1408,6 +1519,7 @@ class LocalBotify {
             editorView.style.animation = "none";
           }, 500);
           editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.remove("animationless"));
+          editorView.querySelector(".editor-terminal .xterm-viewport").style.display = "block";
         } else if (tab.querySelector("i").className === "fas fa-trophy") {
           if (!this.isProPlan) return this.showUpgradeModal();
 
@@ -1415,6 +1527,7 @@ class LocalBotify {
           tab.classList.add("currentView");
 
           editorView.querySelectorAll(".file-explorer-btn, .file-tree-item, .editor-play-btn").forEach((fileElement) => fileElement.classList.add("animationless"));
+          editorView.querySelector(".editor-terminal .xterm-viewport").style.display = "none";
           editorView.style.visibility = "hidden";
           workbenchView.style.display = "none";
           suiteView.style.display = "block";
@@ -1683,8 +1796,8 @@ class LocalBotify {
     this.watchDirectoryRecursive(path.join(process.cwd(), "bots", bot.id.toString()), (eventType) => {
       if (eventType !== "rename") return;
 
-      if (this.collaborationSessions[bot.id.toString()]) {
-        this.collaborationSockets[bot.id.toString()].emit("newFileSystem", this.getFlatFileList(bot, path.join(process.cwd(), "bots", bot.id.toString())));
+      if ((this.collaborationSessions || {})[bot.id.toString()]) {
+        (this.collaborationSockets || {})[bot.id.toString()].emit("newFileSystem", this.getFlatFileList(bot, path.join(process.cwd(), "bots", bot.id.toString())));
       };
 
       if (JSON.stringify(this.getFlatFileList(bot, path.join(process.cwd(), "bots", bot.id.toString()))) === this.parseFileTree(editorView.querySelector(".file-tree"))) return;
@@ -2439,7 +2552,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), category, fileName), this.editor.getValue(), "utf8");
         } else {
           assistant.style.display = "none";
-          this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), category, fileName), "utf8") + (data || ""));
+          this.editor.setValue(this.editor.getValue() + (data || ""));
         };
       };
     });
@@ -2474,19 +2587,19 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
         socketScript.addEventListener("load", () => {
           if (!this.collaborationSockets) (this.collaborationSockets = {});
-          this.collaborationSockets[bot.id.toString()] = io(process.env.SERVER);
+          (this.collaborationSockets || {})[bot.id.toString()] = io(process.env.SERVER);
 
-          this.collaborationSockets[bot.id.toString()].emit("createRoom");
+          (this.collaborationSockets || {})[bot.id.toString()].emit("createRoom");
 
-          this.collaborationSockets[bot.id.toString()].on("createRoom", (id) => {
+          (this.collaborationSockets || {})[bot.id.toString()].on("createRoom", (id) => {
             suiteMainView.querySelector("#collaborationSection .command-item").style.display = "block";
             suiteMainView.querySelector("#collaborationSection .command-item input").value = `${process.env.SERVER}/sessions/${encodeURIComponent(id)}`;
 
             if (!this.collaborationSessions) (this.collaborationSessions = {});
-            this.collaborationSessions[bot.id.toString()] = id;
+            (this.collaborationSessions || {})[bot.id.toString()] = id;
 
-            this.collaborationSockets[bot.id.toString()].on("retrieveFileSystem", () => {
-              this.collaborationSockets[bot.id.toString()].emit("retrieveFileSystem", [
+            (this.collaborationSockets || {})[bot.id.toString()].on("retrieveFileSystem", () => {
+              (this.collaborationSockets || {})[bot.id.toString()].emit("retrieveFileSystem", [
                 this.getFlatFileList(bot, path.join(process.cwd(), "bots", bot.id.toString())),
                 ((dir) => {
                   const files = fs.readdirSync(dir);
@@ -2553,7 +2666,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
               })(path.join(process.cwd(), "bots", bot.id.toString()))), (eventType) => {
                 if (eventType !== "change") return;
 
-                this.collaborationSockets[bot.id.toString()].emit("newFileContent", [
+                (this.collaborationSockets || {})[bot.id.toString()].emit("newFileContent", [
                   ((dir) => {
                     const files = fs.readdirSync(dir);
                     if (files.includes("index.js")) return "index.js";
@@ -2598,24 +2711,23 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
               });
             });
 
-            this.collaborationSockets[bot.id.toString()].on("retrieveFileContent", (fileName) => {
-              this.collaborationSockets[bot.id.toString()].emit("retrieveFileContent", [
+            (this.collaborationSockets || {})[bot.id.toString()].on("retrieveFileContent", (fileName) => {
+              (this.collaborationSockets || {})[bot.id.toString()].emit("retrieveFileContent", [
                 fileName,
                 fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), fileName), "utf8") || ""
               ]);
 
-              this.collaborationSockets[bot.id.toString()].close();
               this.collaborationWatchers[bot.id.toString()] = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), fileName), (eventType) => {
                 if (eventType !== "change") return;
 
-                this.collaborationSockets[bot.id.toString()].emit("newFileContent", [
+                (this.collaborationSockets || {})[bot.id.toString()].emit("newFileContent", [
                   fileName,
                   fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), fileName), "utf8")
                 ]);
               });
             });
 
-            this.collaborationSockets[bot.id.toString()].on("newFileSystem", ([fileAction, fileNames]) => {
+            (this.collaborationSockets || {})[bot.id.toString()].on("newFileSystem", ([fileAction, fileNames]) => {
               switch (fileAction) {
                 case "createFile":
                   fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), fileNames[0]), "", "utf8");
@@ -2632,7 +2744,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
               };
             });
 
-            this.collaborationSockets[bot.id.toString()].on("newFileContent", ([fileName, fileContent]) => {
+            (this.collaborationSockets || {})[bot.id.toString()].on("newFileContent", ([fileName, fileContent]) => {
               if (fileName === this.getFilePath(editorView.querySelector(".file-tree .file-tree-item.active-file"))) {
                 if (fileContent === this.editor.getValue()) return;
 
@@ -2644,20 +2756,21 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
               };
             });
 
-            this.collaborationSockets[bot.id.toString()].on("newLink", (newId) => {
+            (this.collaborationSockets || {})[bot.id.toString()].on("newLink", (newId) => {
               id = newId;
 
               document.querySelector("#collaborationSection .command-item input").value = `${process.env.SERVER}/sessions/${encodeURIComponent(newId)}`;
             });
           });
 
-          this.collaborationSockets[bot.id.toString()].on("disconnect", () => {
+          (this.collaborationSockets || {})[bot.id.toString()].on("disconnect", () => {
+            suiteMainView.querySelector("#collaborationSection #privateJoinLink").checked = false;
             suiteMainView.querySelector("#collaborationSection .command-item").style.display = "none";
 
-            this.collaborationSockets[bot.id.toString()] = null;
+            (this.collaborationSockets || {})[bot.id.toString()] = null;
 
             if ((this.collaborationSessions || {})[bot.id.toString()]) {
-              this.collaborationSessions[bot.id.toString()] = null;
+              (this.collaborationSessions || {})[bot.id.toString()] = null;
             };
           });
         });
@@ -2667,12 +2780,12 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         suiteMainView.querySelector("#collaborationSection .command-item").style.display = "none";
 
         if ((this.collaborationSockets || {})[bot.id.toString()]) {
-          this.collaborationSockets[bot.id.toString()].disconnect();
-          this.collaborationSockets[bot.id.toString()] = null;
+          (this.collaborationSockets || {})[bot.id.toString()].disconnect();
+          (this.collaborationSockets || {})[bot.id.toString()] = null;
         };
 
         if ((this.collaborationSessions || {})[bot.id.toString()]) {
-          this.collaborationSessions[bot.id.toString()] = null;
+          (this.collaborationSessions || {})[bot.id.toString()] = null;
         };
       };
     });
@@ -2687,9 +2800,9 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     });
 
     suiteMainView.querySelector("#collaborationSection .command-item .regenerate-link").addEventListener("click", () => {
-      if (!this.collaborationSockets[bot.id.toString()]) return;
+      if (!(this.collaborationSockets || {})[bot.id.toString()]) return;
 
-      this.collaborationSockets[bot.id.toString()].emit("newLink");
+      (this.collaborationSockets || {})[bot.id.toString()].emit("newLink");
     });
 
     new Chart(suiteMainView.querySelector("#analyticsChart"), {
