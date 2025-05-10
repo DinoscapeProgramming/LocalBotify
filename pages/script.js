@@ -2790,7 +2790,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
       };
     });
 
-    suiteMainView.querySelector("#collaborationSection .command-item input").addEventListener("click", () => {
+    suiteMainView.querySelector("#collaborationSection .command-item input").addEventListener("focus", () => {
       suiteMainView.querySelector("#collaborationSection .command-item input").select();
     });
 
