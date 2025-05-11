@@ -15,17 +15,28 @@ module.exports = {
     }
   },
   slashCommand: (SlashCommandBuilder) ? (new SlashCommandBuilder()
-    .setName("help")) : null,
+    .setName("help")
+    .addStringOption((option) => option
+      .setName("command")
+			.setDescription("The command to view")
+			.addChoices(
+        ...fs.readdirSync("./commands").map((command) => ({
+          name: command.substring(0, command.length - 3),
+          value: command.substring(0, command.length - 3)
+        })) || []
+			)
+    )
+  ) : null,
   command: async ({
     header,
     footer
   }, client, event) => {
     const embed = new EmbedBuilder()
       .setColor(0x00bfff)
-      .setTitle(header || "📖  Help Menu")
-      .setDescription("Here are all available commands, grouped by category:")
+      .setTitle((header || "📖  Help Menu${command}").replaceAll("${command}", (fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? `: ${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}` : ""))
+      .setDescription((!fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? "Here are all available commands, grouped by category:" : require(`../commands/${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`).description)
       .addFields(
-        ...[
+        ...(!fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? [
           ...Object.entries(categories).map(([name, commands]) => ({
             name,
             value: fs.readdirSync("./commands").filter((command) => commands.includes(command.substring(0, command.length - 3))).map((command) => `\`${command.substring(0, command.length - 3)}\``).join(" ")
@@ -36,7 +47,7 @@ module.exports = {
               value: fs.readdirSync("./commands").filter((command) => !Object.values(categories).flat().includes(command.substring(0, command.length - 3))).map((command) => `\`${command.substring(0, command.length - 3)}\``).join(" ")
             } : {}
           ]
-        ]
+        ] : []
       )
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
       .setTimestamp();

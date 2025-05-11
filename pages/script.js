@@ -3019,7 +3019,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
             });
           });
 
-          suiteMainView.querySelector("#landingPageSection .grid-container").appendChild(featureCard);
+          suiteMainView.querySelector("#landingPageSection .grid-container").insertBefore(featureCard, Array.from(suiteMainView.querySelector("#landingPageSection .grid-container").children).at(-1));
         } else if (button.querySelector("i").className === "fas fa-upload") {
           this.prompt("Publish Landing Page", "Enter custom subdomain...", null, bot.landingPages).then((subdomain) => {
             if (!subdomain) return;

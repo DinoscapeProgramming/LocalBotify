@@ -65,9 +65,14 @@ ${lines.map(center).join('\n')}
   updateStatus("online");
   updateStatistics(client);
 
-  client.user.setStatus(PresenceUpdateStatus[config?.status?.[0] || "Online"]);
-  if (config?.status?.[1]) client.user.setActivity(config?.status?.[2].replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), ((config?.status?.[1] === "Playing")) ? {} : {
-    type: ActivityType[config?.status?.[1]]
+  client.user.setPresence({
+    status: PresenceUpdateStatus[config?.status?.[0] || "Online"],
+    activities: [
+      {
+        type: ActivityType[config?.status?.[1]],
+        name: config?.status?.[2].replace(/\{(.*?)\}/g, (_, expression) => eval(expression))
+      }
+    ]
   });
 
   rest.put(
@@ -78,16 +83,23 @@ ${lines.map(center).join('\n')}
   fs.watch("./config.json", (eventType) => {
     if (eventType !== "change") return;
 
+    let previousConfig = config;
+
     config = JSON.parse(fs.readFileSync("./config.json", "utf8") || "{}");
 
-    if (JSON.stringify(config.status) !== JSON.stringify(JSON.parse(fs.readFileSync("./config.json", "utf8")).status)) {
-      client.user.setStatus(PresenceUpdateStatus[config?.status?.[0] || "Online"]);
-      if (config?.status?.[1]) client.user.setActivity(config?.status?.[2].replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), ((config?.status?.[1] === "Playing")) ? {} : {
-        type: ActivityType[config?.status?.[1]]
+    if (JSON.stringify(config.status) !== JSON.stringify(previousConfig.status)) {
+      client.user.setPresence({
+        status: PresenceUpdateStatus[config?.status?.[0] || "Online"],
+        activities: [
+          {
+            type: ActivityType[config?.status?.[1]],
+            name: config?.status?.[2].replace(/\{(.*?)\}/g, (_, expression) => eval(expression))
+          }
+        ]
       });
     };
 
-    if (JSON.stringify(config.status) !== JSON.stringify(JSON.parse(fs.readFileSync("./config.json", "utf8")).status)) {
+    if (config.slashCommands !== previousConfig.slashCommands) {
       fs.readdirSync("./commands").forEach((command) => {
         delete require.cache[require.resolve("./bots/" + command)];
       });
@@ -105,7 +117,7 @@ client.on("messageCreate", (message) => {
   if (message.author.bot || !message.content.startsWith(config.prefix)) return;
 
   let command = message.content.toLowerCase();
-  let commandName = command.substring(config.prefix.length);
+  let commandName = command.substring(config.prefix.length).split(" ")[0];
 
   if (fs.readdirSync("./commands").includes(`${commandName}.js`)) {
     delete require.cache[require.resolve(`./commands/${commandName}.js`)];
