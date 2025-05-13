@@ -19,7 +19,7 @@ module.exports = {
     }
   },
   slashCommand: (SlashCommandBuilder) ? (new SlashCommandBuilder()
-    .setName("invite")) : null,
+    .setName("botinfo")) : null,
   command: async ({
     invite,
     header,

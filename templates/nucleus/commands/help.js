@@ -20,10 +20,10 @@ module.exports = {
       .setName("command")
 			.setDescription("The command to view")
 			.addChoices(
-        ...fs.readdirSync("./commands").map((command) => ({
+        ...(fs.readdirSync("./commands").map((command) => ({
           name: command.substring(0, command.length - 3),
           value: command.substring(0, command.length - 3)
-        })) || []
+        })) || []).slice(0, 25)
 			)
     )
   ) : null,

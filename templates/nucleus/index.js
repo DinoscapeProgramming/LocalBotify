@@ -36,7 +36,7 @@ client.once("ready", () => {
   const lines = [
     `🤖  ${client.user.username} is online!`,
     `🚀  Ready to serve your server!`,
-    `🔗 Invite Link:`,
+    `🔗  Invite Link:`,
     fs.readFileSync("./channels/invite.txt", "utf8") || ""
   ];
 

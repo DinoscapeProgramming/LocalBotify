@@ -3815,6 +3815,27 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     const modal = document.createElement("div");
     modal.className = "modal";
 
+    let configFile = JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")) || `
+      {
+        "prefix": "!",
+        "slashCommands": "true",
+        "status": [
+          "Online",
+          "Custom",
+          "Powered by LocalBotify.app"
+        ],
+        "footer": "Powered by LocalBotify.app",
+        "commands": {
+          "initialization": "npm install",
+          "startup": ".\\node . "
+        },
+        "variables": {
+          "commands": {},
+          "events": {}
+        }
+      }
+    `);
+
     modal.innerHTML = `
       <div class="modal-content">
         <div class="modal-header">
