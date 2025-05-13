@@ -41,12 +41,12 @@ module.exports = {
             name,
             value: fs.readdirSync("./commands").filter((command) => commands.includes(command.substring(0, command.length - 3))).map((command) => `\`${command.substring(0, command.length - 3)}\``).join(" ")
           })).filter(({ value }) => value.length),
-          ...[
-            (fs.readdirSync("./commands").filter((command) => !Object.values(categories).flat().includes(command.substring(0, command.length - 3))).length) ? {
+          ...(fs.readdirSync("./commands").filter((command) => !Object.values(categories).flat().includes(command.substring(0, command.length - 3))).length) ? [
+            {
               name: "🧰  Miscellaneous",
               value: fs.readdirSync("./commands").filter((command) => !Object.values(categories).flat().includes(command.substring(0, command.length - 3))).map((command) => `\`${command.substring(0, command.length - 3)}\``).join(" ")
-            } : {}
-          ]
+            }
+          ] : []
         ] : []
       )
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
