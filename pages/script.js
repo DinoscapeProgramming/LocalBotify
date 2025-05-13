@@ -1232,7 +1232,7 @@ class LocalBotify {
                 Add Command
               </button>
             </h3>
-            ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).length) ? `<span style="color: grey;">No commands found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).map((command) => (command.endsWith(".js")) ? `
+            ${(!(fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")) || []).length) ? `<span style="color: grey;">No commands found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "commands")).map((command) => (command.endsWith(".js")) ? `
               <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem; cursor: pointer;" data-category="commands">${this.escapeHtml(command.substring(0, command.length - 3))}</div>
             ` : "").join("")}
             <h3 style="flex-direction: row; margin-bottom: 1rem; margin-top: 2rem;">
@@ -1242,7 +1242,7 @@ class LocalBotify {
                 Add Event
               </button>
             </h3>
-            ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).length) ? `<span style="color: grey;">No events found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).map((command) => (command.endsWith(".js")) ? `
+            ${(!(fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")) || []).length) ? `<span style="color: grey;">No events found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).map((command) => (command.endsWith(".js")) ? `
               <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem; cursor: pointer;" data-category="events">${this.escapeHtml(command.substring(0, command.length - 3).replace(/[^a-zA-Z]+$/, "")) + ((command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/)}</code>` : "")}</div>
             ` : "").join("")}
           </div>
@@ -4194,7 +4194,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     }).join("");
   };
 
-  getFileTreeItem(view, path) {
+  getFileTreeItem(view, path = "") {
     let parts = path.split("/");
     let container = view.querySelector(".file-tree") || view.querySelector(".help-tree");
 
