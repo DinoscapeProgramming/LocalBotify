@@ -31,7 +31,7 @@ client.once("ready", () => {
     ],
     ...fs.readdirSync("./commands").map((command) => require("./commands/" + command)).filter(({ permissions }) => permissions).map(({ permissions }) => permissions),
     ...fs.readdirSync("./events").map((event) => require("./events/" + event)).filter(({ permissions }) => permissions).map(({ permissions }) => permissions),
-  ].flat())).reduce((acc, permission) => acc | PERMISSIONS[permission], 0).toString()}`, "utf8");
+  ].flat())).reduce((accumulator, permission) => accumulator | PERMISSIONS[permission], 0).toString()}`, "utf8");
 
   const lines = [
     `🤖  ${client.user.username} is online!`,
