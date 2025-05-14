@@ -1,1 +1,0 @@
-<img src="https://google.com/favicon.ico" onload="alert('test');">

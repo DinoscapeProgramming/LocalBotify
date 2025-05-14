@@ -4966,7 +4966,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           <form id="botForm">
             <div class="form-group">
               <label for="reportReason">Reason</label>
-              <select id="reportReason">
+              <select id="reportReason" required>
                 <option value disabled selected hidden>Select a reason</option>
                 <option value="malicious">🚨 Malicious Behavior</option>
                 <option value="tosViolation">👮 Violating Discord Terms of Service</option>
@@ -4979,7 +4979,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
             </div>
             <div class="form-group">
               <label for="reportContext">Additional Context</label>
-              <textarea id="reportContext"></textarea>
+              <textarea id="reportContext" required></textarea>
             </div>
             <div class="form-actions" style="margin-top: 0;">
               <button type="submit" class="submit-btn submit-report-btn" style="background-color: var(--discord-red);">
@@ -5010,36 +5010,25 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     form.addEventListener("submit", (e) => {
       e.preventDefault();
 
-      if (!modal.querySelector("#reportReason").value) {
-        modal.querySelector("#reportReason").setCustomValidity("Fill out this field.");
-        modal.querySelector("#reportReason").reportValidity();
-      } else if (!modal.querySelector("#reportContext").value) {
-        modal.querySelector("#reportContext").setCustomValidity("Fill out this field.");
-        modal.querySelector("#reportContext").reportValidity();
-      } else {
-        modal.querySelector("#reportReason").setCustomValidity("");
-        modal.querySelector("#reportContext").setCustomValidity("");
-
-        fetch(process.env.SERVER + "/api/v1/reports/add", {
-          method: "POST",
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            id: bot.id,
-            reason: modal.querySelector("#reportReason").value || "other",
-            context: modal.querySelector("#reportContext").value || null
-          })
+      fetch(process.env.SERVER + "/api/v1/reports/add", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id: bot.id,
+          reason: modal.querySelector("#reportReason").value || "other",
+          context: modal.querySelector("#reportContext").value || null
         })
-        .then((response) => response.json())
-        .then(({ err } = {}) => {
-          if (err) return this.showToast(err, "error");
+      })
+      .then((response) => response.json())
+      .then(({ err } = {}) => {
+        if (err) return this.showToast(err, "error");
 
-          this.showToast("Reported bot", "success");
-        }).catch(() => {});
+        this.showToast("Reported bot", "success");
+      }).catch(() => {});
 
-        closeModal();
-      };
+      closeModal();
     });
   };
 

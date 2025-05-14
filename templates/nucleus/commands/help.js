@@ -35,6 +35,7 @@ module.exports = {
       .setColor(0x00bfff)
       .setTitle((header || "📖  Help Menu${command}").replaceAll("${command}", (fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? `: ${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}` : ""))
       .setDescription((!fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? "Here are all available commands, grouped by category:" : require(`../commands/${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`).description)
+      .setThumbnail(client.user.displayAvatarURL({ extension: "png" }))
       .addFields(
         ...(!fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? [
           ...Object.entries(categories).map(([name, commands]) => ({
