@@ -697,6 +697,28 @@ class LocalBotify {
         </div>
       </div>
 
+      ${(window.isSecureContext && "credentials" in navigator && (typeof navigator.credentials.create === "function") && (typeof PublicKeyCredential === "function")) ? `<div class="settings-section">
+        <h3><i class="fas fa-shield-halved"></i>Security</h3>
+        <div class="setting-item">
+          <label data-tooltip="This will not protect your tokens, only the GUI">
+            <span>App Lock</span>
+            <input type="checkbox" id="appLock" ${((storedSettings.appLock) ? "checked" : "")}/>
+          </label>
+          <div class="setting-description">
+            Only allow access once verified
+          </div>
+        </div>
+        <div class="setting-item">
+          <label data-tooltip="Keep attackers from stealing your tokens">
+            <span>Environment Encryption</span>
+            <input type="checkbox" id="environmentEncryption" ${((storedSettings.encryptionPassword) ? "checked" : "")}/>
+          </label>
+          <div class="setting-description">
+            Encrypt your bots' dotenv files
+          </div>
+        </div>
+      </div>` : ""}
+
       <div class="settings-section">
         <h3><i class="fas fa-code"></i>Developer Settings</h3>
         <div class="setting-item">
@@ -750,7 +772,7 @@ class LocalBotify {
         </div>
       </div>
 
-      <div id="upgradeForm" class="settings-section">
+      <div id="upgradeForm" class="settings-section" style="margin-bottom: 0;">
         <h3><i class="fas fa-trophy"></i>Pro Plan</h3>
         <button id="activateProToken" class="submit-btn" style="width: 100%; margin-top: -0.25rem; padding-top: 0.75rem; padding-bottom: 0.75rem; border-radius: var(--radius-md);">
           <i class="fas fa-trophy" style="margin-right: 7.5px;"></i>Activate using token
@@ -762,6 +784,44 @@ class LocalBotify {
         Save Changes
       </button>
     `;
+
+    let currentAppLockId = storedSettings.appLock || false;
+
+    if (window.isSecureContext && "credentials" in navigator && (typeof navigator.credentials.create === "function") && (typeof PublicKeyCredential === "function")) {
+      settings.querySelector("#appLock").addEventListener("click", (e) => {
+        if (!settings.querySelector("#appLock").checked) return;
+
+        const blockade = document.createElement("div");
+        blockade.style.position = "absolute";
+        blockade.style.top = "0";
+        blockade.style.left = "0";
+        blockade.style.width = "100vw";
+        blockade.style.height = "100vh";
+        blockade.style.zIndex = "999";
+
+        document.body.appendChild(blockade);
+
+        const embed = window.open(process.env.SERVER + "/appLock", "_blank", "show=no");
+
+        window.addEventListener("message", ({ data: { type, id } = {} }) => {
+          if (type === "ready") {
+            embed.postMessage({
+              type: "create"
+            }, "*");
+          } else if (type === "create") {
+            blockade.remove();
+            embed.close();
+
+            currentAppLockId = id;
+          } else if (type === "error") {
+            blockade.remove();
+            embed.close();
+
+            settings.querySelector("#appLock").checked = false;
+          };
+        });
+      });
+    };
 
     settings.querySelector("#activateProToken").addEventListener("click", () => {
       this.prompt("Activate LocalBotify Pro", "Enter token...").then((token) => {
@@ -853,6 +913,7 @@ class LocalBotify {
       const updatedSettings = JSON.stringify({
         theme: document.getElementById("themeSelect").value,
         showStats: document.getElementById("showStats").checked,
+        appLock: (settings.querySelector("#appLock").checked) ? (currentAppLockId || false) : false,
         defaultPrefix: document.getElementById("defaultPrefix").value,
         devMode: document.getElementById("devMode").checked,
         errorNotifications: document.getElementById("errorNotifications").checked,
@@ -3066,7 +3127,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
             document.body.appendChild(embed);
 
-            window.onmessage = ({ data: { err, finished } }) => {
+            window.onmessage = ({ data: { err, finished } = {} }) => {
               if (!finished) {
                 embed.style.display = "none";
               } else {
@@ -4658,6 +4719,11 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           }), "utf8");
         });
       };
+
+      ipcRenderer.send("runBotCommand", [
+        newBot.id,
+        (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization || "") + "; " + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`
+      ]);
     } else {
       ipcRenderer.invoke("importGitHubRepository", [
         newBot.id,
@@ -4672,13 +4738,13 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
             }), "utf8");
           });
         };
+
+        ipcRenderer.send("runBotCommand", [
+          newBot.id,
+          (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization || "") + "; " + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`
+        ]);
       });
     };
-
-    ipcRenderer.send("terminalData", [
-      newBot.id,
-      (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization || "") + "; " + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`
-    ]);
   };
 
   showUpgradeModal() {
@@ -5632,8 +5698,75 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
   };
 };
 
-const app = new LocalBotify();
+if (JSON.parse(localStorage.getItem("settings") || "{}").appLock) {
+  const blockade = document.createElement("div");
+  blockade.style.position = "absolute";
+  blockade.style.top = "0";
+  blockade.style.left = "0";
+  blockade.style.width = "100vw";
+  blockade.style.height = "100vh";
+  blockade.style.zIndex = "999";
 
-if ((require("path").basename(process.execPath) === "electron.exe") || JSON.parse(localStorage.getItem("settings") || "{}").devMode) {
-  window.LocalBotify = app;
+  document.body.appendChild(blockade);
+
+  const content = document.createElement("div");
+  content.className = "content no-bots";
+
+  content.innerHTML = `
+    <i class="fas fa-spin fa-spinner" style="
+      font-size: 5rem;
+      margin-bottom: 1.5rem;
+      opacity: 0.8;
+    "></i>
+    <p style="opacity: 0.8; margin-bottom: 0.6rem;">Verifying Access...</p>
+  `;
+
+  document.querySelector(".main-content .bot-grid").style.display = "none";
+  document.querySelector(".main-content").appendChild(content);
+
+  const embed = window.open(process.env.SERVER + "/appLock", "_blank", "show=no");
+
+  window.addEventListener("message", ({ data: { type } = {} }) => {
+    if (!JSON.parse(localStorage.getItem("settings") || "{}").appLock) return;
+
+    if (type === "ready") {
+      const binaryString = atob(JSON.parse(localStorage.getItem("settings") || "{}").appLock);
+      const bytes = new Uint8Array(binaryString.length);
+
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      };
+
+      embed.postMessage({
+        type: "verify",
+        id: bytes.buffer
+      }, "*");
+    } else if (type === "verify") {
+      embed.close();
+
+      blockade.remove();
+      document.querySelector(".main-content .bot-grid").style.display = "grid";
+
+      const app = new LocalBotify();
+
+      if ((require("path").basename(process.execPath) === "electron.exe") || JSON.parse(localStorage.getItem("settings") || "{}").devMode) {
+        window.LocalBotify = app;
+      };
+    } else if (type === "error") {
+      content.innerHTML = `
+        <i class="fas fa-user-lock" style="
+          font-size: 5rem;
+          margin-bottom: 1.5rem;
+          opacity: 0.8;
+        "></i>
+        <p style="opacity: 0.8; margin-bottom: 0.6rem;">Access Denied</p>
+      `;
+    };
+  });
+} else {
+  const app = new LocalBotify();
+
+  if ((require("path").basename(process.execPath) === "electron.exe") || JSON.parse(localStorage.getItem("settings") || "{}").devMode) {
+    window.LocalBotify = app;
+  };
 };

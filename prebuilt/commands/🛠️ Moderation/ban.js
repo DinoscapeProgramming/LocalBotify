@@ -1,5 +1,7 @@
-const { EmbedBuilder, SlashCommandBuilder } = require("../../../node_modules/discord.js/src/index.js");
-const { commandType } = require("../../../node_modules/localbotify/index.js");
+if (!global.requireCore) (global.requireCore = () => ({}));
+
+const { EmbedBuilder, SlashCommandBuilder } = require("discord.js");
+const { commandType } = require("localbotify");
 
 module.exports = {
   description: "Ban a user from the server",
