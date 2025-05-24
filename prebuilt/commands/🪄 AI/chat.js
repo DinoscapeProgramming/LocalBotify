@@ -23,7 +23,44 @@ if (!global.server.users) (global.server.users = []);
         <html lang="en">
         <head>
           <meta charset="UTF-8">
-          <title>LocalBotify AI</title>
+          <title>LocalBotify - AI</title>
+          <style>
+            * {
+              box-sizing: border-box;
+            }
+
+            body {
+              margin: 0;
+              padding: 0;
+              font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              background: linear-gradient(to right, #667eea, #764ba2);
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              color: #fff;
+            }
+
+            .container {
+              background-color: rgba(255, 255, 255, 0.1);
+              padding: 2rem 3rem;
+              border-radius: 20px;
+              backdrop-filter: blur(10px);
+              box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+              text-align: center;
+              max-width: 600px;
+            }
+
+            .container h1 {
+              font-size: 2rem;
+              margin-bottom: 1rem;
+            }
+
+            .container p {
+              font-size: 1.2rem;
+              line-height: 1.6;
+            }
+          </style>
           <script defer src="https://js.puter.com/v2"></script>
           <script defer src="/socket.io/socket.io.js"></script>
           <script defer>
@@ -53,7 +90,10 @@ if (!global.server.users) (global.server.users = []);
           </script>
         </head>
         <body>
-          Please keep this page open to keep the AI running. If you close it, the AI will stop working.
+          <div class="container">
+            <h1>🧠 AI is Running</h1>
+            <p>Please keep this page open to keep the AI running.<br>If you close it, the AI will stop working.</p>
+          </div>
         </body>
       </html>
     `);
