@@ -84,7 +84,7 @@ if (!global.server.users) (global.server.users = []);
                   if (!message.content) return;
 
                   socket.emit("dataReady", message.content);
-                });
+                }).catch(() => {});
               });
             });
           </script>
