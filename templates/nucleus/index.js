@@ -129,15 +129,10 @@ client.on("messageCreate", (message) => {
       ...{
         footer: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression))
       },
-      ...Object.entries(commandFile.variables).map(([variableName]) => [
+      ...Object.fromEntries(Object.entries(commandFile.variables).map(([variableName, { defaultValue = null } = {}] = []) => [
         variableName,
-        config?.variables?.commands?.[commandName]?.[variableName] || null
-      ]).reduce((accumulator, [variableName, variableValue]) => ({
-        ...accumulator,
-        ...{
-          [variableName]: variableValue
-        }
-      }), {})
+        config?.variables?.commands?.[commandName]?.[variableName] || defaultValue
+      ]))
     }, client, message);
 
     fs.writeFileSync("./channels/messages.txt", (Number(fs.readFileSync("./channels/messages.txt", "utf8") || "0") + 1).toString(), "utf8");
@@ -169,15 +164,10 @@ client.on("interactionCreate", (interaction) => {
       ...{
         footer: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression))
       },
-      ...Object.entries(commandFile.variables || {}).map(([variableName]) => [
+      ...Object.fromEntries(Object.entries(commandFile.variables).map(([variableName, { default: defaultValue = null } = {}] = []) => [
         variableName,
-        config?.variables?.commands?.[commandName]?.[variableName] || null
-      ]).reduce((accumulator, [variableName, variableValue]) => ({
-        ...accumulator,
-        ...{
-          [variableName]: variableValue
-        }
-      }), {})
+        config?.variables?.commands?.[commandName]?.[variableName] || defaultValue
+      ]))
     }, client, interaction);
 
     fs.writeFileSync("./channels/messages.txt", (Number(fs.readFileSync("./channels/messages.txt", "utf8") || "0") + 1).toString(), "utf8");

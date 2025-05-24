@@ -70,5 +70,11 @@
     "weather",
     "wiki",
     "youtube"
+  ],
+  "🪄  AI": [
+    "chat",
+    "image",
+    "describe",
+    "tts"
   ]
 }

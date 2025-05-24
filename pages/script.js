@@ -1669,7 +1669,7 @@ class LocalBotify {
                   No variables found
                 </label>
               </div>
-            ` : variables.map(([id, { title = "", description = "", defaultValue = "", type = "text", datalist = null, options = {}, properties = {} } = {}] = [], index) => `
+            ` : variables.map(([id, { title = "", description = "", default: defaultValue = "", type = "text", datalist = null, options = {}, properties = {} } = {}] = [], index) => `
             <div class="command-item setting-item" style="margin-bottom: 1rem;" data-id="${this.escapeHtml(id)}">
               ${(type === "switch") ? `
                 <label>
@@ -1694,7 +1694,7 @@ class LocalBotify {
                     ` : ""
                   }
                   ${(type === "textarea") ? `
-                    <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}</textarea>
+                    <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}</textarea>
                   ` : ((type === "select") ? `
                     <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                       ${Object.entries(options).map(([optionId, optionName]) => `
@@ -1702,7 +1702,7 @@ class LocalBotify {
                       `)}
                     </select>
                   ` : `
-                    <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                    <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                   `)}
                 </label>
               `}
@@ -3136,7 +3136,15 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                 if (err) {
                   this.showToast(err, "error");
                 } else {
-                  this.showToast(`Created landing page: ${subdomain}.puter.site`, "success");
+                  this.showToast(`${((bot.landingPages || []).includes(subdomain)) ? "Updated" : "Created"} landing page: ${subdomain}.puter.site`, "success");
+
+                  this.confirm("Open Landing Page", `Would you like to open the landing page you just ${((bot.landingPages || []).includes(subdomain)) ? "updated" : "created"}?`, null, "Open").then(() => {
+                    const childProcess = require("child_process");
+
+                    childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + `https://${subdomain}.puter.site"`, (process.platform === "win32") ? {
+                      shell: "powershell.exe"
+                    } : {});
+                  }).catch(() => {});
 
                   if (!bot.landingPages) (bot.landingPages = []);
                   if (!bot.landingPages.includes(subdomain)) bot.landingPages.push(subdomain);
@@ -3145,14 +3153,6 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                   this.bots[index] = bot;
 
                   this.saveBots();
-
-                  this.confirm("Open Landing Page", "Would you like to open the landing page you just created?", null, "Open").then(() => {
-                    const childProcess = require("child_process");
-
-                    childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + `https://${subdomain}.puter.site"`, (process.platform === "win32") ? {
-                      shell: "powershell.exe"
-                    } : {});
-                  }).catch(() => {});
                 };
               };
             };
@@ -3898,7 +3898,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     `);
 
     modal.innerHTML = `
-      <div class="modal-content">
+      <div class="modal-content" style="max-width: 750px;">
         <div class="modal-header">
           <h2>Add ${category[0].toUpperCase() + category.substring(1, category.length - 1)}</h2>
           <button class="close-btn"><i class="fas fa-times"></i></button>
@@ -4159,7 +4159,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         <div class="modal-body">
           <form id="botForm">
             <div class="form-group">
-              ${(!bot.landingPages) ? `<span style="color: #d1d1d1;">No landing pages found</span>` : (bot.landingPages || []).map((landingPage) => `
+              ${(!(bot.landingPages || []).length) ? `<span style="color: #d1d1d1;">No landing pages found</span>` : (bot.landingPages || []).map((landingPage) => `
                 <div class="setting-item landing-page-item" style="margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.375rem 1rem; cursor: pointer; background-color: var(--discord-darker);">
                   https://${this.escapeHtml(landingPage)}.puter.site
                   <div>

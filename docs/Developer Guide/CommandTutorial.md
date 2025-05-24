@@ -65,9 +65,10 @@ module.exports = {
 
   variables: {
     responseMessage: {
+      type: "slider",
       title: "Response Message",
       description: "Message sent when the ping command is triggered",
-      type: "slider",
+      default: "Pong!",
       properties: {
         min: "0",
         max: "100"

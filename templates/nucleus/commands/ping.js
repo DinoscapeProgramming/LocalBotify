@@ -5,6 +5,15 @@ const { commandType } = requireCore("localbotify");
 
 module.exports = {
   description: "Check the bot's response time",
+
+  permissions: [
+    "SEND_MESSAGES",
+    "MANAGE_MESSAGES",
+    "EMBED_LINKS",
+    "ATTACH_FILES",
+    "READ_MESSAGE_HISTORY"
+  ],
+
   variables: {
     header: {
       title: "Header",
@@ -12,8 +21,7 @@ module.exports = {
       type: "text"
     }
   },
-  slashCommand: (SlashCommandBuilder) ? (new SlashCommandBuilder()
-    .setName("ping")) : null,
+
   command: async ({
     header,
     footer
@@ -46,5 +54,8 @@ module.exports = {
       .setTimestamp();
 
     await sent.edit({ content: null, embeds: [embed] });
-  }
+  },
+
+  slashCommand: (SlashCommandBuilder) ? (new SlashCommandBuilder()
+    .setName("ping")) : null
 };

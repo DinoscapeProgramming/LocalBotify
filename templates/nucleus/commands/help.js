@@ -7,26 +7,24 @@ const categories = require("../data/categories.json");
 
 module.exports = {
   description: "View all available commands",
+
+  permissions: [
+    "SEND_MESSAGES",
+    "MANAGE_MESSAGES",
+    "EMBED_LINKS",
+    "ATTACH_FILES",
+    "READ_MESSAGE_HISTORY"
+  ],
+
   variables: {
     header: {
+      type: "text",
       title: "Header",
       description: "The header of the response embed",
-      type: "text"
+      default: "📖  Help Menu${command}"
     }
   },
-  slashCommand: (SlashCommandBuilder) ? (new SlashCommandBuilder()
-    .setName("help")
-    .addStringOption((option) => option
-      .setName("command")
-			.setDescription("The command to view")
-			.addChoices(
-        ...(fs.readdirSync("./commands").map((command) => ({
-          name: command.substring(0, command.length - 3),
-          value: command.substring(0, command.length - 3)
-        })) || []).slice(0, 25)
-			)
-    )
-  ) : null,
+
   command: async ({
     header,
     footer
@@ -54,5 +52,19 @@ module.exports = {
       .setTimestamp();
 
     event.respond({ content: null, embeds: [embed] });
-  }
+  },
+
+  slashCommand: (SlashCommandBuilder) ? (new SlashCommandBuilder()
+    .setName("help")
+    .addStringOption((option) => option
+      .setName("command")
+			.setDescription("The command to view")
+			.addChoices(
+        ...(fs.readdirSync("./commands").map((command) => ({
+          name: command.substring(0, command.length - 3),
+          value: command.substring(0, command.length - 3)
+        })) || []).slice(0, 25)
+			)
+    )
+  ) : null
 };
