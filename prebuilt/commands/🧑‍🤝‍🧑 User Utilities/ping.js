@@ -16,9 +16,10 @@ module.exports = {
 
   variables: {
     header: {
+      type: "text",
       title: "Header",
       description: "The header of the response embed",
-      type: "text"
+      default: "🏓  Pong!"
     }
   },
 
@@ -37,7 +38,7 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setColor(0x00bfff)
-      .setTitle(header || "🏓  Pong!")
+      .setTitle(header)
       .addFields(
         {
           name: "Bot Latency",
