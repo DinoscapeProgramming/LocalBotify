@@ -12,7 +12,9 @@ if (!global.server.messages) (global.server.messages = []);
 
 (async () => {
   await new Promise((resolve, reject) => {
-    if (global.server.link || global.server.eventEmitter) return resolve();
+    if (global.server.link || global.server.eventEmitter || global.server.loading) return resolve();
+
+    global.server.loading = true;
 
     const http = require("http");
     const server = http.createServer((req, res) => {
@@ -78,13 +80,29 @@ if (!global.server.messages) (global.server.messages = []);
               socket.emit("connectAgent", (new URL(location.href)).searchParams.get("user") || "");
 
               socket.on("sendData", ({ type, data }) => {
-                if (!Array.isArray(data)) return;
+                if (type === "chat") {
+                  if (!Array.isArray(data)) return;
 
-                puter.ai.chat(data).then(({ message } = {}) => {
-                  if (!message.content) return;
+                  puter.ai.chat(data).then(({ message } = {}) => {
+                    if (!message.content) return;
 
-                  socket.emit("dataReady", message.content);
-                }).catch(() => {});
+                    socket.emit("dataReady", {
+                      type: "chat",
+                      data: message.content
+                    });
+                  }).catch(() => {});
+                } else if (type === "image") {
+                  if (typeof data !== "string") return;
+
+                  puter.ai.txt2img(data).then((image) => {
+                    if (!image || !image.src) return;
+
+                    socket.emit("dataReady", {
+                      type: "image",
+                      data: image.src
+                    });
+                  }).catch(() => {});
+                };
               });
             });
           </script>
@@ -113,16 +131,19 @@ if (!global.server.messages) (global.server.messages = []);
 
         global.server.users.push(user);
 
-        socket.on("dataReady", (data) => {
-          eventEmitter.emit(`dataReady:${user}`, data);
+        socket.on("dataReady", ({ type, data } = {}) => {
+          eventEmitter.emit(`dataReady:${user}`, {
+            type,
+            data
+          });
         });
 
         eventEmitter.emit(`userConnected:${user}`);
 
         eventEmitter.removeAllListeners(`sendData:${user}`);
-        eventEmitter.on(`sendData:${user}`, (data) => {
+        eventEmitter.on(`sendData:${user}`, ({ type, data } = {}) => {
           socket.emit("sendData", {
-            type: "chat",
+            type,
             data
           });
         });
@@ -134,14 +155,24 @@ if (!global.server.messages) (global.server.messages = []);
     });
 
     server.listen(3000, "localhost", () => {
-      localtunnel({ port: 3000 }).then((tunnel) => {
-        global.server.link = tunnel.url;
-        global.server.eventEmitter = eventEmitter;
+      let connect = () => {
+        try {
+          localtunnel({ port: 3000 }).then((tunnel) => {
+            global.server.link = tunnel.url;
+            global.server.eventEmitter = eventEmitter;
 
-        console.log(`Server running at ${tunnel.url}`);
+            console.log(`Server running at ${tunnel.url}`);
 
-        resolve();
-      });
+            resolve();
+          }).catch(() => {
+            setTimeout(connect, 0);
+          });
+        } catch {
+          setTimeout(connect, 0);
+        };
+      };
+
+      connect();
     });
   });
 
@@ -166,17 +197,17 @@ module.exports = {
       description: "The header of the response embed when the user is not connected to the AI agent.",
       default: "🧠  Connect to AI Agent"
     },
-    role: {
+    personality: {
       type: "textarea",
-      title: "Role",
-      description: "The role of the AI agent. This will be used to set the context for the AI. You can use markdown syntax here.",
-      default: "You are a helpful AI assistant. You will answer the user's questions based on the context provided."
+      title: "Personality",
+      description: "The personality of the AI agent. This will be used to set the context for the AI. You can use markdown syntax here.",
+      default: "You are a helpful AI assistant. You will answer the user's questions based on the context provided. The user in this conversation is called ${user}, so treat the user as such."
     }
   },
 
   command: async ({
     header,
-    role,
+    personality,
     footer
   }, client, event) => {
     try {
@@ -211,14 +242,16 @@ module.exports = {
       event.channel.sendTyping();
 
       let interval = setInterval(() => {
-        if (!response) return event.channel.sendTyping();
+        try {
+          if (!response || !global.server.users.includes((commandType(event) === "message") ? event.author.id : event.user.id)) return event.channel.sendTyping();
+        } catch {};
 
         clearInterval(interval);
       }, 9500);
 
       global.server.eventEmitter.removeAllListeners(`dataReady:${(commandType(event) === "message") ? event.author.id : event.user.id}`);
-      global.server.eventEmitter.addListener(`dataReady:${(commandType(event) === "message") ? event.author.id : event.user.id}`, (data) => {
-        if (typeof data !== "string") return;
+      global.server.eventEmitter.addListener(`dataReady:${(commandType(event) === "message") ? event.author.id : event.user.id}`, ({ type, data } = {}) => {
+        if ((type !== "chat") || (typeof data !== "string")) return;
 
         global.server.messages[(commandType(event) === "message") ? event.author.id : event.user.id].push({
           role: "assistant",
@@ -248,15 +281,18 @@ module.exports = {
         content: ((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("prompt")) || ""
       });
 
-      global.server.eventEmitter.emit(`sendData:${(commandType(event) === "message") ? event.author.id : event.user.id}`, [
-        ...[
-          {
-            role: "system",
-            content: role.replaceAll("${user}", ((commandType(event) === "message") ? event.author.displayName : event.user.displayName) || ((commandType(event) === "message") ? event.author.username : event.user.username) || "`Unknown User`")
-          }
-        ],
-        ...global.server.messages[(commandType(event) === "message") ? event.author.id : event.user.id]
-      ]);
+      global.server.eventEmitter.emit(`sendData:${(commandType(event) === "message") ? event.author.id : event.user.id}`, {
+        type: "chat",
+        data: [
+          ...[
+            {
+              role: "system",
+              content: personality.replaceAll("${user}", ((commandType(event) === "message") ? event.author.displayName : event.user.displayName) || ((commandType(event) === "message") ? event.author.username : event.user.username) || "`Unknown User`")
+            }
+          ],
+          ...global.server.messages[(commandType(event) === "message") ? event.author.id : event.user.id]
+        ]
+      });
     } catch {};
   },
 

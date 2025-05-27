@@ -1,6 +1,6 @@
 if (!global.requireCore) (global.requireCore = () => ({}));
 
-const { EmbedBuilder, SlashCommandBuilder } = requireCore("discord.js");
+const { EmbedBuilder, SlashCommandBuilder, AttachmentBuilder } = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
 
 if (!global.server) (global.server = {});
@@ -12,7 +12,9 @@ if (!global.server.messages) (global.server.messages = []);
 
 (async () => {
   await new Promise((resolve, reject) => {
-    if (global.server.link || global.server.eventEmitter) return resolve();
+    if (global.server.link || global.server.eventEmitter || global.server.loading) return resolve();
+
+    global.server.loading = true;
 
     const http = require("http");
     const server = http.createServer((req, res) => {
@@ -78,13 +80,29 @@ if (!global.server.messages) (global.server.messages = []);
               socket.emit("connectAgent", (new URL(location.href)).searchParams.get("user") || "");
 
               socket.on("sendData", ({ type, data }) => {
-                if (!Array.isArray(data)) return;
+                if (type === "chat") {
+                  if (!Array.isArray(data)) return;
 
-                puter.ai.chat(data).then(({ message } = {}) => {
-                  if (!message.content) return;
+                  puter.ai.chat(data).then(({ message } = {}) => {
+                    if (!message.content) return;
 
-                  socket.emit("dataReady", message.content);
-                }).catch(() => {});
+                    socket.emit("dataReady", {
+                      type: "chat",
+                      data: message.content
+                    });
+                  }).catch(() => {});
+                } else if (type === "image") {
+                  if (typeof data !== "string") return;
+
+                  puter.ai.txt2img(data).then((image) => {
+                    if (!image || !image.src) return;
+
+                    socket.emit("dataReady", {
+                      type: "image",
+                      data: image.src
+                    });
+                  }).catch(() => {});
+                };
               });
             });
           </script>
@@ -113,16 +131,19 @@ if (!global.server.messages) (global.server.messages = []);
 
         global.server.users.push(user);
 
-        socket.on("dataReady", (data) => {
-          eventEmitter.emit(`dataReady:${user}`, data);
+        socket.on("dataReady", ({ type, data } = {}) => {
+          eventEmitter.emit(`dataReady:${user}`, {
+            type,
+            data
+          });
         });
 
         eventEmitter.emit(`userConnected:${user}`);
 
         eventEmitter.removeAllListeners(`sendData:${user}`);
-        eventEmitter.on(`sendData:${user}`, (data) => {
+        eventEmitter.on(`sendData:${user}`, ({ type, data } = {}) => {
           socket.emit("sendData", {
-            type: "chat",
+            type,
             data
           });
         });
@@ -134,14 +155,24 @@ if (!global.server.messages) (global.server.messages = []);
     });
 
     server.listen(3000, "localhost", () => {
-      localtunnel({ port: 3000 }).then((tunnel) => {
-        global.server.link = tunnel.url;
-        global.server.eventEmitter = eventEmitter;
+      let connect = () => {
+        try {
+          localtunnel({ port: 3000 }).then((tunnel) => {
+            global.server.link = tunnel.url;
+            global.server.eventEmitter = eventEmitter;
 
-        console.log(`Server running at ${tunnel.url}`);
+            console.log(`Server running at ${tunnel.url}`);
 
-        resolve();
-      });
+            resolve();
+          }).catch(() => {
+            setTimeout(connect, 0);
+          });
+        } catch {
+          setTimeout(connect, 0);
+        };
+      };
+
+      connect();
     });
   });
 
@@ -165,18 +196,11 @@ module.exports = {
       title: "Connection Header",
       description: "The header of the response embed when the user is not connected to the AI agent.",
       default: "🧠  Connect to AI Agent"
-    },
-    role: {
-      type: "textarea",
-      title: "Role",
-      description: "The role of the AI agent. This will be used to set the context for the AI. You can use markdown syntax here.",
-      default: "You are a helpful AI assistant. You will answer the user's questions based on the context provided."
     }
   },
 
   command: async ({
     header,
-    role,
     footer
   }, client, event) => {
     try {
@@ -211,57 +235,35 @@ module.exports = {
       event.channel.sendTyping();
 
       let interval = setInterval(() => {
-        if (!response) return event.channel.sendTyping();
+        try {
+          if (!response || !global.server.users.includes((commandType(event) === "message") ? event.author.id : event.user.id)) return event.channel.sendTyping();
+        } catch {};
 
         clearInterval(interval);
       }, 9500);
 
       global.server.eventEmitter.removeAllListeners(`dataReady:${(commandType(event) === "message") ? event.author.id : event.user.id}`);
-      global.server.eventEmitter.addListener(`dataReady:${(commandType(event) === "message") ? event.author.id : event.user.id}`, (data) => {
-        if (typeof data !== "string") return;
-
-        global.server.messages[(commandType(event) === "message") ? event.author.id : event.user.id].push({
-          role: "assistant",
-          content: data
-        });
+      global.server.eventEmitter.addListener(`dataReady:${(commandType(event) === "message") ? event.author.id : event.user.id}`, ({ type, data } = {}) => {
+        if ((type !== "image") || (typeof data !== "string")) return;
 
         response = true;
 
-        Array.from(data).reduce((accumulator, character) => (accumulator.at(-1).length >= 2000) ? [
-          ...accumulator,
-          ...[
-            character
+        event.respond({
+          files: [
+            new AttachmentBuilder(Buffer.from(data.split(",")[1], "base64"), { name: "image.png" })
           ]
-        ] : accumulator.map((chunk, index) => (index === (accumulator.length - 1)) ? `${chunk}${character}` : chunk), [""]).map((chunk) => {
-          if (!chunk) return;
-
-          event.respond(chunk.replaceAll("@everyone", "@\u200Beveryone").replaceAll("@here", "@\u200Bhere").replaceAll(/<@!?(\d+)>/g, "<@\u200b$1>").replaceAll(/<@&(\d+)>/g, "<@&\u200b$1>"));
         });
       });
 
-      if (!global.server.messages[(commandType(event) === "message") ? event.author.id : event.user.id]) {
-        global.server.messages[(commandType(event) === "message") ? event.author.id : event.user.id] = [];
-      };
-
-      global.server.messages[(commandType(event) === "message") ? event.author.id : event.user.id].push({
-        role: "user",
-        content: ((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("prompt")) || ""
+      global.server.eventEmitter.emit(`sendData:${(commandType(event) === "message") ? event.author.id : event.user.id}`, {
+        type: "image",
+        data: ((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("prompt")) || ""
       });
-
-      global.server.eventEmitter.emit(`sendData:${(commandType(event) === "message") ? event.author.id : event.user.id}`, [
-        ...[
-          {
-            role: "system",
-            content: role.replaceAll("${user}", ((commandType(event) === "message") ? event.author.displayName : event.user.displayName) || ((commandType(event) === "message") ? event.author.username : event.user.username) || "`Unknown User`")
-          }
-        ],
-        ...global.server.messages[(commandType(event) === "message") ? event.author.id : event.user.id]
-      ]);
     } catch {};
   },
 
   slashCommand: (SlashCommandBuilder) ? (new SlashCommandBuilder()
-    .setName("chat")
+    .setName("image")
     .addStringOption((option) =>
       option.setName("prompt")
         .setDescription("The prompt to send to the AI")

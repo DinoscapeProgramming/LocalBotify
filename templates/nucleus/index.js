@@ -17,6 +17,7 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildMembers,
     GatewayIntentBits.MessageContent
   ], // --> remember to activate intents in the developer portal settings too!
 });
