@@ -2448,12 +2448,12 @@ class LocalBotify {
                     No variables found
                   </label>
                 </div>
-              ` : variables.map(([id, { title = "", description = "", type = "text", datalist = null, options = {}, properties = {} } = {}] = [], index) => `
+              ` : variables.map(([id, { title = "", description = "", default: defaultValue = "", type = "text", datalist = null, options = {}, properties = {} } = {}] = [], index) => `
               <div class="command-item setting-item" style="margin-bottom: 1rem;" data-id="${this.escapeHtml(id)}">
                 ${(type === "switch") ? `
                   <label>
                     <span>${this.escapeHtml(title)}</span>
-                    <input type="checkbox" ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}/>
+                    <input type="checkbox"${(defaultValue) ? " checked" : ""} ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}/>
                   </label>
                   ${
                     (description) ? `
@@ -2473,7 +2473,7 @@ class LocalBotify {
                       ` : ""
                     }
                     ${(type === "textarea") ? `
-                      <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}</textarea>
+                      <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}</textarea>
                     ` : ((type === "select") ? `
                       <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                         ${Object.entries(options).map(([optionId, optionName]) => `
@@ -2481,7 +2481,7 @@ class LocalBotify {
                         `)}
                       </select>
                     ` : `
-                      <input type="${type.replace("switch", "checkbox").replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                      <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                     `)}
                   </label>
                 `}
@@ -4031,12 +4031,12 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                     No variables found
                   </label>
                 </div>
-              ` : variables.map(([id, { title = "", description = "", type = "text", datalist = null, options = {}, properties = {} } = {}] = [], index) => `
+              ` : variables.map(([id, { title = "", description = "", default: defaultValue = "", type = "text", datalist = null, options = {}, properties = {} } = {}] = [], index) => `
               <div class="command-item setting-item" style="margin-bottom: 1rem;" data-id="${this.escapeHtml(id)}">
                 ${(type === "switch") ? `
                   <label>
                     <span>${this.escapeHtml(title)}</span>
-                    <input type="checkbox" ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}/>
+                    <input type="checkbox"${(defaultValue) ? " checked" : ""} ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}/>
                   </label>
                   ${
                     (description) ? `
@@ -4056,7 +4056,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                       ` : ""
                     }
                     ${(type === "textarea") ? `
-                      <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}</textarea>
+                      <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}</textarea>
                     ` : ((type === "select") ? `
                       <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                         ${Object.entries(options).map(([optionId, optionName]) => `
@@ -4064,7 +4064,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                         `)}
                       </select>
                     ` : `
-                      <input type="${type.replace("switch", "checkbox").replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                      <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                     `)}
                   </label>
                 `}
