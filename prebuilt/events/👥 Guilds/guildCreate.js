@@ -23,18 +23,16 @@ module.exports = {
       type: "textarea",
       title: "Embed Description",
       description: "The description of the welcome embed",
-      default: `
-        Hello **\${guildName}**! 👋
+      default: `Hello **\${guildName}**! 👋
 
-        I'm your new assistant bot, here to make your server more fun and functional! 🎉
+I'm your new assistant bot, here to make your server more fun and functional! 🎉
 
-        See what I can do for you by typing \`\${prefix}help\`.
+See what I can do for you by typing \`\${prefix}help\`.
 
-        **Need help?**
-        You can always ask for assistance or reach out in the support server: [Support Server Link](\${supportServer})      
+**Need help?**
+You can always ask for assistance or reach out in the support server: [Support Server Link](\${supportServer})      
 
-        I'm looking forward to helping out! 😊
-      `
+I'm looking forward to helping out! 😊`
     }
   },
 
@@ -43,6 +41,6 @@ module.exports = {
     title,
     description
   }, client, event) => {
-    
+
   }
 }

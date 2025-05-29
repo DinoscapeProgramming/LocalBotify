@@ -102,6 +102,17 @@ if (!global.server.messages) (global.server.messages = []);
                       data: image.src
                     });
                   }).catch(() => {});
+                } else if (type === "tts") {
+                  if (typeof data !== "string") return;
+
+                  puter.ai.txt2speech(data).then((audio) => {
+                    if (!audio || !audio.src) return;
+
+                    socket.emit("dataReady", {
+                      type: "tts",
+                      data: audio.src
+                    });
+                  });
                 };
               });
             });

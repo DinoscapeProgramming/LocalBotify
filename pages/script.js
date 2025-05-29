@@ -1654,7 +1654,7 @@ class LocalBotify {
 
         workbenchEditorView.innerHTML = `
           <h3 class="command-header">
-            <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i>${command.textContent.trim().replace(/[^A-Za-z]/g, "")}
+            <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i><span contenteditable spellcheck="false">${this.escapeHtml(command.textContent.trim().replace(/[^A-Za-z]/g, ""))}</span>
             <button class="add-command-btn" style="position: absolute; right: 39.5px;">
               <i class="fas fa-code"></i>
               Edit in code lab
@@ -1694,7 +1694,7 @@ class LocalBotify {
                     ` : ""
                   }
                   ${(type === "textarea") ? `
-                    <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}</textarea>
+                    <textarea style="height: 230px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}</textarea>
                   ` : ((type === "select") ? `
                     <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                       ${Object.entries(options).map(([optionId, optionName]) => `
@@ -1716,6 +1716,50 @@ class LocalBotify {
             </div>
           `).join("")}
         `;
+
+        workbenchEditorView.querySelector(".command-header span").addEventListener("blur", () => {
+          if (workbenchEditorView.querySelector(".command-header span").textContent.trim() === command.textContent.trim()) return;
+
+          fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${command.textContent.trim()}.js`), path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${workbenchEditorView.querySelector(".command-header span").textContent.trim()}.js`));
+
+          if (!configFile) (configFile = {});
+          if (!configFile.variables) (configFile.variables = {});
+          if (!configFile.variables[command.dataset.category]) (configFile.variables[command.dataset.category] = {});
+          if (!configFile.variables[command.dataset.category][command.textContent.trim()]) (configFile.variables[command.dataset.category][command.textContent.trim()] = {});
+
+          if (configFile.variables[command.dataset.category][command.textContent.trim()]) {
+            configFile.variables[command.dataset.category][workbenchEditorView.querySelector(".command-header span").textContent.trim()] = configFile.variables[command.dataset.category][command.textContent.trim()];
+            delete configFile.variables[command.dataset.category][command.textContent.trim()];
+
+            fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
+          };
+
+          command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+        });
+
+        workbenchEditorView.querySelector(".command-header span").addEventListener("keydown", (e) => {
+          if ((e.key !== "Enter") || (workbenchEditorView.querySelector(".command-header span").textContent.trim() === command.textContent.trim())) return;
+
+          e.preventDefault();
+
+          workbenchEditorView.querySelector(".command-header span").blur();
+
+          fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${command.textContent.trim()}.js`), path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${workbenchEditorView.querySelector(".command-header span").textContent.trim()}.js`));
+
+          if (!configFile) (configFile = {});
+          if (!configFile.variables) (configFile.variables = {});
+          if (!configFile.variables[command.dataset.category]) (configFile.variables[command.dataset.category] = {});
+          if (!configFile.variables[command.dataset.category][command.textContent.trim()]) (configFile.variables[command.dataset.category][command.textContent.trim()] = {});
+
+          if (configFile.variables[command.dataset.category][command.textContent.trim()]) {
+            configFile.variables[command.dataset.category][workbenchEditorView.querySelector(".command-header span").textContent.trim()] = configFile.variables[command.dataset.category][command.textContent.trim()];
+            delete configFile.variables[command.dataset.category][command.textContent.trim()];
+
+            fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
+          };
+
+          command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+        });
 
         workbenchEditorView.querySelectorAll(".command-header button").forEach((button) => {
           button.addEventListener("click", () => {
@@ -2433,7 +2477,7 @@ class LocalBotify {
 
           workbenchEditorView.innerHTML = `
             <h3 class="command-header">
-              <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i>${command.textContent.trim().replace(/[^A-Za-z]/g, "")}
+              <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i><span contenteditable spellcheck="false">${this.escapeHtml(command.textContent.trim().replace(/[^A-Za-z]/g, ""))}</span>
               <button class="add-command-btn" style="position: absolute; right: 39.5px;">
                 <i class="fas fa-code"></i>
                 Edit in code lab
@@ -2473,7 +2517,7 @@ class LocalBotify {
                       ` : ""
                     }
                     ${(type === "textarea") ? `
-                      <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}</textarea>
+                      <textarea style="height: 230px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}</textarea>
                     ` : ((type === "select") ? `
                       <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                         ${Object.entries(options).map(([optionId, optionName]) => `
@@ -2495,6 +2539,50 @@ class LocalBotify {
               </div>
             `).join("")}
           `;
+
+          workbenchEditorView.querySelector(".command-header span").addEventListener("blur", () => {
+            if (workbenchEditorView.querySelector(".command-header span").textContent.trim() === command.textContent.trim()) return;
+
+            fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${command.textContent.trim()}.js`), path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${workbenchEditorView.querySelector(".command-header span").textContent.trim()}.js`));
+
+            if (!configFile) (configFile = {});
+            if (!configFile.variables) (configFile.variables = {});
+            if (!configFile.variables[command.dataset.category]) (configFile.variables[command.dataset.category] = {});
+            if (!configFile.variables[command.dataset.category][command.textContent.trim()]) (configFile.variables[command.dataset.category][command.textContent.trim()] = {});
+
+            if (configFile.variables[command.dataset.category][command.textContent.trim()]) {
+              configFile.variables[command.dataset.category][workbenchEditorView.querySelector(".command-header span").textContent.trim()] = configFile.variables[command.dataset.category][command.textContent.trim()];
+              delete configFile.variables[command.dataset.category][command.textContent.trim()];
+
+              fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
+            };
+
+            command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+          });
+
+          workbenchEditorView.querySelector(".command-header span").addEventListener("keydown", (e) => {
+            if ((e.key !== "Enter") || (workbenchEditorView.querySelector(".command-header span").textContent.trim() === command.textContent.trim())) return;
+
+            e.preventDefault();
+
+            workbenchEditorView.querySelector(".command-header span").blur();
+
+            fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${command.textContent.trim()}.js`), path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${workbenchEditorView.querySelector(".command-header span").textContent.trim()}.js`));
+
+            if (!configFile) (configFile = {});
+            if (!configFile.variables) (configFile.variables = {});
+            if (!configFile.variables[command.dataset.category]) (configFile.variables[command.dataset.category] = {});
+            if (!configFile.variables[command.dataset.category][command.textContent.trim()]) (configFile.variables[command.dataset.category][command.textContent.trim()] = {});
+
+            if (configFile.variables[command.dataset.category][command.textContent.trim()]) {
+              configFile.variables[command.dataset.category][workbenchEditorView.querySelector(".command-header span").textContent.trim()] = configFile.variables[command.dataset.category][command.textContent.trim()];
+              delete configFile.variables[command.dataset.category][command.textContent.trim()];
+
+              fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
+            };
+
+            command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+          });
 
           workbenchEditorView.querySelectorAll(".command-header button").forEach((button) => {
             button.addEventListener("click", () => {
@@ -4016,7 +4104,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
           workbenchEditorView.innerHTML = `
             <h3 class="command-header">
-              <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i>${command.textContent.trim().replace(/[^A-Za-z]/g, "")}
+              <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i><span contenteditable spellcheck="false">${this.escapeHtml(command.textContent.trim().replace(/[^A-Za-z]/g, ""))}</span>
               <button class="add-command-btn" style="position: absolute; right: 39.5px;">
                 <i class="fas fa-code"></i>
                 Edit in code lab
@@ -4056,7 +4144,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                       ` : ""
                     }
                     ${(type === "textarea") ? `
-                      <textarea style="height: 150px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}</textarea>
+                      <textarea style="height: 230px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}</textarea>
                     ` : ((type === "select") ? `
                       <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                         ${Object.entries(options).map(([optionId, optionName]) => `
@@ -4078,6 +4166,50 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
               </div>
             `).join("")}
           `;
+
+          workbenchEditorView.querySelector(".command-header span").addEventListener("blur", () => {
+            if (workbenchEditorView.querySelector(".command-header span").textContent.trim() === command.textContent.trim()) return;
+
+            fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${command.textContent.trim()}.js`), path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${workbenchEditorView.querySelector(".command-header span").textContent.trim()}.js`));
+
+            if (!configFile) (configFile = {});
+            if (!configFile.variables) (configFile.variables = {});
+            if (!configFile.variables[command.dataset.category]) (configFile.variables[command.dataset.category] = {});
+            if (!configFile.variables[command.dataset.category][command.textContent.trim()]) (configFile.variables[command.dataset.category][command.textContent.trim()] = {});
+
+            if (configFile.variables[command.dataset.category][command.textContent.trim()]) {
+              configFile.variables[command.dataset.category][workbenchEditorView.querySelector(".command-header span").textContent.trim()] = configFile.variables[command.dataset.category][command.textContent.trim()];
+              delete configFile.variables[command.dataset.category][command.textContent.trim()];
+
+              fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
+            };
+
+            command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+          });
+
+          workbenchEditorView.querySelector(".command-header span").addEventListener("keydown", (e) => {
+            if ((e.key !== "Enter") || (workbenchEditorView.querySelector(".command-header span").textContent.trim() === command.textContent.trim())) return;
+
+            e.preventDefault();
+
+            workbenchEditorView.querySelector(".command-header span").blur();
+
+            fs.renameSync(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${command.textContent.trim()}.js`), path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${workbenchEditorView.querySelector(".command-header span").textContent.trim()}.js`));
+
+            if (!configFile) (configFile = {});
+            if (!configFile.variables) (configFile.variables = {});
+            if (!configFile.variables[command.dataset.category]) (configFile.variables[command.dataset.category] = {});
+            if (!configFile.variables[command.dataset.category][command.textContent.trim()]) (configFile.variables[command.dataset.category][command.textContent.trim()] = {});
+
+            if (configFile.variables[command.dataset.category][command.textContent.trim()]) {
+              configFile.variables[command.dataset.category][workbenchEditorView.querySelector(".command-header span").textContent.trim()] = configFile.variables[command.dataset.category][command.textContent.trim()];
+              delete configFile.variables[command.dataset.category][command.textContent.trim()];
+
+              fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
+            };
+
+            command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+          });
 
           workbenchEditorView.querySelectorAll(".command-header button").forEach((button) => {
             button.addEventListener("click", () => {

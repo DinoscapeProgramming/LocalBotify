@@ -78,7 +78,7 @@ ${lines.map(center).join('\n')}
 
   rest.put(
     Routes.applicationCommands(client.user.id),
-    { body: (config.slashCommands ?? true) ? fs.readdirSync("./commands").map((command) => require("./commands/" + command)).filter(({ slashCommand }) => slashCommand).map(({ description, slashCommand }) => slashCommand.setDescription(description || "")) : [] }
+    { body: (config.slashCommands ?? true) ? fs.readdirSync("./commands").map((command) => require("./commands/" + command)).filter(({ slashCommand }) => slashCommand).map(({ description, slashCommand }) => slashCommand.setName(command.substring(0, command.length - 3)).setDescription(description || "")) : [] }
   );
 
   fs.watch("./config.json", (eventType) => {
@@ -107,7 +107,7 @@ ${lines.map(center).join('\n')}
 
       rest.put(
         Routes.applicationCommands(client.user.id),
-        { body: (config.slashCommands ?? true) ? fs.readdirSync("./commands").map((command) => require("./commands/" + command)).filter(({ slashCommand }) => slashCommand).map(({ description, slashCommand }) => slashCommand.setDescription(description || "")) : [] }
+        { body: (config.slashCommands ?? true) ? fs.readdirSync("./commands").map((command) => require("./commands/" + command)).filter(({ slashCommand }) => slashCommand).map(({ description, slashCommand }) => slashCommand.setName(command.substring(0, command.length - 3)).setDescription(description || "")) : [] }
       );
     };
   });
@@ -130,7 +130,7 @@ client.on("messageCreate", (message) => {
       ...{
         footer: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression))
       },
-      ...Object.fromEntries(Object.entries(commandFile.variables).map(([variableName, { defaultValue = null } = {}] = []) => [
+      ...Object.fromEntries(Object.entries(commandFile.variables).map(([variableName, { default: defaultValue = null } = {}] = []) => [
         variableName,
         config?.variables?.commands?.[commandName]?.[variableName] || defaultValue
       ]))
