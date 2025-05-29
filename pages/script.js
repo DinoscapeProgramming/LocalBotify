@@ -1304,7 +1304,7 @@ class LocalBotify {
               </button>
             </h3>
             ${(!(fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")) || []).length) ? `<span style="color: grey;">No events found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).map((command) => (command.endsWith(".js")) ? `
-              <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem; cursor: pointer;" data-category="events">${this.escapeHtml(command.substring(0, command.length - 3).replace(/[^a-zA-Z]+$/, "")) + ((command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/)}</code>` : "")}</div>
+              <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem; cursor: pointer;" data-category="events">${this.escapeHtml(command.substring(0, command.length - 3).replace(/[^a-zA-Z]+$/, "")) + ((command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${this.escapeHtml(command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/))}</code>` : "")}</div>
             ` : "").join("")}
           </div>
         </div>
@@ -1734,7 +1734,11 @@ class LocalBotify {
             fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
           };
 
-          command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+          if (command.dataset.category === "commands") {
+            command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+          } else {
+            command.innerHTML = (this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().replace(/[^a-zA-Z]+$/, "")) + ((workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/))}</code>` : ""));
+          };
         });
 
         workbenchEditorView.querySelector(".command-header span").addEventListener("keydown", (e) => {
@@ -1758,7 +1762,11 @@ class LocalBotify {
             fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
           };
 
-          command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+          if (command.dataset.category === "commands") {
+            command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+          } else {
+            command.innerHTML = (this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().replace(/[^a-zA-Z]+$/, "")) + ((workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/))}</code>` : ""));
+          };
         });
 
         workbenchEditorView.querySelectorAll(".command-header button").forEach((button) => {
@@ -2460,7 +2468,7 @@ class LocalBotify {
           </button>
         </h3>
         ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).length) ? `<span style="color: grey;">No events found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).map((command) => (command.endsWith(".js")) ? `
-          <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem; cursor: pointer;" data-category="events">${this.escapeHtml(command.substring(0, command.length - 3).replace(/[^a-zA-Z]+$/, "")) + ((command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/)}</code>` : "")}</div>
+          <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem; cursor: pointer;" data-category="events">${this.escapeHtml(command.substring(0, command.length - 3).replace(/[^a-zA-Z]+$/, "")) + ((command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${this.escapeHtml(command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/))}</code>` : "")}</div>
         ` : "").join("")}
       `;
 
@@ -2557,7 +2565,11 @@ class LocalBotify {
               fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
             };
 
-            command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+            if (command.dataset.category === "commands") {
+              command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+            } else {
+              command.innerHTML = (this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().replace(/[^a-zA-Z]+$/, "")) + ((workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/))}</code>` : ""));
+            };
           });
 
           workbenchEditorView.querySelector(".command-header span").addEventListener("keydown", (e) => {
@@ -2581,7 +2593,11 @@ class LocalBotify {
               fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
             };
 
-            command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+            if (command.dataset.category === "commands") {
+              command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+            } else {
+              command.innerHTML = (this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().replace(/[^a-zA-Z]+$/, "")) + ((workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/))}</code>` : ""));
+            };
           });
 
           workbenchEditorView.querySelectorAll(".command-header button").forEach((button) => {
@@ -4087,7 +4103,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           </button>
         </h3>
         ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).length) ? `<span style="color: grey;">No events found</span>` : fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "events")).map((command) => (command.endsWith(".js")) ? `
-          <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem; cursor: pointer;" data-category="events">${this.escapeHtml(command.substring(0, command.length - 3).replace(/[^a-zA-Z]+$/, "")) + ((command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/)}</code>` : "")}</div>
+          <div class="setting-item" style="width: calc(100% + 12.5px); margin-left: -2.5px; margin-bottom: 0.5rem; padding: 0.5rem 1rem; cursor: pointer;" data-category="events">${this.escapeHtml(command.substring(0, command.length - 3).replace(/[^a-zA-Z]+$/, "")) + ((command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${this.escapeHtml(command.substring(0, command.length - 3).match(/[^a-zA-Z]+$/))}</code>` : "")}</div>
         ` : "").join("")}
       `;
 
@@ -4184,7 +4200,11 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
               fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
             };
 
-            command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+            if (command.dataset.category === "commands") {
+              command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+            } else {
+              command.innerHTML = (this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().replace(/[^a-zA-Z]+$/, "")) + ((workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/))}</code>` : ""));
+            };
           });
 
           workbenchEditorView.querySelector(".command-header span").addEventListener("keydown", (e) => {
@@ -4208,7 +4228,11 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
               fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
             };
 
-            command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+            if (command.dataset.category === "commands") {
+              command.textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim();
+            } else {
+              command.innerHTML = (this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().replace(/[^a-zA-Z]+$/, "")) + ((workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/))}</code>` : ""));
+            };
           });
 
           workbenchEditorView.querySelectorAll(".command-header button").forEach((button) => {
