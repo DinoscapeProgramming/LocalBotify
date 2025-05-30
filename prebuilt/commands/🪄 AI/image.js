@@ -91,6 +91,17 @@ if (!global.server.messages) (global.server.messages = []);
                       data: message.content
                     });
                   }).catch(() => {});
+                } else if (type === "describe") {
+                  if (!Array.isArray(data)) return;
+
+                  puter.ai.chat("Describe this image." + ((data[1]) ? ("Here is some additional context: " + data[1]) : ""), data[0]).then(({ message } = {}) => {
+                    if (!message.content) return;
+
+                    socket.emit("dataReady", {
+                      type: "describe",
+                      data: message.content
+                    });
+                  }).catch(() => {});
                 } else if (type === "image") {
                   if (typeof data !== "string") return;
 
@@ -102,6 +113,17 @@ if (!global.server.messages) (global.server.messages = []);
                       data: image.src
                     });
                   }).catch(() => {});
+                } else if (type === "tts") {
+                  if (typeof data !== "string") return;
+
+                  puter.ai.txt2speech(data).then((audio) => {
+                    if (!audio || !audio.src) return;
+
+                    socket.emit("dataReady", {
+                      type: "tts",
+                      data: audio.src
+                    });
+                  });
                 };
               });
             });
@@ -191,19 +213,37 @@ module.exports = {
   ],
 
   variables: {
-    header: {
+    errorMessage: {
+      type: "textarea",
+      title: "Error Response Message",
+      description: "The message to send if the user does not specify a prompt.",
+      default: "Please provide a prompt to send to the AI agent."
+    },
+    title: {
       type: "text",
-      title: "Connection Header",
-      description: "The header of the response embed when the user is not connected to the AI agent.",
+      title: "Connection Title",
+      description: "The title of the response embed when the user is not connected to the AI agent.",
       default: "🧠  Connect to AI Agent"
+    },
+    description: {
+      type: "textarea",
+      title: "Connection Description",
+      description: "The description of the response embed when the user is not connected to the AI agent. Use \`${link}\` to insert the link to connect to the AI agent and \`${password}\` to insert the password.",
+      default: `Please connect using the following link: \${link}\nEnter the following password to connect: \`\${password}\``
     }
   },
 
   command: async ({
-    header,
+    errorMessage,
+    title,
+    description,
     footer
   }, client, event) => {
     try {
+      if ((commandType(event) === "message") && !event.content.split(" ").slice(1).join(" ").trim()) return event.respond({
+        content: errorMessage
+      });
+
       let connectionMessage = null;
 
       if (!global.server.users.includes((commandType(event) === "message") ? event.author.id : event.user.id)) {
@@ -212,8 +252,8 @@ module.exports = {
           embeds: [
             new EmbedBuilder()
               .setColor(0x00bfff)
-              .setTitle(header)
-              .setDescription(`Please connect using the following link: ${(global.server.link) ? `${global.server.link}?user=${encodeURIComponent((commandType(event) === "message") ? event.author.id : event.user.id)}` : "`Server not ready yet`"}\nEnter the following password to connect: \`${global.server.password || "Server not ready yet"}\``)
+              .setTitle(title)
+              .setDescription(description.replaceAll("${link}", (global.server.link) ? `${global.server.link}?user=${encodeURIComponent((commandType(event) === "message") ? event.author.id : event.user.id)}` : "`Server not ready yet`").replaceAll("${password}", global.server.password || "Server not ready yet"))
               .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
               .setTimestamp()
           ]
@@ -257,7 +297,7 @@ module.exports = {
 
       global.server.eventEmitter.emit(`sendData:${(commandType(event) === "message") ? event.author.id : event.user.id}`, {
         type: "image",
-        data: ((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("prompt")) || ""
+        data: ((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ").trim() : event.options.getString("prompt")) || ""
       });
     } catch {};
   },
@@ -265,7 +305,8 @@ module.exports = {
   slashCommand: (SlashCommandBuilder) ? (new SlashCommandBuilder()
     .setName("image")
     .addStringOption((option) =>
-      option.setName("prompt")
+      option
+        .setName("prompt")
         .setDescription("The prompt to send to the AI")
         .setRequired(true)
     )

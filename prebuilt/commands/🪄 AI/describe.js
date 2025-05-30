@@ -91,6 +91,17 @@ if (!global.server.messages) (global.server.messages = []);
                       data: message.content
                     });
                   }).catch(() => {});
+                } else if (type === "describe") {
+                  if (!Array.isArray(data)) return;
+
+                  puter.ai.chat("Describe this image." + ((data[1]) ? ("Here is some additional context: " + data[1]) : ""), data[0]).then(({ message } = {}) => {
+                    if (!message.content) return;
+
+                    socket.emit("dataReady", {
+                      type: "describe",
+                      data: message.content
+                    });
+                  }).catch(() => {});
                 } else if (type === "image") {
                   if (typeof data !== "string") return;
 
@@ -202,19 +213,37 @@ module.exports = {
   ],
 
   variables: {
-    header: {
+    errorMessage: {
+      type: "textarea",
+      title: "Error Response Message",
+      description: "The message to send if the user does not attach a file.",
+      default: "Please attach a file to describe."
+    },
+    title: {
       type: "text",
-      title: "Connection Header",
-      description: "The header of the response embed when the user is not connected to the AI agent.",
+      title: "Connection Title",
+      description: "The title of the response embed when the user is not connected to the AI agent.",
       default: "🧠  Connect to AI Agent"
+    },
+    description: {
+      type: "textarea",
+      title: "Connection Description",
+      description: "The description of the response embed when the user is not connected to the AI agent. Use \`${link}\` to insert the link to connect to the AI agent and \`${password}\` to insert the password.",
+      default: `Please connect using the following link: \${link}\nEnter the following password to connect: \`\${password}\``
     }
   },
 
   command: async ({
-    header,
+    errorMessage,
+    title,
+    description,
     footer
   }, client, event) => {
     try {
+      if (((commandType(event) === "message") && !event.attachments.first()) || ((commandType(event) === "interaction") && !event.options.getAttachment("file"))) return event.respond({
+        content: errorMessage
+      });
+
       let connectionMessage = null;
 
       if (!global.server.users.includes((commandType(event) === "message") ? event.author.id : event.user.id)) {
@@ -223,8 +252,8 @@ module.exports = {
           embeds: [
             new EmbedBuilder()
               .setColor(0x00bfff)
-              .setTitle(header)
-              .setDescription(`Please connect using the following link: ${(global.server.link) ? `${global.server.link}?user=${encodeURIComponent((commandType(event) === "message") ? event.author.id : event.user.id)}` : "`Server not ready yet`"}\nEnter the following password to connect: \`${global.server.password || "Server not ready yet"}\``)
+              .setTitle(title)
+              .setDescription(description.replaceAll("${link}", (global.server.link) ? `${global.server.link}?user=${encodeURIComponent((commandType(event) === "message") ? event.author.id : event.user.id)}` : "`Server not ready yet`").replaceAll("${password}", global.server.password || "Server not ready yet"))
               .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
               .setTimestamp()
           ]
@@ -255,30 +284,41 @@ module.exports = {
 
       global.server.eventEmitter.removeAllListeners(`dataReady:${(commandType(event) === "message") ? event.author.id : event.user.id}`);
       global.server.eventEmitter.addListener(`dataReady:${(commandType(event) === "message") ? event.author.id : event.user.id}`, ({ type, data } = {}) => {
-        if ((type !== "image") || (typeof data !== "string")) return;
+        if ((type !== "describe") || (typeof data !== "string")) return;
 
         response = true;
 
         event.respond({
-          files: [
-            new AttachmentBuilder(Buffer.from(data.split(",")[1], "base64"), { name: "image.png" })
-          ]
+          content: data
         });
       });
 
       global.server.eventEmitter.emit(`sendData:${(commandType(event) === "message") ? event.author.id : event.user.id}`, {
-        type: "image",
-        data: ((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("prompt")) || ""
+        type: "describe",
+        data: (commandType(event) === "message") ? [
+          event.attachments.first()?.url,
+          event.content.split(" ").slice(1).join(" ").trim() || null
+        ] : [
+          event.options.getAttachment("file")?.url,
+          event.options.getString("context") || null
+        ]
       });
     } catch {};
   },
 
   slashCommand: (SlashCommandBuilder) ? (new SlashCommandBuilder()
-    .setName("image")
-    .addStringOption((option) =>
-      option.setName("prompt")
-        .setDescription("The prompt to send to the AI")
+    .setName("describe")
+    .addAttachmentOption((option) =>
+      option
+        .setName("file")
+        .setDescription("The file to upload")
         .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option
+        .setName("context")
+        .setDescription("Context for the AI to generate an image from")
+        .setRequired(false)
     )
   ) : null
 };

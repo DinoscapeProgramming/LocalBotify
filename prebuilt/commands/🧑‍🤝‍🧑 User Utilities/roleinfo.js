@@ -14,7 +14,7 @@ module.exports = {
 
   variables: {
     errorMessage: {
-      type: "text",
+      type: "textarea",
       title: "Error Response Message",
       description: "The message to send if the role is not mentioned or invalid.",
       default: "Please mention a valid role."
@@ -164,7 +164,8 @@ module.exports = {
   slashCommand: (Discord.SlashCommandBuilder) ? (
     new Discord.SlashCommandBuilder()
       .addRoleOption((option) =>
-        option.setName("role")
+        option
+          .setName("role")
           .setDescription("Select the role to view info")
           .setRequired(true)
       )

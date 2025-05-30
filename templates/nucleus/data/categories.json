@@ -51,7 +51,6 @@
   "🔧  Configuration": [
     "disable",
     "enable",
-    "permissions",
     "setlogchannel",
     "setprefix",
     "setwelcome"
@@ -60,6 +59,7 @@
     "botinfo",
     "help",
     "invite",
+    "permissions",
     "support"
   ],
   "🔍  Search": [

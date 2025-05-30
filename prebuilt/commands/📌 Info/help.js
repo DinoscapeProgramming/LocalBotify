@@ -4,7 +4,6 @@ const { EmbedBuilder, SlashCommandBuilder } = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
 const fs = require("fs");
 const categories = require("../data/categories.json");
-const { type } = require("os");
 
 module.exports = {
   description: "View all available commands",
@@ -64,15 +63,16 @@ module.exports = {
 
   slashCommand: (SlashCommandBuilder) ? (
     new SlashCommandBuilder()
-      .addStringOption((option) => option
-        .setName("command")
-        .setDescription("The command to view")
-        .addChoices(
-          ...(fs.readdirSync("./commands").map((command) => ({
-            name: command.substring(0, command.length - 3),
-            value: command.substring(0, command.length - 3)
-          })) || []).slice(0, 25)
-        )
+      .addStringOption((option) =>
+        option
+          .setName("command")
+          .setDescription("The command to view")
+          .addChoices(
+            ...(fs.readdirSync("./commands").map((command) => ({
+              name: command.substring(0, command.length - 3),
+              value: command.substring(0, command.length - 3)
+            })) || []).slice(0, 25)
+          )
       )
   ) : null
 };

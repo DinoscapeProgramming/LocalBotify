@@ -1226,6 +1226,9 @@ class LocalBotify {
               <button id="workbench-play-btn" class="workbench-action-btn" style="margin-right: 7.5px;">
                 ${(((this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/process.txt")) || "OFFLINE").trim() || "OFFLINE") === "OFFLINE") ? `<i class="fas fa-play"></i>Run` : `<i class="fas fa-stop"></i>Stop`}
               </button>
+              <button id="workbench-invite-btn" class="workbench-action-btn" style="padding: 0.5rem 0.6rem; margin-right: 7.25px;">
+                <i class="fas fa-link"></i>
+              </button>
               <button id="workbench-publish-btn" class="workbench-action-btn" style="padding: 0.5rem 0.65rem; margin-right: 7.25px;">
                 <i class="fas fa-upload"></i>
               </button>
@@ -1600,6 +1603,16 @@ class LocalBotify {
           }, 500);
         };
       });
+    });
+
+    workbenchMainView.querySelector("#workbench-invite-btn").addEventListener("click", () => {
+      if (!fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/invite.txt"), "utf8")) return;
+
+      const childProcess = require("child_process");
+
+      childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/invite.txt"), "utf8") + `"`, (process.platform === "win32") ? {
+        shell: "powershell.exe"
+      } : {});
     });
 
     workbenchMainView.querySelector("#workbench-publish-btn").addEventListener("click", () => {

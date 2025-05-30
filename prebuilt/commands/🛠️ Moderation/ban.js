@@ -57,6 +57,16 @@ module.exports = {
   slashCommand: new SlashCommandBuilder()
     .setName("ban")
     .setDescription("Ban a user")
-    .addUserOption(option => option.setName("user").setDescription("User to ban").setRequired(true))
-    .addStringOption(option => option.setName("reason").setDescription("Reason for the ban"))
+    .addUserOption((option) =>
+      option
+        .setName("user")
+        .setDescription("User to ban")
+        .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option
+        .setName("reason")
+        .setDescription("Reason for the ban")
+        .setRequired(false)
+    )
 };

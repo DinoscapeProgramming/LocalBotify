@@ -14,7 +14,7 @@ module.exports = {
 
   variables: {
     errorMessage: {
-      type: "text",
+      type: "textarea",
       title: "Error Response Message",
       description: "The message to send if the user is not mentioned or invalid.",
       default: "Please mention a valid user."
@@ -152,7 +152,8 @@ module.exports = {
   slashCommand: (Discord.SlashCommandBuilder) ? (
     new Discord.SlashCommandBuilder()
       .addUserOption((option) =>
-        option.setName("user")
+        option
+          .setName("user")
           .setDescription("Select the user to view info")
           .setRequired(true)
       )
