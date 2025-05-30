@@ -10,37 +10,40 @@ module.exports = {
   ],
 
   variables: {
-    responseMessage: {
-      title: "Uptime Response Message",
+    title: {
       type: "text",
-      properties: {
-        placeholder: "The bot has been online for {uptime}"
-      }
+      title: "Embed Title",
+      description: "The title of the embed that will be sent in response to the command.",
+      default: "⏱️  Bot Uptime"
+    },
+    description: {
+      type: "textarea",
+      title: "Embed Description",
+      description: "The message to display in the embed. Use ${days}, ${hours}, ${minutes}, and ${seconds} to show the respective values.",
+      default: "The bot has been online for ${days}d ${hours}h ${minutes}m ${seconds}s."
     }
   },
 
-  command: (variables, client, event) => {
+  command: ({
+    title,
+    description,
+    footer
+  }, client, event) => {
     const uptime = Math.floor(client.uptime / 1000);
     const days = Math.floor(uptime / 86400);
     const hours = Math.floor((uptime % 86400) / 3600);
     const minutes = Math.floor((uptime % 3600) / 60);
     const seconds = uptime % 60;
 
-    const uptimeString = `${days}d ${hours}h ${minutes}m ${seconds}s`;
-
     const embed = new Discord.EmbedBuilder()
-      .setColor("#0099ff")
-      .setTitle("Bot Uptime")
-      .setDescription(variables.responseMessage.replace("{uptime}", uptimeString));
+      .setColor(0x00bfff)
+      .setTitle(title)
+      .setDescription(description.replaceAll("${days}", days).replaceAll("${hours}", hours).replaceAll("${minutes}", minutes).replaceAll("${seconds}", seconds))
+      .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
+      .setTimestamp();
 
-    if (commandType(event) === "message") {
-      event.channel.send({ embeds: [embed] });
-    } else if (commandType(event) === "interaction") {
-      event.reply({ embeds: [embed] });
-    }
+    event.respond({ content: null, embeds: [embed] });
   },
 
-  slashCommand: new Discord.SlashCommandBuilder()
-    .setName("uptime")
-    .setDescription("Check the bot's uptime")
+  slashCommand: (Discord.SlashCommandBuilder) ? new Discord.SlashCommandBuilder() : null
 };

@@ -1649,6 +1649,8 @@ class LocalBotify {
 
     workbenchMainView.querySelectorAll(".workbench-section .setting-item").forEach((command) => {
       command.addEventListener("click", () => {
+        workbenchView.scrollTop = 0;
+
         delete require.cache[require.resolve(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js"))];
         const variables = Object.entries(require(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js")).variables);
 
@@ -1674,7 +1676,7 @@ class LocalBotify {
               ${(type === "switch") ? `
                 <label>
                   <span>${this.escapeHtml(title)}</span>
-                  <input type="checkbox"${(defaultValue) ? " checked" : ""} ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}/>
+                  <input type="checkbox"${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue) ? " checked" : ""} ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}/>
                 </label>
                 ${
                   (description) ? `
@@ -1694,7 +1696,7 @@ class LocalBotify {
                     ` : ""
                   }
                   ${(type === "textarea") ? `
-                    <textarea style="height: 230px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}</textarea>
+                    <textarea style="height: 130px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}</textarea>
                   ` : ((type === "select") ? `
                     <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                       ${Object.entries(options).map(([optionId, optionName]) => `
@@ -1702,7 +1704,7 @@ class LocalBotify {
                       `)}
                     </select>
                   ` : `
-                    <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                    <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                   `)}
                 </label>
               `}
@@ -1739,6 +1741,8 @@ class LocalBotify {
           } else {
             command.innerHTML = (this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().replace(/[^a-zA-Z]+$/, "")) + ((workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/))}</code>` : ""));
           };
+
+          workbenchEditorView.querySelector(".command-header span").textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim().trim().replace(/[^A-Za-z]/g, "");
         });
 
         workbenchEditorView.querySelector(".command-header span").addEventListener("keydown", (e) => {
@@ -1767,6 +1771,8 @@ class LocalBotify {
           } else {
             command.innerHTML = (this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().replace(/[^a-zA-Z]+$/, "")) + ((workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/))}</code>` : ""));
           };
+
+          workbenchEditorView.querySelector(".command-header span").textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim().trim().replace(/[^A-Za-z]/g, "");
         });
 
         workbenchEditorView.querySelectorAll(".command-header button").forEach((button) => {
@@ -2480,6 +2486,8 @@ class LocalBotify {
 
       workbenchMainView.querySelectorAll(".workbench-section .setting-item").forEach((command) => {
         command.addEventListener("click", () => {
+          workbenchView.scrollTop = 0;
+
           delete require.cache[require.resolve(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js"))];
           const variables = Object.entries(require(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js")).variables);
 
@@ -2505,7 +2513,7 @@ class LocalBotify {
                 ${(type === "switch") ? `
                   <label>
                     <span>${this.escapeHtml(title)}</span>
-                    <input type="checkbox"${(defaultValue) ? " checked" : ""} ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}/>
+                    <input type="checkbox"${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue) ? " checked" : ""} ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}/>
                   </label>
                   ${
                     (description) ? `
@@ -2525,7 +2533,7 @@ class LocalBotify {
                       ` : ""
                     }
                     ${(type === "textarea") ? `
-                      <textarea style="height: 230px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}</textarea>
+                      <textarea style="height: 130px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}</textarea>
                     ` : ((type === "select") ? `
                       <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                         ${Object.entries(options).map(([optionId, optionName]) => `
@@ -2533,7 +2541,7 @@ class LocalBotify {
                         `)}
                       </select>
                     ` : `
-                      <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                      <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                     `)}
                   </label>
                 `}
@@ -2570,6 +2578,8 @@ class LocalBotify {
             } else {
               command.innerHTML = (this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().replace(/[^a-zA-Z]+$/, "")) + ((workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/))}</code>` : ""));
             };
+
+            workbenchEditorView.querySelector(".command-header span").textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim().trim().replace(/[^A-Za-z]/g, "");
           });
 
           workbenchEditorView.querySelector(".command-header span").addEventListener("keydown", (e) => {
@@ -2598,6 +2608,8 @@ class LocalBotify {
             } else {
               command.innerHTML = (this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().replace(/[^a-zA-Z]+$/, "")) + ((workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/))}</code>` : ""));
             };
+
+            workbenchEditorView.querySelector(".command-header span").textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim().trim().replace(/[^A-Za-z]/g, "");
           });
 
           workbenchEditorView.querySelectorAll(".command-header button").forEach((button) => {
@@ -4115,6 +4127,8 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
       workbenchMainView.querySelectorAll(".workbench-section .setting-item").forEach((command) => {
         command.addEventListener("click", () => {
+          workbenchView.scrollTop = 0;
+
           delete require.cache[require.resolve(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js"))];
           const variables = Object.entries(require(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, command.textContent.trim() + ".js")).variables);
 
@@ -4140,7 +4154,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                 ${(type === "switch") ? `
                   <label>
                     <span>${this.escapeHtml(title)}</span>
-                    <input type="checkbox"${(defaultValue) ? " checked" : ""} ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}/>
+                    <input type="checkbox"${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue) ? " checked" : ""} ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}/>
                   </label>
                   ${
                     (description) ? `
@@ -4160,7 +4174,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                       ` : ""
                     }
                     ${(type === "textarea") ? `
-                      <textarea style="height: 230px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}</textarea>
+                      <textarea style="height: 130px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}</textarea>
                     ` : ((type === "select") ? `
                       <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                         ${Object.entries(options).map(([optionId, optionName]) => `
@@ -4168,7 +4182,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                         `)}
                       </select>
                     ` : `
-                      <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] || defaultValue || ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                      <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                     `)}
                   </label>
                 `}
@@ -4205,6 +4219,8 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
             } else {
               command.innerHTML = (this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().replace(/[^a-zA-Z]+$/, "")) + ((workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/))}</code>` : ""));
             };
+
+            workbenchEditorView.querySelector(".command-header span").textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim().trim().replace(/[^A-Za-z]/g, "");
           });
 
           workbenchEditorView.querySelector(".command-header span").addEventListener("keydown", (e) => {
@@ -4233,6 +4249,8 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
             } else {
               command.innerHTML = (this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().replace(/[^a-zA-Z]+$/, "")) + ((workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/)) ? `<code style="background: #242323b0; font-family: monospace; padding: 0.2rem 0.4rem; margin-left: 7.5px; border-radius: var(--radius-sm); position: fixed; height: 23.25px;">${this.escapeHtml(workbenchEditorView.querySelector(".command-header span").textContent.trim().match(/[^a-zA-Z]+$/))}</code>` : ""));
             };
+
+            workbenchEditorView.querySelector(".command-header span").textContent = workbenchEditorView.querySelector(".command-header span").textContent.trim().trim().replace(/[^A-Za-z]/g, "");
           });
 
           workbenchEditorView.querySelectorAll(".command-header button").forEach((button) => {

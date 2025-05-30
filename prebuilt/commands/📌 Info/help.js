@@ -4,6 +4,7 @@ const { EmbedBuilder, SlashCommandBuilder } = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
 const fs = require("fs");
 const categories = require("../data/categories.json");
+const { type } = require("os");
 
 module.exports = {
   description: "View all available commands",
@@ -17,22 +18,29 @@ module.exports = {
   ],
 
   variables: {
-    header: {
+    title: {
       type: "text",
-      title: "Header",
-      description: "The header of the response embed",
+      title: "Embed Title",
+      description: "The title of the response embed",
       default: "📖  Help Menu${command}"
+    },
+    description: {
+      type: "textarea",
+      title: "Embed Description",
+      description: "The description of the response embed",
+      default: "Here are all available commands, grouped by category:"
     }
   },
 
   command: async ({
-    header,
+    title,
+    description,
     footer
   }, client, event) => {
     const embed = new EmbedBuilder()
       .setColor(0x00bfff)
-      .setTitle((header || "📖  Help Menu${command}").replaceAll("${command}", (fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? `: ${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}` : ""))
-      .setDescription((!fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? "Here are all available commands, grouped by category:" : require(`../commands/${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`).description)
+      .setTitle(title.replaceAll("${command}", (fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? `: ${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}` : ""))
+      .setDescription((!fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? description : require(`../commands/${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`).description)
       .setThumbnail(client.user.displayAvatarURL({ extension: "png" }))
       .addFields(
         ...(!fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? [
@@ -54,17 +62,17 @@ module.exports = {
     event.respond({ content: null, embeds: [embed] });
   },
 
-  slashCommand: (SlashCommandBuilder) ? (new SlashCommandBuilder()
-    .setName("help")
-    .addStringOption((option) => option
-      .setName("command")
-      .setDescription("The command to view")
-      .addChoices(
-        ...(fs.readdirSync("./commands").map((command) => ({
-          name: command.substring(0, command.length - 3),
-          value: command.substring(0, command.length - 3)
-        })) || []).slice(0, 25)
+  slashCommand: (SlashCommandBuilder) ? (
+    new SlashCommandBuilder()
+      .addStringOption((option) => option
+        .setName("command")
+        .setDescription("The command to view")
+        .addChoices(
+          ...(fs.readdirSync("./commands").map((command) => ({
+            name: command.substring(0, command.length - 3),
+            value: command.substring(0, command.length - 3)
+          })) || []).slice(0, 25)
+        )
       )
-    )
   ) : null
 };
