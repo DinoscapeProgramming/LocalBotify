@@ -108,7 +108,7 @@ sneeze`
     embedTitle: {
       type: "text",
       title: "Embed Title",
-      default: "🎯 Hangman Game"
+      default: "🎯  Hangman Game"
     },
     startMessage: {
       type: "textarea",

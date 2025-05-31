@@ -2,7 +2,7 @@ if (!global.requireCore) (global.requireCore = () => ({}));
 
 const Discord = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
-const he = require("he");
+const he = requireCore("he");
 
 module.exports = {
   description: "Answer a random trivia question!",

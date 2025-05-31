@@ -48,13 +48,13 @@ module.exports = {
     const guesses = [];
     const maxGuesses = 6;
 
-    const filter = m => 
+    const filter = (m) => 
       m.author.id === ((commandType(event) === "message") ? event.author.id : event.user.id) &&
       m.content.length === 5 && /^[a-zA-Z]+$/.test(m.content);
 
     const embed = new Discord.EmbedBuilder()
       .setColor(color)
-      .setTitle("🟩 Wordle")
+      .setTitle("🟩  Wordle")
       .setDescription(startMessage)
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
       .setTimestamp();

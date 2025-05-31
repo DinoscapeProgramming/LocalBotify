@@ -41,7 +41,7 @@ module.exports = {
       type: "text",
       title: "Embed Title",
       description: "Title used for all embeds.",
-      default: "Guess the Number"
+      default: "🔢  Guess the Number"
     },
     startMessage: {
       type: "textarea",
@@ -135,11 +135,10 @@ module.exports = {
 
     await sendEmbed(startMessage.replace("{min}", min).replace("{max}", max));
 
-    const filter = m => {
-      const authorId = (commandType(event) === "message") ? event.author.id : event.user.id;
-      // Ignore the original command message itself
+    const filter = (m) => {
       if (m.id === event.id) return false;
-      return m.author.id === authorId && !m.author.bot;
+
+      return !m.author.bot;
     };
 
     const channel = (commandType(event) === "message") ? event.channel : event.channel;
