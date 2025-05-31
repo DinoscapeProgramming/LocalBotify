@@ -124,7 +124,11 @@ client.on("messageCreate", (message) => {
     delete require.cache[require.resolve(`./commands/${commandName}.js`)];
     const commandFile = require(`./commands/${commandName}.js`);
 
-    message.respond = (...args) => message.channel.send(...args);
+    message.respond = (...args) => {
+      try {
+        return message.channel.send(...args);
+      } catch {};
+    };
 
     commandFile.command({
       ...{
@@ -159,7 +163,11 @@ client.on("interactionCreate", (interaction) => {
     delete require.cache[require.resolve(`./commands/${commandName}.js`)];
     const commandFile = require(`./commands/${commandName}.js`);
     
-    interaction.respond = (...args) => interaction.reply(...args);
+    interaction.respond = (...args) => {
+      try {
+        return interaction.reply(...args);
+      } catch {};
+    };
 
     commandFile.command({
       ...{

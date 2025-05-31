@@ -92,15 +92,15 @@ module.exports = {
       .addFields(
         { name: questionName, value: questionValue.replaceAll("${question}", question), inline },
         { name: answerName, value: answerValue.replaceAll("${answer}", response), inline }
-      );
+      )
+      .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
+      .setTimestamp()
 
     event.respond({ content, embeds: [embed] });
   },
 
   slashCommand: (Discord.SlashCommandBuilder) ? (
     new Discord.SlashCommandBuilder()
-      .setName("8ball")
-      .setDescription("Ask the magic 8-ball a yes/no question.")
       .addStringOption((option) =>
         option.setName("question")
           .setDescription("Your yes/no question")

@@ -1,0 +1,143 @@
+if (!global.requireCore) (global.requireCore = () => ({}));
+
+const Discord = requireCore("discord.js");
+const { commandType } = requireCore("localbotify");
+const he = require("he");
+
+module.exports = {
+  description: "Answer a random trivia question!",
+
+  permissions: [
+    "SEND_MESSAGES",
+    "EMBED_LINKS"
+  ],
+
+  variables: {
+    content: {
+      type: "textarea",
+      title: "Content Above Embed",
+      description: "Text to show above the embed message.",
+      default: ""
+    },
+    title: {
+      type: "text",
+      title: "Embed Title",
+      description: "The title of the trivia embed.",
+      default: "🧠 Trivia Time!"
+    },
+    embedColor: {
+      type: "color",
+      title: "Embed Color",
+      description: "The color of the embed. Use a hex color code.",
+      default: "#3498db"
+    },
+    category: {
+      type: "text",
+      title: "Trivia Category (optional)",
+      description: "Leave blank for any. Examples: 18 (CS), 9 (General Knowledge)",
+      default: ""
+    },
+    difficulty: {
+      type: "text",
+      title: "Difficulty",
+      description: "Leave blank for any. Options: easy, medium, hard.",
+      default: ""
+    },
+    correctMsg: {
+      type: "textarea",
+      title: "Correct Answer Message",
+      description: "Message shown when the user answers correctly. Use {answer} to show the correct answer.",
+      default: "✅ Correct! You're smart!"
+    },
+    wrongMsg: {
+      type: "textarea",
+      title: "Wrong Answer Message",
+      description: "Message shown when the user answers incorrectly. Use {answer} to show the correct answer.",
+      default: "❌ Wrong! The correct answer was **{answer}**."
+    },
+    timeoutMsg: {
+      type: "textarea",
+      title: "Timeout Message",
+      description: "Message shown when the time runs out. Use {answer} to show the correct answer.",
+      default: "⏱️ Time's up! The answer was **{answer}**."
+    },
+    secondsToAnswer: {
+      type: "number",
+      title: "Seconds to Answer",
+      description: "How long the user has to answer the question (in seconds).",
+      default: 20
+    }
+  },
+
+  command: async ({
+    content, title, footer, embedColor, category, difficulty,
+    correctMsg, wrongMsg, timeoutMsg, secondsToAnswer
+  }, client, event) => {
+    const url = new URL("https://opentdb.com/api.php");
+    url.searchParams.set("amount", "1");
+    if (category) url.searchParams.set("category", category);
+    if (difficulty) url.searchParams.set("difficulty", difficulty);
+    url.searchParams.set("type", "multiple");
+
+    try {
+      const res = await fetch(url.toString());
+      const json = await res.json();
+
+      if (!json.results || !json.results[0]) return event.respond("❌ No trivia question found.");
+
+      const q = json.results[0];
+      const question = he.decode(q.question);
+      const correct = he.decode(q.correct_answer);
+      const choices = q.incorrect_answers.map(ans => he.decode(ans));
+      choices.push(correct);
+      choices.sort(() => Math.random() - 0.5);
+
+      const buttons = new Discord.ActionRowBuilder().addComponents(
+        choices.map((choice, i) =>
+          new Discord.ButtonBuilder()
+            .setCustomId(`trivia_${i}`)
+            .setLabel(choice)
+            .setStyle(Discord.ButtonStyle.Primary)
+        )
+      );
+
+      const msg = await event.respond({
+        content,
+        embeds: [
+          new Discord.EmbedBuilder()
+            .setColor(embedColor)
+            .setTitle(title)
+            .setDescription(`**${question}**`)
+            .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
+            .setTimestamp()
+        ],
+        components: [buttons]
+      });
+
+      const filter = i => {
+        const userId = (commandType(event) === "message") ? event.author.id : event.user.id;
+        return i.user.id === userId;
+      };
+
+      const interaction = await msg.awaitMessageComponent({
+        filter,
+        time: secondsToAnswer * 1000
+      });
+
+      const selected = interaction.component.label;
+      const responseText = (selected === correct)
+        ? correctMsg
+        : wrongMsg.replace("{answer}", correct);
+
+      await interaction.update({
+        content: responseText,
+        embeds: [],
+        components: []
+      });
+    } catch {
+      await event.respond(timeoutMsg.replace("{answer}", "unknown"));
+    };
+  },
+
+  slashCommand: (Discord.SlashCommandBuilder) ? new Discord.SlashCommandBuilder() : null
+};
