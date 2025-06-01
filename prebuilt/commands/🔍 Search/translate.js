@@ -12,31 +12,37 @@ module.exports = {
     content: {
       type: "textarea",
       title: "Content Above Embed",
+      description: "Text to show above the embed message.",
       default: ""
     },
     title: {
       type: "text",
       title: "Embed Title",
+      description: "The title of the embed that shows the translation.",
       default: "🌍  Translation"
     },
     description: {
       type: "textarea",
       title: "Embed Description",
+      description: "Description of the embed. Use `{language}` for the language code and `{result}` for the translated text.",
       default: "**Translated to \`{language}\`:**\n{result}"
     },
     embedColor: {
       type: "color",
       title: "Embed Color",
+      description: "The color of the embed. Use a hex color code.",
       default: "#2ecc71"
     },
     errorMessage: {
       type: "textarea",
       title: "Invalid Language Error",
+      description: "Message to send if the language code is invalid or translation fails.",
       default: "❌ Invalid language code. Please use a supported locale like `en`, `es`, `fr`, etc."
     },
     missingArgs: {
       type: "textarea",
       title: "Missing Arguments Error",
+      description: "Message to send if the user doesn't provide a language code or text to translate.",
       default: "❗ Please provide a language code and some text to translate.\nExample: `/translate en Hola mundo`"
     }
   },

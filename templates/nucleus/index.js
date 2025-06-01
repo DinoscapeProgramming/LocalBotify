@@ -7,9 +7,10 @@ requireCore("@teeny-tiny/dotenv").config();
 const updateStatus = require("./trackers/status.js");
 const updateStatistics = require("./trackers/statistics.js");
 const fs = require("fs");
-const path = require("path");
 const { REST, Routes, Client, GatewayIntentBits, PresenceUpdateStatus, ActivityType } = requireCore("discord.js");
 const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
+const SyncStore = requireCore("syncstore.json");
+const db = new SyncStore("./store.json");
 const PERMISSIONS = require("./data/permissions.json");
 let config = JSON.parse(fs.readFileSync("./config.json", "utf8") || "{}");
 
@@ -115,10 +116,10 @@ ${lines.map(center).join('\n')}
 
 client.on("messageCreate", (message) => {
   config = JSON.parse(fs.readFileSync("./config.json", "utf8") || "{}");
-  if (message.author.bot || !message.content.startsWith(config.prefix)) return;
+  if (message.author.bot || !message.content.startsWith(db[message.guild.id]?.prefix || config.prefix)) return;
 
   let command = message.content.toLowerCase();
-  let commandName = command.substring(config.prefix.length).split(" ")[0];
+  let commandName = command.substring((db[message.guild.id]?.prefix || config.prefix).length).split(" ")[0];
 
   if (fs.readdirSync("./commands").includes(`${commandName}.js`)) {
     delete require.cache[require.resolve(`./commands/${commandName}.js`)];
@@ -130,6 +131,9 @@ client.on("messageCreate", (message) => {
       } catch {};
     };
 
+    if (!db[message.guild.id]) (db[message.guild.id] = {});
+    message.store = db[message.guild.id];
+
     commandFile.command({
       ...{
         footer: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression))
@@ -139,6 +143,8 @@ client.on("messageCreate", (message) => {
         config?.variables?.commands?.[commandName]?.[variableName] ?? defaultValue
       ]))
     }, client, message);
+
+    if ((db[message.guild.id].constructor === Object) && !Object.keys(db[message.guild.id]).length) delete db[message.guild.id];
 
     fs.writeFileSync("./channels/messages.txt", (Number(fs.readFileSync("./channels/messages.txt", "utf8") || "0") + 1).toString(), "utf8");
 
@@ -169,6 +175,9 @@ client.on("interactionCreate", (interaction) => {
       } catch {};
     };
 
+    if (!db[interaction.guild.id]) (db[interaction.guild.id] = {});
+    interaction.store = db[interaction.guild.id];
+
     commandFile.command({
       ...{
         footer: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression))
@@ -178,6 +187,8 @@ client.on("interactionCreate", (interaction) => {
         config?.variables?.commands?.[commandName]?.[variableName] ?? defaultValue
       ]))
     }, client, interaction);
+
+    if ((db[message.guild.id].constructor === Object) && !Object.keys(db[message.guild.id]).length) delete db[message.guild.id];
 
     fs.writeFileSync("./channels/messages.txt", (Number(fs.readFileSync("./channels/messages.txt", "utf8") || "0") + 1).toString(), "utf8");
 

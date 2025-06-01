@@ -28,7 +28,10 @@
     "pantry.js": "^1.0.7",
     "shiki": "^3.3.0",
     "socket.io": "^4.8.1",
-    "unzipper": "^0.12.3"
+    "syncstore.json": "^1.0.5",
+    "unzipper": "^0.12.3",
+    "yahoo-finance2": "^2.12.4",
+    "youtube-search-api": "^1.2.2"
   },
   "devDependencies": {
     "@electron/rebuild": "^3.7.1",
