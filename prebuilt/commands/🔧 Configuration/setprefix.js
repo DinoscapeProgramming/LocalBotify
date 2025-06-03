@@ -41,6 +41,8 @@ module.exports = {
 
     if (((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("prefix")) !== JSON.parse(fs.readFileSync("./config.json", "utf8") || "{}").prefix) {
       event.store.prefix = (commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("prefix");
+    } else {
+      delete event.store.prefix;
     };
 
     const embed = new EmbedBuilder()

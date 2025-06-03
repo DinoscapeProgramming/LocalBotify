@@ -188,7 +188,7 @@ client.on("interactionCreate", (interaction) => {
       ]))
     }, client, interaction);
 
-    if ((db[message.guild.id].constructor === Object) && !Object.keys(db[message.guild.id]).length) delete db[message.guild.id];
+    if ((db[interaction.guild.id].constructor === Object) && !Object.keys(db[interaction.guild.id]).length) delete db[interaction.guild.id];
 
     fs.writeFileSync("./channels/messages.txt", (Number(fs.readFileSync("./channels/messages.txt", "utf8") || "0") + 1).toString(), "utf8");
 
