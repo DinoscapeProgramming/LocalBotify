@@ -1,6 +1,6 @@
 if (!global.requireCore) (global.requireCore = () => ({}));
 
-const Discord = requireCore("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, SlashCommandBuilder } = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
 
 const emojis = {
@@ -19,11 +19,11 @@ module.exports = {
   ],
 
   variables: {
-    timeoutSeconds: {
-      type: "number",
-      title: "Timeout (seconds)",
-      description: "How many seconds to wait for both players to pick",
-      default: 30
+    content: {
+      type: "text",
+      title: "Content",
+      description: "Regular message above the embed.",
+      default: ""
     },
 
     embedTitleStart: {
@@ -59,6 +59,13 @@ module.exports = {
       title: "Result Text - Win",
       description: "Text shown when a player wins. Use {winner}, {winnerChoice}, {winnerEmoji}, {loserChoice}, and {loserEmoji} as placeholders",
       default: "{winner} wins! **{winnerChoice}** {winnerEmoji} beats **{loserChoice}** {loserEmoji}"
+    },
+
+    timeoutSeconds: {
+      type: "number",
+      title: "Timeout (seconds)",
+      description: "How many seconds to wait for both players to pick",
+      default: 30
     },
 
     errorNotMentioned: {
@@ -125,11 +132,24 @@ module.exports = {
     }
   },
 
-  command: async (variables, client, event) => {
-    const { timeoutSeconds, embedTitleStart, embedDescriptionStart, embedTitleResult, resultTieText, resultWinText,
-      errorNotMentioned, errorSelfChallenge, errorAlreadyPicked, errorTimeout, errorMissingPick, footer,
-      buttonRockLabel, buttonPaperLabel, buttonScissorsLabel } = variables;
-
+  command: async ({
+    content,
+    embedTitleStart,
+    embedDescriptionStart,
+    embedTitleResult,
+    resultTieText,
+    resultWinText,
+    timeoutSeconds,
+    errorNotMentioned,
+    errorSelfChallenge,
+    errorAlreadyPicked,
+    errorTimeout,
+    errorMissingPick,
+    footer,
+    buttonRockLabel,
+    buttonPaperLabel,
+    buttonScissorsLabel
+  }, client, event) => {
     let challenger, challenged;
     if (commandType(event) === "message") {
       challenger = event.author;
@@ -143,34 +163,35 @@ module.exports = {
     if (challenged.id === challenger.id) return event.respond(errorSelfChallenge);
 
     const startDescription = embedDescriptionStart
-      .replace("{player1}", `<@${challenger.id}>`)
-      .replace("{player2}", `<@${challenged.id}>`);
+      .replaceAll("{player1}", `<@${challenger.id}>`)
+      .replaceAll("{player2}", `<@${challenged.id}>`);
 
-    const buttons = new Discord.ActionRowBuilder().addComponents(
-      new Discord.ButtonBuilder()
+    const buttons = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
         .setCustomId("rps_rock")
         .setLabel(buttonRockLabel)
-        .setStyle(Discord.ButtonStyle.Primary)
+        .setStyle(ButtonStyle.Primary)
         .setEmoji(emojis.rock),
-      new Discord.ButtonBuilder()
+      new ButtonBuilder()
         .setCustomId("rps_paper")
         .setLabel(buttonPaperLabel)
-        .setStyle(Discord.ButtonStyle.Primary)
+        .setStyle(ButtonStyle.Primary)
         .setEmoji(emojis.paper),
-      new Discord.ButtonBuilder()
+      new ButtonBuilder()
         .setCustomId("rps_scissors")
         .setLabel(buttonScissorsLabel)
-        .setStyle(Discord.ButtonStyle.Primary)
+        .setStyle(ButtonStyle.Primary)
         .setEmoji(emojis.scissors)
     );
 
-    const challengeEmbed = new Discord.EmbedBuilder()
+    const challengeEmbed = new EmbedBuilder()
       .setTitle(embedTitleStart)
       .setDescription(startDescription)
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? challenger : challenger).displayAvatarURL() })
       .setTimestamp();
 
     const challengeMessage = await event.respond({
+      content,
       embeds: [challengeEmbed],
       components: [buttons],
       fetchReply: true
@@ -254,18 +275,18 @@ module.exports = {
 
       await challengeMessage.edit({ components: [] });
 
-      const resultEmbed = new Discord.EmbedBuilder()
+      const resultEmbed = new EmbedBuilder()
         .setTitle(embedTitleResult)
         .setDescription(resultText)
         .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? challenger : challenger).displayAvatarURL() })
         .setTimestamp();
 
-      event.respond({ embeds: [resultEmbed] });
+      event.respond({ content, embeds: [resultEmbed] });
     });
   },
 
-  slashCommand: (Discord.SlashCommandBuilder) ? (
-    new Discord.SlashCommandBuilder()
+  slashCommand: (SlashCommandBuilder) ? (
+    new SlashCommandBuilder()
       .addUserOption((option) =>
         option
           .setName("user")

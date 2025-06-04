@@ -1,6 +1,6 @@
 if (!global.requireCore) (global.requireCore = () => ({}));
 
-const Discord = requireCore("discord.js");
+const { EmbedBuilder, SlashCommandBuilder } = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
 
 module.exports = {
@@ -12,30 +12,27 @@ module.exports = {
   ],
 
   variables: {
-    title: {
-      type: "text",
-      title: "Embed Title",
-      description: "Title of the embed message.",
-      default: "📊  Rating"
-    },
-    format: {
-      type: "text",
-      title: "Rating Format",
-      description: "Use {item} for what is being rated and {score} for the number.",
-      default: "I'd rate **{item}** a **{score}/10**!"
-    },
     content: {
       type: "textarea",
       title: "Content",
       description: "Regular message above the embed.",
       default: ""
     },
-    color: {
-      type: "color",
-      title: "Embed Color",
-      description: "Color of the embed.",
-      default: "#ffcc00"
+
+    title: {
+      type: "text",
+      title: "Embed Title",
+      description: "Title of the embed message.",
+      default: "📊  Rating"
     },
+
+    description: {
+      type: "text",
+      title: "Embed Description",
+      description: "Description of the embed message. Use {item} for what is being rated and {score} for the number.",
+      default: "I'd rate **{item}** a **{score}/10**!"
+    },
+
     missingInput: {
       type: "text",
       title: "Missing Input Message",
@@ -45,12 +42,11 @@ module.exports = {
   },
 
   command: async ({
-    title,
-    format,
     content,
-    color,
+    title,
+    description,
+    footer,
     missingInput,
-    footer
   }, client, event) => {
     try {
       const args = (event.content?.split(" ").slice(1).join(" ") || "").trim();
@@ -58,18 +54,12 @@ module.exports = {
       if (!args) return event.respond(missingInput);
 
       const score = Math.floor(Math.random() * 10) + 1;
-      const description = format
-        .replace("{item}", args)
-        .replace("{score}", score.toString());
 
-      const embed = new Discord.EmbedBuilder()
+      const embed = new EmbedBuilder()
+        .setColor(0x00bfff)
         .setTitle(title)
-        .setDescription(description)
-        .setColor(color)
-        .setFooter({
-          text: footer,
-          iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL()
-        })
+        .setDescription(description.replaceAll("{item}", args).replaceAll("{score}", score.toString()))
+        .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
         .setTimestamp();
 
       event.respond({ content, embeds: [embed] });
@@ -78,12 +68,10 @@ module.exports = {
     }
   },
 
-  slashCommand: (Discord.SlashCommandBuilder)
-    ? new Discord.SlashCommandBuilder()
-        .setName("rate")
-        .setDescription("Rates what you give it")
-        .addStringOption(opt =>
-          opt.setName("thing")
+  slashCommand: (SlashCommandBuilder)
+    ? new SlashCommandBuilder()
+        .addStringOption((option) =>
+          option.setName("thing")
             .setDescription("What should I rate?")
             .setRequired(true)
         )

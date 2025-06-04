@@ -4,7 +4,7 @@ const { EmbedBuilder, SlashCommandBuilder } = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
 
 module.exports = {
-  description: "Check the bot's response time",
+  description: "Check the bot's response time.",
 
   permissions: [
     "SEND_MESSAGES",
@@ -15,36 +15,55 @@ module.exports = {
   ],
 
   variables: {
+    content: {
+      type: "textarea",
+      title: "Content",
+      description: "The regular text content above the embed.",
+      default: ""
+    },
+
     title: {
       type: "text",
       title: "Embed Title",
       description: "The title of the response embed",
       default: "🏓  Pong!"
     },
+
+    description: {
+      type: "textarea",
+      title: "Embed Description",
+      description: "Description of the embed.",
+      default: ""
+    },
+
     inline: {
       type: "switch",
       title: "Inline Fields",
       description: "Whether the fields in the embed should be displayed inline.",
       default: true
     },
+
     botLatencyName: {
       type: "text",
       title: "Bot Latency Field",
       description: "The name of the field that will display the bot's latency.",
       default: "🤖  Bot Latency"
     },
+
     botLatencyValue: {
       type: "text",
       title: "Bot Latency Value",
       description: "The value of the field that will display the bot's latency.",
       default: "${botLatency}ms"
     },
+
     apiLatencyName: {
       type: "text",
       title: "API Latency Field",
       description: "The name of the field that will display the API latency.",
       default: "🌐  API Latency"
     },
+
     apiLatencyValue: {
       type: "text",
       title: "API Latency Value",
@@ -54,7 +73,9 @@ module.exports = {
   },
 
   command: async ({
+    content,
     title,
+    description,
     inline,
     botLatencyName,
     botLatencyValue,
@@ -74,6 +95,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor(0x00bfff)
       .setTitle(title)
+      .setDescription(description)
       .addFields(
         {
           name: botLatencyName,
@@ -89,7 +111,7 @@ module.exports = {
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
       .setTimestamp();
 
-    await sent.edit({ content: null, embeds: [embed] });
+    await sent.edit({ content, embeds: [embed] });
   },
 
   slashCommand: (SlashCommandBuilder) ? new SlashCommandBuilder() : null

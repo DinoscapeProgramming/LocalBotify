@@ -1,6 +1,6 @@
 if (!global.requireCore) (global.requireCore = () => ({}));
 
-const Discord = requireCore("discord.js");
+const { EmbedBuilder, SlashCommandBuilder } = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
 
 module.exports = {
@@ -12,38 +12,41 @@ module.exports = {
   ],
 
   variables: {
-    errorMessage: {
-      type: "textarea",
-      title: "Error Message",
-      description: "Message to send if no dog image is found.",
-      default: "❌ Failed to fetch a dog. Please try again later!"
-    },
     content: {
       type: "textarea",
       title: "Content",
       description: "Text to show above the embed.",
       default: ""
     },
+
     title: {
       type: "text",
       title: "Embed Title",
       description: "Title of the embed.",
       default: "🐶  Woof!"
     },
-    color: {
-      type: "color",
-      title: "Embed Color",
-      description: "Color of the embed.",
-      default: "#ffa500"
+
+    description: {
+      type: "textarea",
+      title: "Embed Description",
+      description: "Description of the embed.",
+      default: ""
+    },
+
+    errorMessage: {
+      type: "textarea",
+      title: "Error Message",
+      description: "Message to send if no dog image is found.",
+      default: "❌ Failed to fetch a dog. Please try again later!"
     }
   },
 
   command: async ({
-    errorMessage,
     content,
     title,
-    color,
-    footer
+    description,
+    footer,
+    errorMessage
   }, client, event) => {
     try {
       const res = await fetch("https://api.some-random-api.com/img/dog");
@@ -51,10 +54,11 @@ module.exports = {
 
       if (!data?.link) return event.respond(errorMessage);
 
-      const embed = new Discord.EmbedBuilder()
+      const embed = new EmbedBuilder()
+        .setColor(0x00bfff)
         .setTitle(title)
+        .setDescription(description)
         .setImage(data.link)
-        .setColor(color)
         .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
         .setTimestamp();
 
@@ -64,5 +68,5 @@ module.exports = {
     }
   },
 
-  slashCommand: (Discord.SlashCommandBuilder) ? new Discord.SlashCommandBuilder() : null
+  slashCommand: (SlashCommandBuilder) ? new SlashCommandBuilder() : null
 };

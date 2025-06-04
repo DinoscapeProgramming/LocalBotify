@@ -12,6 +12,7 @@
     "warn",
     "warnings"
   ],
+
   "🧑‍🤝‍🧑  User Utilities" : [
     "avatar",
     "ping",
@@ -21,6 +22,7 @@
     "uptime",
     "userinfo"
   ],
+
   "🎉  Fun": [
     "8ball",
     "cat",
@@ -31,6 +33,7 @@
     "rate",
     "roll"
   ],
+
   "📈  Levels & Economy": [
     "balance",
     "bot",
@@ -41,6 +44,7 @@
     "shop",
     "work"
   ],
+
   "🎮  Games" : [
     "guessnumber",
     "hangman",
@@ -49,6 +53,7 @@
     "trivia",
     "wordle"
   ],
+
   "🔧  Configuration": [
     "disable",
     "enable",
@@ -56,6 +61,7 @@
     "setprefix",
     "setwelcome"
   ],
+
   "📌  Info": [
     "botinfo",
     "help",
@@ -63,6 +69,7 @@
     "permissions",
     "support"
   ],
+
   "🔍  Search": [
     "anime",
     "definition",
@@ -72,6 +79,7 @@
     "wiki",
     "youtube"
   ],
+
   "🪄  AI": [
     "chat",
     "image",

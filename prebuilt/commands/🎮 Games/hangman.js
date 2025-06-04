@@ -1,6 +1,6 @@
 if (!global.requireCore) (global.requireCore = () => ({}));
 
-const Discord = requireCore("discord.js");
+const { EmbedBuilder, SlashCommandBuilder } = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
 
 module.exports = {
@@ -13,6 +13,20 @@ module.exports = {
   ],
 
   variables: {
+    content: {
+      type: "text",
+      title: "Content",
+      description: "Regular message above the embed.",
+      default: ""
+    },
+
+    title: {
+      type: "text",
+      title: "Embed Title",
+      description: "Title of the embed message.",
+      default: "🎯  Hangman Game"
+    },
+
     words: {
       type: "textarea",
       title: "Word List",
@@ -99,70 +113,75 @@ cookie
 orbit
 sneeze`
     },
+
     maxGuesses: {
       type: "number",
       title: "Maximum Incorrect Guesses",
       description: "How many wrong guesses are allowed before game over.",
       default: 11
     },
-    embedTitle: {
-      type: "text",
-      title: "Embed Title",
-      default: "🎯  Hangman Game"
-    },
+
     startMessage: {
       type: "textarea",
       title: "Start Message",
       default: "I've picked a word. Guess one letter at a time!"
     },
+
     winMessage: {
       type: "textarea",
       title: "Win Message",
       default: "🎉 You guessed the word **{word}** in **{attempts}** guesses!"
     },
+
     loseMessage: {
       type: "textarea",
       title: "Lose Message",
       default: "💀 You lost! The word was **{word}**."
     },
+
     invalidInput: {
       type: "textarea",
       title: "Invalid Input Message",
       default: "❌ Please guess a single, unused letter (A-Z)."
     },
+
     alreadyGuessed: {
       type: "textarea",
       title: "Already Guessed Message",
       default: "⚠️ You've already guessed **{letter}**."
     },
+
     timeoutMessage: {
       type: "textarea",
       title: "Timeout Message",
       default: "⏱️ Game timed out! The word was **{word}**."
     },
-    embedColor: {
-      type: "color",
-      title: "Embed Color",
-      default: "#ff6600"
-    },
-    footer: {
-      type: "text",
-      title: "Embed Footer",
-      default: "Hangman | LocalBotify"
-    },
+
     timeoutSeconds: {
       type: "number",
       title: "Timeout Seconds",
       default: 60
+    },
+
+    footer: {
+      type: "text",
+      title: "Embed Footer",
+      default: "Hangman | LocalBotify"
     }
   },
 
-  command: async (vars, client, event) => {
-    const {
-      words, maxGuesses, embedTitle, startMessage, winMessage, loseMessage,
-      invalidInput, alreadyGuessed, timeoutMessage, embedColor, footer, timeoutSeconds
-    } = vars;
-
+  command: async ({
+    title,
+    words,
+    maxGuesses,
+    startMessage,
+    winMessage,
+    loseMessage,
+    alreadyGuessed,
+    timeoutMessage,
+    timeoutSeconds,
+    footer,
+  }, client, event) => {
     const wordList = words
       .split(/\r?\n/)
       .map(w => w.trim().toLowerCase())
@@ -178,14 +197,16 @@ sneeze`
 
     const displayWord = () => word.split("").map(l => guessed.has(l) ? l : "⬜").join(" ");
 
-    const sendGameEmbed = (desc) => {
+    const sendGameEmbed = (description) => {
       return event.respond({
-        embeds: [new Discord.EmbedBuilder()
-          .setColor(embedColor)
-          .setTitle(embedTitle)
-          .setDescription(desc)
-          .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
-          .setTimestamp()
+        content,
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0x00bfff)
+            .setTitle(title)
+            .setDescription(description)
+            .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
+            .setTimestamp()
         ]
       });
     };
@@ -194,7 +215,7 @@ sneeze`
 
     const filter = (m) => {
       const userId = (commandType(event) === "message") ? event.author.id : event.user.id;
-      return m.author.id === userId && /^[a-zA-Z]$/.test(m.content.trim());
+      return (m.author.id === userId) && /^[a-zA-Z]$/.test(m.content.trim());
     };
 
     const channel = (commandType(event) === "message") ? event.channel : event.channel;
@@ -212,9 +233,9 @@ sneeze`
         const letter = msg.content.toLowerCase();
 
         if (guessed.has(letter)) {
-          await msg.reply(alreadyGuessed.replace("{letter}", letter));
+          await msg.reply(alreadyGuessed.replaceAll("{letter}", letter));
           continue;
-        }
+        };
 
         guessed.add(letter);
 
@@ -222,26 +243,26 @@ sneeze`
           correct.add(letter);
         } else {
           attempts++;
-        }
+        };
 
         const progress = displayWord();
 
         if (Array.from(wordLetters).every(l => guessed.has(l))) {
           await sendGameEmbed(winMessage
-            .replace("{word}", word)
-            .replace("{attempts}", guessed.size));
+            .replaceAll("{word}", word)
+            .replaceAll("{attempts}", guessed.size));
           return;
-        }
+        };
 
         await sendGameEmbed(`\`${progress}\`\nWrong guesses: ${attempts}/${maxGuesses}`);
-      }
+      };
 
-      await sendGameEmbed(loseMessage.replace("{word}", word));
+      await sendGameEmbed(loseMessage.replaceAll("{word}", word));
 
     } catch {
-      await sendGameEmbed(timeoutMessage.replace("{word}", word));
-    }
+      await sendGameEmbed(timeoutMessage.replaceAll("{word}", word));
+    };
   },
 
-  slashCommand: (Discord.SlashCommandBuilder) ? new Discord.SlashCommandBuilder() : null
+  slashCommand: (SlashCommandBuilder) ? new SlashCommandBuilder() : null
 };

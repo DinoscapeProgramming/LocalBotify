@@ -6,7 +6,7 @@ const fs = require("fs");
 const categories = require("../data/categories.json");
 
 module.exports = {
-  description: "View all available commands",
+  description: "View all available commands.",
 
   permissions: [
     "SEND_MESSAGES",
@@ -17,12 +17,20 @@ module.exports = {
   ],
 
   variables: {
+    content: {
+      type: "textarea",
+      title: "Content",
+      description: "The regular text content above the embed.",
+      default: ""
+    },
+
     title: {
       type: "text",
       title: "Embed Title",
       description: "The title of the response embed",
       default: "📖  Help Menu${command}"
     },
+
     description: {
       type: "textarea",
       title: "Embed Description",
@@ -32,6 +40,7 @@ module.exports = {
   },
 
   command: async ({
+    content,
     title,
     description,
     footer
@@ -58,7 +67,7 @@ module.exports = {
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
       .setTimestamp();
 
-    event.respond({ content: null, embeds: [embed] });
+    event.respond({ content, embeds: [embed] });
   },
 
   slashCommand: (SlashCommandBuilder) ? (

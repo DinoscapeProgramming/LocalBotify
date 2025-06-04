@@ -4,67 +4,97 @@ const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, SlashCommand
 
 module.exports = {
   description: "Challenge someone to a game of Connect Four!",
-  permissions: ["SEND_MESSAGES"],
+
+  permissions: [
+    "SEND_MESSAGES"
+  ],
+
   variables: {
     content: {
       type: "text",
-      title: "Content Above Embed",
+      title: "Content",
+      description: "Regular message above the embed.",
       default: ""
     },
-    footer: {
+
+    title: {
       type: "text",
-      title: "Footer",
-      default: "LocalBotify Connect Four"
+      title: "Embed Title",
+      description: "Title of the embed message.",
+      default: "🎮  Connect Four Challenge"
     },
-    color: {
-      type: "color",
-      title: "Embed Color",
-      default: "#f1c40f"
-    },
+
     inviteMessage: {
       type: "text",
       title: "Invite Title",
+      description: "Title of the invite message.",
       default: "{challenger} vs {opponent}"
     },
+
     acceptMessage: {
       type: "text",
       title: "Accepted Message",
+      description: "Title of the acceptation message.",
       default: "🎮 {challenger} vs {opponent} — It's {turn}'s move!"
     },
+
     rejectMessage: {
       type: "text",
       title: "Rejected Message",
+      description: "Title of the rejection message.",
       default: "❌ {opponent} declined the challenge."
     },
+
     timeoutMessage: {
       type: "text",
       title: "Timeout Message",
+      description: "Title of the timeout message.",
       default: "⌛ Challenge timed out."
     },
+
     winMessage: {
       type: "text",
       title: "Win Message",
+      description: "Title of the win message.",
       default: "🏆 {player} wins the game!"
     },
+
     tieMessage: {
       type: "text",
       title: "Tie Message",
+      description: "Title of the tie message.",
       default: "🤝 It's a draw!"
+    },
+
+    expirationMessage: {
+      type: "text",
+      title: "Expiration Message",
+      description: "Title of the expiration message.",
+      default: "⏱️ Game expired."
     }
   },
 
-  command: async ({ content, footer, color, inviteMessage, acceptMessage, rejectMessage, timeoutMessage, winMessage, tieMessage }, client, event) => {
+  command: async ({
+    content,
+    title,
+    inviteMessage,
+    acceptMessage,
+    rejectMessage,
+    timeoutMessage,
+    winMessage,
+    tieMessage,
+    expirationMessage,
+    footer
+  }, client, event) => {
     const challenger = event.member || event.author;
     const opponent = event.mentions?.users?.first() || event.options?.getUser("opponent");
 
-    if (!opponent || opponent.bot || opponent.id === challenger.id) {
-      return event.respond("❌ Mention a valid user to challenge.");
-    }
+    if (!opponent || opponent.bot || opponent.id === challenger.id) return event.respond("❌ Mention a valid user to challenge.");
 
     const inviteEmbed = new EmbedBuilder()
-      .setTitle("🎮  Connect Four Challenge")
+      .setColor(0x00bfff)
+      .setTitle(title)
       .setDescription(inviteMessage.replaceAll("{challenger}", challenger.toString()).replaceAll("{opponent}", opponent.toString()))
-      .setColor(color)
       .setFooter({ text: footer });
 
     const inviteMsg = await event.respond({
@@ -88,7 +118,7 @@ module.exports = {
       if (interaction.customId === "reject") {
         inviteCollector.stop("rejected");
         return inviteMsg.edit({ content: rejectMessage.replaceAll("{opponent}", opponent.toString()), embeds: [], components: [] });
-      }
+      };
 
       inviteCollector.stop("accepted");
       startGame(challenger, opponent, inviteMsg);
@@ -123,9 +153,9 @@ module.exports = {
       };
 
       const embed = new EmbedBuilder()
+        .setColor(0x00bfff)
         .setTitle("🧩 Connect Four")
         .setDescription(drawBoard())
-        .setColor(color)
         .setFooter({ text: footer });
 
       const gameMsg = await msg.edit({
@@ -201,8 +231,8 @@ module.exports = {
         } else if (reason === "tie") {
           endText = tieMessage;
         } else {
-          endText = "⏱️ Game expired.";
-        }
+          endText = expirationMessage;
+        };
 
         await gameMsg.edit({
           content: endText,
@@ -210,13 +240,15 @@ module.exports = {
           components: []
         });
       });
-    }
+    };
   },
 
-  slashCommand: new SlashCommandBuilder()
-    .addUserOption(option =>
-      option.setName("opponent")
-        .setDescription("User you want to challenge")
-        .setRequired(true)
-    )
+  slashCommand: (SlashCommandBuilder) ? (
+    new SlashCommandBuilder()
+      .addUserOption(option =>
+        option.setName("opponent")
+          .setDescription("User you want to challenge")
+          .setRequired(true)
+      )
+  ) : null
 };
