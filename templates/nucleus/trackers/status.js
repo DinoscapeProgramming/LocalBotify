@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { alert } = requireCore("localbotify");
 
 function updateStatus(status) {
   fs.writeFileSync(path.join(process.cwd(), "channels/status.txt"), status.toUpperCase(), "utf8");
@@ -31,7 +32,12 @@ process.on("SIGTERM", () => {
 
 // Catch uncaught exceptions
 process.on("uncaughtException", (err) => {
-  console.error("Uncaught exception:", err);
+  if (err.message.includes("Used disallowed intents")) {
+    alert("⚠️ Privileged Intents", "Privileged intents missing in Developer Portal! Please enable them.");
+  } else {
+    console.error("Uncaught exception:", err);
+  };
+
   updateStatus("offline");
   updateProcress("offline");
   fs.writeFileSync(path.join(process.cwd(), "channels/error.txt"), Date.now().toString() + "\n" + err.toString().split(":").slice(1).join(":"), "utf8");

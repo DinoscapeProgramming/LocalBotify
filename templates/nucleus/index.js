@@ -90,15 +90,17 @@ ${lines.map(center).join('\n')}
     config = JSON.parse(fs.readFileSync("./config.json", "utf8") || "{}");
 
     if (JSON.stringify(config.status) !== JSON.stringify(previousConfig.status)) {
-      client.user.setPresence({
-        status: PresenceUpdateStatus[config?.status?.[0] || "Online"],
-        activities: [
-          {
-            type: ActivityType[config?.status?.[1]],
-            name: config?.status?.[2].replace(/\{(.*?)\}/g, (_, expression) => eval(expression))
-          }
-        ]
-      });
+      try {
+        client.user.setPresence({
+          status: PresenceUpdateStatus[config?.status?.[0] || "Online"],
+          activities: [
+            {
+              type: ActivityType[config?.status?.[1]],
+              name: config?.status?.[2].replace(/\{(.*?)\}/g, (_, expression) => eval(expression))
+            }
+          ]
+        });
+      } catch {};
     };
 
     if (config.slashCommands !== previousConfig.slashCommands) {
