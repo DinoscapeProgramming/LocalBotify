@@ -115,7 +115,7 @@ module.exports = {
         const definition = definitions[index];
         return new Discord.EmbedBuilder()
           .setColor(embedColor)
-          .setTitle(embedTitle.replace("{word}", entry.word))
+          .setTitle(embedTitle.replaceAll("{word}", entry.word))
           .addFields(
             { name: fieldPartOfSpeechTitle, value: definition.partOfSpeech || "N/A", inline: true },
             { name: fieldDefinitionTitle, value: definition.definition, inline: false },

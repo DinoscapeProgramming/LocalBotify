@@ -91,11 +91,11 @@ module.exports = {
         const views = video.viewCountText || "N/A";
         const length = video.length?.simpleText || "N/A";
         const formatted = fieldFormat
-          .replace("{title}", video.title)
-          .replace("{channel}", video.channelTitle)
-          .replace("{views}", views)
-          .replace("{length}", length)
-          .replace("{url}", url);
+          .replaceAll("{title}", video.title)
+          .replaceAll("{channel}", video.channelTitle)
+          .replaceAll("{views}", views)
+          .replaceAll("{length}", length)
+          .replaceAll("{url}", url);
 
         return new Discord.EmbedBuilder()
           .setColor(embedColor)

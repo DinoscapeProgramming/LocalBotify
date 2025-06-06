@@ -130,7 +130,7 @@ module.exports = {
         .addFields(
           { name: fieldTemperatureTitle, value: fieldTemperatureValue.replaceAll("{temperature}", weather.temperature.toString()), inline },
           { name: fieldWindTitle, value: fieldWindValue.replaceAll("{windspeed}", weather.windspeed), inline },
-          { name: fieldConditionTitle, value: fieldConditionValue.replace("{weathercode}", weather.weathercode), inline }
+          { name: fieldConditionTitle, value: fieldConditionValue.replaceAll("{weathercode}", weather.weathercode), inline }
         )
         .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
         .setTimestamp();

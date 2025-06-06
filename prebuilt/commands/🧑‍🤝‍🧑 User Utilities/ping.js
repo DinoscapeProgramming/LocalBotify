@@ -99,12 +99,12 @@ module.exports = {
       .addFields(
         {
           name: botLatencyName,
-          value: botLatencyValue.replace("${botLatency}", botLatency),
+          value: botLatencyValue.replaceAll("${botLatency}", botLatency),
           inline
         },
         {
           name: apiLatencyName,
-          value: apiLatencyValue.replace("${apiLatency}", apiLatency),
+          value: apiLatencyValue.replaceAll("${apiLatency}", apiLatency),
           inline
         }
       )

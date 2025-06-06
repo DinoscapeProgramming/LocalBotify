@@ -127,7 +127,7 @@ module.exports = {
       const selected = interaction.component.label;
       const responseText = (selected === correct)
         ? correctMsg
-        : wrongMsg.replace("{answer}", correct);
+        : wrongMsg.replaceAll("{answer}", correct);
 
       await interaction.update({
         content: responseText,
@@ -135,7 +135,7 @@ module.exports = {
         components: []
       });
     } catch {
-      await event.respond(timeoutMsg.replace("{answer}", "unknown"));
+      await event.respond(timeoutMsg.replaceAll("{answer}", "unknown"));
     };
   },
 

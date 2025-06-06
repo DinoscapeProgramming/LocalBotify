@@ -1,6 +1,6 @@
 if (!global.requireCore) (global.requireCore = () => ({}));
 
-const Discord = requireCore("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder } = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
 
 const X = "❌";
@@ -19,33 +19,92 @@ function checkWin(board, player) {
 module.exports = {
   description: "Play Tic-Tac-Toe with another user (no board display).",
 
-  permissions: ["SEND_MESSAGES"],
+  permissions: [
+    "SEND_MESSAGES"
+  ],
 
   variables: {
+    turnMessage: {
+      type: "text",
+      title: "Turn Message",
+      description: "Message shown when it's a player's turn. Use {player} as a placeholder.",
+      default: "It's your turn, {player}!"
+    },
+
+    winMessage: {
+      type: "text",
+      title: "Win Message",
+      description: "Message sent when a player wins. Use {player} as a placeholder.",
+      default: "{player} wins! 🎉"
+    },
+
+    drawMessage: {
+      type: "text",
+      title: "Draw Message",
+      description: "Message sent when the game ends in a draw.",
+      default: "It's a draw! 🤝"
+    },
+
+    timeoutEnabled: {
+      type: "switch",
+      title: "Enable Timeout",
+      description: "Whether to enable a timeout for the game.",
+      default: true
+    },
+
+    timeoutSeconds: {
+      type: "number",
+      title: "Timeout Seconds",
+      description: "Number of seconds before the game times out.",
+      default: 300
+    },
+
     timeoutMessage: {
       type: "textarea",
       title: "Timeout Message",
       description: "Message sent when the game times out.",
       default: "⏰ Game timed out due to inactivity."
     },
-    inviteMessage: {
+
+    noOpponentMessage: {
       type: "text",
-      title: "Invite Message",
-      description: "Message shown to mention the opponent.",
-      default: "It's your turn, {player}!"
+      title: "No Opponent Message",
+      description: "Message sent when no opponent is mentioned.",
+      default: "❌ You must mention a user to play with."
+    },
+
+    selfPlayMessage: {
+      type: "text",
+      title: "Self Play Message",
+      description: "Message sent when a user tries to play against themselves.",
+      default: "❌ You cannot play against yourself!"
+    },
+
+    cellTakenMessage: {
+      type: "text",
+      title: "Cell Taken Message",
+      description: "Message sent when a player tries to take an already occupied cell.",
+      default: "❌ That cell is already taken!"
     }
   },
 
   command: async ({
+    turnMessage,
+    winMessage,
+    drawMessage,
+    timeoutEnabled,
+    timeoutSeconds,
     timeoutMessage,
-    inviteMessage
+    noOpponentMessage,
+    selfPlayMessage,
+    cellTakenMessage,
   }, client, event) => {
     const authorId = (commandType(event) === "message") ? event.author.id : event.user.id;
 
     let opponentUser = (commandType(event) === "message") ? event.mentions.users.first() : event.options?.getUser("user");
 
-    if (!opponentUser) return event.respond("❌ You must mention a user to play with.");
-    if (opponentUser.id === authorId) return event.respond("❌ You cannot play against yourself!");
+    if (!opponentUser) return event.respond(noOpponentMessage);
+    if (opponentUser.id === authorId) return event.respond(selfPlayMessage);
 
     let board = Array(9).fill(null);
     let currentPlayer = X;
@@ -54,14 +113,14 @@ module.exports = {
     function createButtons(board, disabled = false) {
       const rows = [];
       for (let row = 0; row < 3; row++) {
-        const actionRow = new Discord.ActionRowBuilder();
+        const actionRow = new ActionRowBuilder();
         for (let col = 0; col < 3; col++) {
           const idx = row * 3 + col;
           actionRow.addComponents(
-            new Discord.ButtonBuilder()
+            new ButtonBuilder()
               .setCustomId(`ttt_${idx}`)
               .setLabel(board[idx] || "\u200b")
-              .setStyle(board[idx] ? Discord.ButtonStyle.Secondary : Discord.ButtonStyle.Primary)
+              .setStyle(board[idx] ? ButtonStyle.Secondary : ButtonStyle.Primary)
               .setDisabled(disabled || Boolean(board[idx]))
           );
         };
@@ -70,7 +129,7 @@ module.exports = {
       return rows;
     };
 
-    let messageContent = inviteMessage.replace("{player}", `<@${currentPlayerId}>`);
+    let messageContent = turnMessage.replaceAll("{player}", `<@${currentPlayerId}>`);
 
     const msg = await event.respond({
       content: messageContent,
@@ -82,12 +141,12 @@ module.exports = {
       (i.message.id === msg.id) &&
       i.customId.startsWith("ttt_");
 
-    const collector = msg.createMessageComponentCollector({ filter, time: 300000 });
+    const collector = msg.createMessageComponentCollector({ filter, time: (timeoutEnabled) ? timeoutSeconds * 1000 : null });
 
     collector.on("collect", async (i) => {
       const idx = Number(i.customId.split("_")[1]);
       if (board[idx]) {
-        await i.reply({ content: "❌ That cell is already taken!", ephemeral: true });
+        await i.reply({ content: cellTakenMessage, ephemeral: true });
         return;
       };
       board[idx] = currentPlayer;
@@ -95,7 +154,7 @@ module.exports = {
       if (checkWin(board, currentPlayer)) {
         collector.stop("win");
         await i.update({
-          content: `<@${currentPlayerId}> wins! 🎉`,
+          content: winMessage.replaceAll("{player}", `<@${currentPlayerId}>`),
           components: createButtons(board, true)
         });
         return;
@@ -104,7 +163,7 @@ module.exports = {
       if (board.every(cell => cell)) {
         collector.stop("draw");
         await i.update({
-          content: `It's a draw! 🤝`,
+          content: drawMessage,
           components: createButtons(board, true)
         });
         return;
@@ -114,7 +173,7 @@ module.exports = {
       currentPlayerId = (currentPlayerId === authorId) ? opponentUser.id : authorId;
 
       await i.update({
-        content: inviteMessage.replace("{player}", `<@${currentPlayerId}>`),
+        content: turnMessage.replaceAll("{player}", `<@${currentPlayerId}>`),
         components: createButtons(board)
       });
     });
@@ -127,8 +186,8 @@ module.exports = {
     });
   },
 
-  slashCommand: (Discord.SlashCommandBuilder) ? (
-    new Discord.SlashCommandBuilder()
+  slashCommand: (SlashCommandBuilder) ? (
+    new SlashCommandBuilder()
       .addUserOption((option) =>
         option
           .setName("user")

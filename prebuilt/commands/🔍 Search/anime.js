@@ -19,7 +19,7 @@ module.exports = {
       type: "text",
       title: "Embed Title",
       description: "The title of the embed. Use `{title}`.",
-      default: "🎌 Anime Search: {title}"
+      default: "🎌  Anime Search: {title}"
     },
     embedColor: {
       type: "color",
@@ -37,7 +37,7 @@ module.exports = {
       type: "text",
       title: "Title Field Title",
       description: "Name of the title field.",
-      default: "📺 Title"
+      default: "📺  Title"
     },
     fieldTitleValue: {
       type: "text",
@@ -49,7 +49,7 @@ module.exports = {
       type: "text",
       title: "Episodes Field Title",
       description: "Title for the episodes field.",
-      default: "📦 Episodes"
+      default: "📦  Episodes"
     },
     fieldEpisodesValue: {
       type: "text",
@@ -61,7 +61,7 @@ module.exports = {
       type: "text",
       title: "Score Field Title",
       description: "Title for the score field.",
-      default: "⭐ Score"
+      default: "⭐  Score"
     },
     fieldScoreValue: {
       type: "text",

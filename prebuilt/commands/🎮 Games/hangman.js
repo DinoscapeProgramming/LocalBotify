@@ -161,12 +161,6 @@ sneeze`
       type: "number",
       title: "Timeout Seconds",
       default: 60
-    },
-
-    footer: {
-      type: "text",
-      title: "Embed Footer",
-      default: "Hangman | LocalBotify"
     }
   },
 

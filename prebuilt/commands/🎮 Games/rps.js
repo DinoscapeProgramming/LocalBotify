@@ -61,11 +61,25 @@ module.exports = {
       default: "{winner} wins! **{winnerChoice}** {winnerEmoji} beats **{loserChoice}** {loserEmoji}"
     },
 
+    timeoutEnabled: {
+      type: "switch",
+      title: "Enable Timeout",
+      description: "Whether to enable a timeout for the game",
+      default: true
+    },
+
     timeoutSeconds: {
       type: "number",
       title: "Timeout (seconds)",
       description: "How many seconds to wait for both players to pick",
       default: 30
+    },
+
+    timeoutMessage: {
+      type: "text",
+      title: "Timeout Message",
+      description: "Message shown if the game times out waiting for picks",
+      default: "⏰ Game timed out. Both players did not pick in time."
     },
 
     errorNotMentioned: {
@@ -103,13 +117,6 @@ module.exports = {
       default: "❌ Something went wrong. One or both players didn't pick."
     },
 
-    footer: {
-      type: "text",
-      title: "Embed Footer Text",
-      description: "The footer text shown on embeds",
-      default: "Rock-Paper-Scissors | LocalBotify"
-    },
-
     buttonRockLabel: {
       type: "text",
       title: "Button Label - Rock",
@@ -139,11 +146,12 @@ module.exports = {
     embedTitleResult,
     resultTieText,
     resultWinText,
+    timeoutEnabled,
     timeoutSeconds,
+    timeoutMessage,
     errorNotMentioned,
     errorSelfChallenge,
     errorAlreadyPicked,
-    errorTimeout,
     errorMissingPick,
     footer,
     buttonRockLabel,
@@ -207,7 +215,7 @@ module.exports = {
       return true;
     };
 
-    const collector = challengeMessage.createMessageComponentCollector({ filter, time: timeoutSeconds * 1000 });
+    const collector = challengeMessage.createMessageComponentCollector({ filter, time: (timeoutEnabled) ? timeoutSeconds * 1000 : null });
 
     collector.on("collect", async (interaction) => {
       const playerId = interaction.user.id;
@@ -230,7 +238,7 @@ module.exports = {
     collector.on("end", async (_, reason) => {
       if (reason !== "completed") {
         await challengeMessage.edit({ components: [] });
-        return event.respond(errorTimeout);
+        return event.respond(timeoutMessage);
       };
 
       const p1Choice = picks.get(challenger.id);
@@ -244,8 +252,8 @@ module.exports = {
       let resultText;
       if (p1Choice === p2Choice) {
         resultText = resultTieText
-          .replace("{choice}", p1Choice)
-          .replace("{emoji}", emojis[p1Choice]);
+          .replaceAll("{choice}", p1Choice)
+          .replaceAll("{emoji}", emojis[p1Choice]);
       } else {
         const winsAgainst = {
           rock: "scissors",
@@ -266,11 +274,11 @@ module.exports = {
         };
 
         resultText = resultWinText
-          .replace("{winner}", `<@${winner.id}>`)
-          .replace("{winnerChoice}", winnerChoice)
-          .replace("{winnerEmoji}", emojis[winnerChoice])
-          .replace("{loserChoice}", loserChoice)
-          .replace("{loserEmoji}", emojis[loserChoice]);
+          .replaceAll("{winner}", `<@${winner.id}>`)
+          .replaceAll("{winnerChoice}", winnerChoice)
+          .replaceAll("{winnerEmoji}", emojis[winnerChoice])
+          .replaceAll("{loserChoice}", loserChoice)
+          .replaceAll("{loserEmoji}", emojis[loserChoice]);
       };
 
       await challengeMessage.edit({ components: [] });

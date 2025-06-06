@@ -109,13 +109,6 @@ module.exports = {
       title: "Timeout Message",
       description: "Message when the game times out.",
       default: "⏰ Time's up! The number was **{number}**."
-    },
-
-    footer: {
-      type: "text",
-      title: "Embed Footer",
-      description: "Footer text for the embeds.",
-      default: "Guess Number | LocalBotify"
     }
   },
 

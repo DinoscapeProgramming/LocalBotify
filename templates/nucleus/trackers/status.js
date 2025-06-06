@@ -34,6 +34,8 @@ process.on("SIGTERM", () => {
 process.on("uncaughtException", (err) => {
   if (err.message.includes("Used disallowed intents")) {
     alert("⚠️ Privileged Intents", "Privileged intents missing in Developer Portal! Please enable them.");
+  } else if (err.message.includes("An invalid token was provided.")) {
+    alert("⚠️ Invalid Token", "Your bot token is invalid! Please provide a valid token.");
   } else {
     console.error("Uncaught exception:", err);
   };
