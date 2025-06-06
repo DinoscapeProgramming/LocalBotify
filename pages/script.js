@@ -4907,7 +4907,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         });
       };
 
-      ipcRenderer.send("runBotCommand", [
+      ipcRenderer.invoke("runBotCommand", [
         newBot.id,
         (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization || "") + "; " + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`
       ]);
@@ -4926,7 +4926,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           });
         };
 
-        ipcRenderer.send("runBotCommand", [
+        ipcRenderer.invoke("runBotCommand", [
           newBot.id,
           (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization || "") + "; " + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`
         ]);
