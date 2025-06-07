@@ -43,7 +43,7 @@ client.once("ready", () => {
   ];
 
   const boxWidth = Math.max(...lines.map(line => line.length)) + 4;
-  const horizontal = '═'.repeat(boxWidth);
+  const horizontal = "═".repeat(boxWidth);
 
   const hasEmoji = (text) => {
     const emojiRegex = /(?:\p{Emoji}(?:\p{Emoji_Modifier}|\uFE0F)?(?:\u200D\p{Emoji})*)/gu;
@@ -55,14 +55,13 @@ client.once("ready", () => {
     const totalPadding = boxWidth - text.length;
     const left = Math.ceil(totalPadding / 2);
     const right = Math.floor(totalPadding / 2);
-    return '║' + ' '.repeat(left) + text + ' '.repeat(right + Number(hasEmoji(text))) + '║';
+    return "║" + " ".repeat(left) + text + " ".repeat(right + Number(hasEmoji(text))) + "║";
   };
 
-  console.log('\x1b[36m%s\x1b[0m', `
+  console.log("\x1b[38;2;108;160;220m", `
 ╔${horizontal}╗
 ${lines.map(center).join('\n')}
-╚${horizontal}╝
-  `);
+╚${horizontal}╝`, "\x1b[0m");
 
   updateStatus("online");
   updateStatistics(client);

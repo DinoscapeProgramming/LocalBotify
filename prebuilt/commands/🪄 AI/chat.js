@@ -183,7 +183,30 @@ if (!global.server.messages) (global.server.messages = []);
             global.server.link = tunnel.url;
             global.server.eventEmitter = eventEmitter;
 
-            console.log(`Server running at ${tunnel.url}`);
+            const lines = [
+              `💻   AI Server running at ${tunnel.url}`
+            ];
+
+            const boxWidth = Math.max(...lines.map(line => line.length)) + 4;
+            const horizontal = "═".repeat(boxWidth);
+
+            const hasEmoji = (text) => {
+              const emojiRegex = /(?:\p{Emoji}(?:\p{Emoji_Modifier}|\uFE0F)?(?:\u200D\p{Emoji})*)/gu;
+              const numberOrSpecialCharRegex = /^[0-9]$|[.*+?^${}()|[\]\\]/;
+              return Array.from(text).map((character) => emojiRegex.test(character) && !numberOrSpecialCharRegex.test(character)).includes(true);
+            };
+
+            const center = (text) => {
+              const totalPadding = boxWidth - text.length;
+              const left = Math.ceil(totalPadding / 2);
+              const right = Math.floor(totalPadding / 2);
+              return "║" + " ".repeat(left) + text + " ".repeat(right + Number(hasEmoji(text))) + "║";
+            };
+
+            console.log("\x1b[38;2;218;165;32m", `
+╔${horizontal}╗
+${lines.map(center).join('\n')}
+╚${horizontal}╝`, "\x1b[0m");
 
             resolve();
           }).catch(() => {
