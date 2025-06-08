@@ -9,10 +9,7 @@ module.exports = {
 
   permissions: [
     "SEND_MESSAGES",
-    "MANAGE_MESSAGES",
-    "EMBED_LINKS",
-    "ATTACH_FILES",
-    "READ_MESSAGE_HISTORY"
+    "EMBED_LINKS"
   ],
 
   variables: {
@@ -22,10 +19,11 @@ module.exports = {
       description: "The title of the response embed",
       default: "✏️  Set Prefix"
     },
+
     description: {
       type: "text",
       title: "Embed Description",
-      description: "The description of the response embed, use `{prefix}` to show the current prefix.",
+      description: "The description of the response embed. Use {prefix} to show the current prefix.",
       default: "The prefix has been set to `{prefix}`"
     },
   },
@@ -35,6 +33,7 @@ module.exports = {
     description,
     footer
   }, client, event) => {
+    if (!event.member.permissions.has("ManageGuild")) return event.reject("🚫 You need the **Manage Server** permission to use this command.");
     if ((commandType(event) === "message") && !event.content.split(" ").slice(1).join(" ")) return event.reject("Please provide a prefix to set.");
 
     if (((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("prefix")) !== JSON.parse(fs.readFileSync("./config.json", "utf8") || "{}").prefix) {
@@ -45,8 +44,8 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setColor(0x00bfff)
-      .setTitle(title)
-      .setDescription(description.replaceAll("{prefix}", (commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("prefix")))
+      .setTitle(title || null)
+      .setDescription(description.replaceAll("{prefix}", (commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("prefix")) || null)
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
       .setTimestamp();
 

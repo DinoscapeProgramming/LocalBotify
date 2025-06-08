@@ -148,13 +148,13 @@ client.on("messageCreate", (message) => {
       ]
     });
 
-    if (db[message.guild.id]?.disabledFeatures?.includes(Object.entries(categories || {}).find(([_, commands]) => commands.includes(commandName))[0].substring(4).toLowerCase())) return message.channel.send({
+    if (db[message.guild.id]?.disabledFeatures?.includes(Object.entries(categories || {}).find(([_, commands]) => commands.includes(commandName))[0].replace(/^[^\w]+/, "").trim().toLowerCase())) return message.channel.send({
       content: null,
       embeds: [
         new EmbedBuilder()
           .setColor(0xff0000)
           .setTitle("⚠️  Command Disabled")
-          .setDescription(`All commands in the category \`${Object.entries(categories || {}).find(([_, commands]) => commands.includes(commandName))[0].replaceAll("  ", " ")}\` are currently disabled in this server.`)
+          .setDescription(`All commands in the category \`${Object.entries(categories || {}).find(([_, commands]) => commands.includes(commandName))[0].replaceAll("   ", " ")}\` are currently disabled in this server.`)
           .setFooter({ text: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), iconURL: message.author.displayAvatarURL() })
           .setTimestamp()
       ]
@@ -262,13 +262,13 @@ client.on("interactionCreate", (interaction) => {
       ]
     });
 
-    if (db[interaction.guild.id]?.disabledFeatures?.includes(Object.entries(categories || {}).find(([_, commands]) => commands.includes(commandName))[0].substring(4).toLowerCase())) return interaction.reply({
+    if (db[interaction.guild.id]?.disabledFeatures?.includes(Object.entries(categories || {}).find(([_, commands]) => commands.includes(commandName))[0].replace(/^[^\w]+/, "").trim().toLowerCase())) return interaction.reply({
       content: null,
       embeds: [
         new EmbedBuilder()
           .setColor(0xff0000)
           .setTitle("⚠️  Command Disabled")
-          .setDescription(`All commands in the category \`${Object.entries(categories || {}).find(([_, commands]) => commands.includes(commandName))[0].replaceAll("  ", " ")}\` are currently disabled in this server.`)
+          .setDescription(`All commands in the category \`${Object.entries(categories || {}).find(([_, commands]) => commands.includes(commandName))[0].replaceAll("   ", " ")}\` are currently disabled in this server.`)
           .setFooter({ text: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), iconURL: interaction.user.displayAvatarURL() })
           .setTimestamp()
       ]

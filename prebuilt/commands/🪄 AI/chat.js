@@ -176,11 +176,11 @@ if (!global.server.messages) (global.server.messages = []);
       });
     });
 
-    server.listen(3000, "localhost", () => {
+    server.listen(0, "localhost", () => {
       let connect = () => {
         try {
           localtunnel({
-            port: 3000,
+            port: server.address().port,
             maxReconnectAttempts: Infinity
           }).then((tunnel) => {
             global.server.link = tunnel.url;

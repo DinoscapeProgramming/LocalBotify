@@ -9,9 +9,7 @@ module.exports = {
 
   permissions: [
     "SEND_MESSAGES",
-    "EMBED_LINKS",
-    "ATTACH_FILES",
-    "READ_MESSAGE_HISTORY"
+    "EMBED_LINKS"
   ],
 
   variables: {
@@ -21,10 +19,11 @@ module.exports = {
       description: "The title of the response embed",
       default: "🚫  Feature Disabled"
     },
+
     description: {
       type: "text",
       title: "Embed Description",
-      description: "The description of the response embed, use `{feature}` to show the feature that has been disabled.",
+      description: "The description of the response embed. Use {feature} to show the feature that has been disabled.",
       default: "The feature `{feature}` has been disabled."
     },
   },
@@ -34,16 +33,17 @@ module.exports = {
     description,
     footer
   }, client, event) => {
+    if (!event.member.permissions.has("ManageGuild")) return event.reject("🚫 You need the **Manage Server** permission to use this command.");
     if ((commandType(event) === "message") && !event.content.split(" ").slice(1).join(" ")) return event.reject("Please provide a feature to disable.");
-    if ((((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")) === "all") || Object.keys(categories || {}).includes(((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).substring(4).toLowerCase()) || Object.values(categories || {}).flat().includes((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature"))) return event.reject("Please provide a valid feature to disable, or use `all` to disable all features.");
+    if ((((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).toLowerCase() !== "all") && !Object.keys(categories || {}).map((name) => name.replace(/^[^\w]+/, "").trim().toLowerCase()).includes(((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).toLowerCase()) && !Object.values(categories || {}).flat().includes(((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).toLowerCase())) return event.reject("Please provide a valid feature to disable.");
 
     if (!event.store.disabledFeatures) (event.store.disabledFeatures = []);
-    event.store.disabledFeatures.push((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature"));
+    event.store.disabledFeatures.push(((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).toLowerCase());
 
     const embed = new EmbedBuilder()
       .setColor(0x00bfff)
-      .setTitle(title)
-      .setDescription(description.replaceAll("{feature}", (commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")))
+      .setTitle(title || null)
+      .setDescription(description.replaceAll("{feature}", (Object.keys(categories || {}).map((name) => name.replace(/^[^\w]+/, "").trim().toLowerCase()).includes((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature"))) ? Object.keys(categories || {}).find((name) => (name.replace(/^[^\w]+/, "").trim().toLowerCase() === ((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).toLowerCase())).replaceAll("   ", " ") : ((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).toLowerCase()) || null)
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
       .setTimestamp();
 
@@ -67,7 +67,7 @@ module.exports = {
               ],
               ...Object.keys(categories || {}).map((name) => ({
                 name,
-                value: name.substring(4).toLowerCase()
+                value: name.replace(/^[^\w]+/, "").trim().toLowerCase()
               })),
               ...Object.values(categories || {}).flatMap((commands) => commands.map((command) => ({
                 name: command,
