@@ -20,28 +20,28 @@ module.exports = {
       default: ""
     },
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "The title of the trivia embed.",
       default: "🧠 Trivia Time!"
     },
-    embedColor: {
-      type: "color",
-      title: "Embed Color",
-      description: "The color of the embed. Use a hex color code.",
-      default: "#3498db"
-    },
     category: {
-      type: "text",
+      type: "textarea",
       title: "Trivia Category (optional)",
       description: "Leave blank for any. Examples: 18 (CS), 9 (General Knowledge)",
       default: ""
     },
     difficulty: {
-      type: "text",
+      type: "select",
       title: "Difficulty",
       description: "Leave blank for any. Options: easy, medium, hard.",
-      default: ""
+      options: {
+        any: "Any",
+        easy: "Easy",
+        medium: "Medium",
+        hard: "Hard"
+      },
+      default: "any"
     },
     correctMsg: {
       type: "textarea",
@@ -70,8 +70,15 @@ module.exports = {
   },
 
   command: async ({
-    content, title, footer, embedColor, category, difficulty,
-    correctMsg, wrongMsg, timeoutMsg, secondsToAnswer
+    content,
+    title,
+    footer,
+    category,
+    difficulty,
+    correctMsg,
+    wrongMsg,
+    timeoutMsg,
+    secondsToAnswer
   }, client, event) => {
     const url = new URL("https://opentdb.com/api.php");
     url.searchParams.set("amount", "1");
@@ -105,8 +112,8 @@ module.exports = {
         content,
         embeds: [
           new Discord.EmbedBuilder()
-            .setColor(embedColor)
-            .setTitle(title)
+            .setColor(0x00bfff)
+            .setTitle(title || null)
             .setDescription(`**${question}**`)
             .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
             .setTimestamp()

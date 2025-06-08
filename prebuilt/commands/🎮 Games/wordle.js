@@ -27,6 +27,12 @@ module.exports = {
   ],
 
   variables: {
+    title: {
+      type: "textarea",
+      title: "Embed Title",
+      description: "Title of the embed message.",
+      default: "🟩  Wordle"
+    },
     startMessage: {
       type: "textarea",
       title: "Start Message",
@@ -34,7 +40,7 @@ module.exports = {
       default: "🎮 Wordle Game started! Reply with a 5-letter guess."
     },
     wrongLength: {
-      type: "text",
+      type: "textarea",
       title: "Wrong Length Message",
       default: "❌ Your guess must be 5 letters."
     },
@@ -45,7 +51,12 @@ module.exports = {
     }
   },
 
-  command: async ({ startMessage, wrongLength, color, footer }, client, event) => {
+  command: async ({
+    title,
+    startMessage,
+    wrongLength,
+    footer
+  }, client, event) => {
     const target = WORDS[Math.floor(Math.random() * WORDS.length)];
     const guesses = [];
     const maxGuesses = 6;
@@ -55,9 +66,9 @@ module.exports = {
       m.content.length === 5 && /^[a-zA-Z]+$/.test(m.content);
 
     const embed = new Discord.EmbedBuilder()
-      .setColor(color)
-      .setTitle("🟩  Wordle")
-      .setDescription(startMessage)
+      .setColor(0x00bfff)
+      .setTitle(title || null)
+      .setDescription(startMessage || null)
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
       .setTimestamp();
 
@@ -81,7 +92,7 @@ module.exports = {
       const done = (guess === target || guesses.length >= maxGuesses);
 
       embed.setDescription(desc + (done ? `\n\n✅ The word was: **${target}**` : ""));
-      embed.setColor(done ? 0x00ff66 : color);
+      embed.setColor(done ? 0x00ff66 : 0x00bfff);
       sent.edit({ embeds: [embed] });
       msg.delete().catch(() => {});
     });

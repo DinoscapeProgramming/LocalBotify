@@ -239,14 +239,8 @@ module.exports = {
   ],
 
   variables: {
-    errorMessage: {
-      type: "textarea",
-      title: "Error Response Message",
-      description: "The message to send if the user has not specified a message to send to the AI agent.",
-      default: "Please specify a message to send to the AI agent."
-    },
     title: {
-      type: "text",
+      type: "textarea",
       title: "Connection Title",
       description: "The title of the response embed when the user is not connected to the AI agent.",
       default: "🧠  Connect to AI Agent"
@@ -254,28 +248,32 @@ module.exports = {
     description: {
       type: "textarea",
       title: "Connection Description",
-      description: "The description of the response embed when the user is not connected to the AI agent. Use \`${link}\` to insert the link to connect to the AI agent and \`${password}\` to insert the password.",
-      default: `Please connect using the following link: \${link}\nEnter the following password to connect: \`\${password}\``
+      description: "The description of the response embed when the user is not connected to the AI agent. Use {link} to insert the link to connect to the AI agent and {password} to insert the password.",
+      default: `Please connect using the following link: {link}\nEnter the following password to connect: \`{password}\``
     },
     personality: {
       type: "textarea",
       title: "Personality",
       description: "The personality of the AI agent. This will be used to set the context for the AI. You can use markdown syntax here.",
-      default: "You are a helpful AI assistant. You will answer the user's questions based on the context provided. The user in this conversation is called ${user}, so treat the user as such."
+      default: "You are a helpful AI assistant. You will answer the user's questions based on the context provided. The user in this conversation is called {user}, so treat the user as such."
+    },
+    errorMessage: {
+      type: "textarea",
+      title: "Error Response Message",
+      description: "The message to send if the user has not specified a message to send to the AI agent.",
+      default: "Please specify a message to send to the AI agent."
     }
   },
 
   command: async ({
-    errorMessage,
     title,
     description,
     personality,
-    footer
+    footer,
+    errorMessage
   }, client, event) => {
     try {
-      if ((commandType(event) === "message") && !event.content.split(" ").slice(1).join(" ").trim()) return event.respond({
-        content: errorMessage
-      });
+      if ((commandType(event) === "message") && !event.content.split(" ").slice(1).join(" ").trim()) return event.reject(errorMessage);
 
       let connectionMessage = null;
 
@@ -285,8 +283,8 @@ module.exports = {
           embeds: [
             new EmbedBuilder()
               .setColor(0x00bfff)
-              .setTitle(title)
-              .setDescription(description.replaceAll("${link}", (global.server.link) ? `${global.server.link}?user=${encodeURIComponent((commandType(event) === "message") ? event.author.id : event.user.id)}` : "`Server not ready yet`").replaceAll("${password}", global.server.password || "Server not ready yet"))
+              .setTitle(title || null)
+              .setDescription(description.replaceAll("{link}", (global.server.link) ? `${global.server.link}?user=${encodeURIComponent((commandType(event) === "message") ? event.author.id : event.user.id)}` : "`Server not ready yet`").replaceAll("{password}", global.server.password || "Server not ready yet") || null)
               .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
               .setTimestamp()
           ]
@@ -353,7 +351,7 @@ module.exports = {
           ...[
             {
               role: "system",
-              content: personality.replaceAll("${user}", ((commandType(event) === "message") ? event.author.displayName : event.user.displayName) || ((commandType(event) === "message") ? event.author.username : event.user.username) || "`Unknown User`")
+              content: personality.replaceAll("{user}", ((commandType(event) === "message") ? event.author.displayName : event.user.displayName) || ((commandType(event) === "message") ? event.author.username : event.user.username) || "`Unknown User`")
             }
           ],
           ...global.server.messages[(commandType(event) === "message") ? event.author.id : event.user.id]

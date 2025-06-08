@@ -1,6 +1,7 @@
 if (!global.requireCore) (global.requireCore = () => ({}));
 
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, SlashCommandBuilder } = requireCore("discord.js");
+const { commandType } = requireCore("localbotify");
 
 module.exports = {
   description: "Challenge someone to a game of Connect Four!",

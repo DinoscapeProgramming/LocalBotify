@@ -24,16 +24,16 @@ module.exports = {
     },
 
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
-      description: "The title of the response embed",
-      default: "📖  Help Menu${command}"
+      description: "The title of the response embed. Use {command} to insert the command name if specified.",
+      default: "📖  Help Menu{command}"
     },
 
     description: {
       type: "textarea",
       title: "Embed Description",
-      description: "The description of the response embed",
+      description: "The description of the response embed.",
       default: "Here are all available commands, grouped by category:"
     }
   },
@@ -46,7 +46,7 @@ module.exports = {
   }, client, event) => {
     const embed = new EmbedBuilder()
       .setColor(0x00bfff)
-      .setTitle(title.replaceAll("${command}", (fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? `: ${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}` : "") || null)
+      .setTitle(title.replaceAll("{command}", (fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? `: ${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}` : "") || null)
       .setDescription((!fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? (description || null) : require(`../commands/${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`).description)
       .setThumbnail(client.user.displayAvatarURL({ extension: "png" }))
       .addFields(

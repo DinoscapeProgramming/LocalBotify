@@ -20,7 +20,7 @@ module.exports = {
       default: ""
     },
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "The title of the response embed.",
       default: "🤖  Bot Information"
@@ -28,8 +28,8 @@ module.exports = {
     description: {
       type: "textarea",
       title: "Embed Description",
-      description: "The description of the embed. Use ${botName} or ${botId}.",
-      default: "Here is some information about **${botName}**:"
+      description: "The description of the embed. Use {botName} to insert the bot's name and {botId} to insert the bot's ID.",
+      default: "Here is some information about **{botName}**:"
     },
     inline: {
       type: "switch",
@@ -38,64 +38,64 @@ module.exports = {
       default: false
     },
     botIdName: {
-      type: "text",
+      type: "textarea",
       title: "Bot ID Field",
       description: "The name of the field that will display the bot ID.",
       default: "🆔  Bot ID"
     },
     botIdValue: {
-      type: "text",
+      type: "textarea",
       title: "Bot ID Value",
-      description: "The value of the field that will display the bot ID.",
-      default: "${botId}"
+      description: "The value of the field that will display the bot ID. Use {botId} to insert the bot's ID.",
+      default: "{botId}"
     },
     usernameName: {
-      type: "text",
+      type: "textarea",
       title: "Bot Tag Field",
       description: "The name of the field that will display the bot's tag.",
       default: "📛  Bot Tag"
     },
     usernameValue: {
-      type: "text",
+      type: "textarea",
       title: "Bot Tag Value",
-      description: "The value of the field that will display the bot's tag.",
-      default: "${botTag}"
+      description: "The value of the field that will display the bot's tag. Use {botTag} to insert the bot's tag.",
+      default: "{botTag}"
     },
     createdAtName: {
-      type: "text",
+      type: "textarea",
       title: "Created At Field",
       description: "The name of the field that will display when the bot account was created.",
       default: "📅  Created At"
     },
     createdAtValue: {
-      type: "text",
+      type: "textarea",
       title: "Created At Value",
-      description: "The value of the field that will display the bot creation time.",
-      default: "<t:${createdAtTimestamp}:F>"
+      description: "The value of the field that will display the bot creation time. Use {createdAtTimestamp} to insert the timestamp of when the bot account was created.",
+      default: "<t:{createdAtTimestamp}:F>"
     },
     serversName: {
-      type: "text",
+      type: "textarea",
       title: "Servers Field",
       description: "The name of the field that will show how many servers the bot is in.",
       default: "🌍  Servers"
     },
     serversValue: {
-      type: "text",
+      type: "textarea",
       title: "Servers Value",
-      description: "The value of the field that will show how many servers the bot is in.",
-      default: "${serverCount}"
+      description: "The value of the field that will show how many servers the bot is in. Use {serverCount} to insert the number of servers.",
+      default: "{serverCount}"
     },
     usersName: {
-      type: "text",
+      type: "textarea",
       title: "Users Field",
       description: "The name of the field that will show how many users the bot can see.",
       default: "👥  Users"
     },
     usersValue: {
-      type: "text",
+      type: "textarea",
       title: "Users Value",
-      description: "The value of the field that will show how many users the bot can see.",
-      default: "${userCount}"
+      description: "The value of the field that will show how many users the bot can see. Use {userCount} to insert the number of users.",
+      default: "{userCount}"
     }
   },
 
@@ -123,15 +123,15 @@ module.exports = {
 
     const embed = new Discord.EmbedBuilder()
       .setColor(0x00bfff)
-      .setTitle(title.replaceAll("${botName}", botUser.username).replaceAll("${botId}", botUser.id))
-      .setDescription(description.replaceAll("${botName}", botUser.username).replaceAll("${botId}", botUser.id))
+      .setTitle(title.replaceAll("{botName}", botUser.username).replaceAll("{botId}", botUser.id) || null)
+      .setDescription(description.replaceAll("{botName}", botUser.username).replaceAll("{botId}", botUser.id) || null)
       .setThumbnail(botUser.displayAvatarURL({ dynamic: true }))
       .addFields(
-        { name: botIdName, value: botIdValue.replaceAll("${botId}", botUser.id), inline },
-        { name: usernameName, value: usernameValue.replaceAll("${botTag}", botUser.tag), inline },
-        { name: createdAtName, value: createdAtValue.replaceAll("${createdAtTimestamp}", Math.floor(botUser.createdTimestamp / 1000).toString()), inline },
-        { name: serversName, value: serversValue.replaceAll("${serverCount}", serverCount.toString()), inline },
-        { name: usersName, value: usersValue.replaceAll("${userCount}", userCount.toString()), inline }
+        { name: botIdName, value: botIdValue.replaceAll("{botId}", botUser.id), inline },
+        { name: usernameName, value: usernameValue.replaceAll("{botTag}", botUser.tag), inline },
+        { name: createdAtName, value: createdAtValue.replaceAll("{createdAtTimestamp}", Math.floor(botUser.createdTimestamp / 1000).toString()), inline },
+        { name: serversName, value: serversValue.replaceAll("{serverCount}", serverCount.toString()), inline },
+        { name: usersName, value: usersValue.replaceAll("{userCount}", userCount.toString()), inline }
       )
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
       .setTimestamp();

@@ -19,7 +19,7 @@ module.exports = {
       default: ""
     },
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "The title of the response embed.",
       default: "🔐  Bot Permissions"
@@ -50,8 +50,8 @@ module.exports = {
 
     const embed = new Discord.EmbedBuilder()
       .setColor(0x00bfff)
-      .setTitle(title)
-      .setDescription(description.replaceAll("${user}", ((commandType(event) === "message") ? event.mentions?.members?.first() : event.options.getUser("user")) ? `<@${(commandType(event) === "message") ? event.mentions?.members?.first()?.id : event.options.getUser("user")?.id}>'s` : "my").replaceAll("${channelId}", channel.id.toString()).replaceAll("${permissions}", status))
+      .setTitle(title || null)
+      .setDescription(description.replaceAll("{user}", ((commandType(event) === "message") ? event.mentions?.members?.first() : event.options.getUser("user")) ? `<@${(commandType(event) === "message") ? event.mentions?.members?.first()?.id : event.options.getUser("user")?.id}>'s` : "my").replaceAll("{channelId}", channel.id.toString()).replaceAll("{permissions}", status) || null)
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
       .setTimestamp();
 

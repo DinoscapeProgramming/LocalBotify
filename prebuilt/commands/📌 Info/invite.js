@@ -22,7 +22,7 @@ module.exports = {
       default: ""
     },
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "The title of the response embed",
       default: "🎉  Invite Me!"
@@ -50,9 +50,9 @@ module.exports = {
   }, client, event) => {
     const embed = new EmbedBuilder()
       .setColor(0x00bfff)
-      .setTitle(title)
+      .setTitle(title || null)
       .setURL(invite)
-      .setDescription(description)
+      .setDescription(description || null)
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
       .setTimestamp();
 

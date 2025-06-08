@@ -239,12 +239,6 @@ module.exports = {
   ],
 
   variables: {
-    errorMessage: {
-      type: "textarea",
-      title: "Error Response Message",
-      description: "The message to send if the user does not specify a prompt.",
-      default: "Please provide a prompt to send to the AI agent."
-    },
     title: {
       type: "text",
       title: "Connection Title",
@@ -254,21 +248,25 @@ module.exports = {
     description: {
       type: "textarea",
       title: "Connection Description",
-      description: "The description of the response embed when the user is not connected to the AI agent. Use \`${link}\` to insert the link to connect to the AI agent and \`${password}\` to insert the password.",
-      default: `Please connect using the following link: \${link}\nEnter the following password to connect: \`\${password}\``
+      description: "The description of the response embed when the user is not connected to the AI agent. Use {link} to insert the link to connect to the AI agent and {password} to insert the password.",
+      default: `Please connect using the following link: {link}\nEnter the following password to connect: \`{password}\``
+    },
+    errorMessage: {
+      type: "textarea",
+      title: "Error Response Message",
+      description: "The message to send if the user does not specify a prompt.",
+      default: "Please provide a prompt to send to the AI agent."
     }
   },
 
   command: async ({
-    errorMessage,
     title,
     description,
-    footer
+    footer,
+    errorMessage
   }, client, event) => {
     try {
-      if ((commandType(event) === "message") && !event.content.split(" ").slice(1).join(" ").trim()) return event.respond({
-        content: errorMessage
-      });
+      if ((commandType(event) === "message") && !event.content.split(" ").slice(1).join(" ").trim()) return event.reject(errorMessage);
 
       let connectionMessage = null;
 
@@ -278,8 +276,8 @@ module.exports = {
           embeds: [
             new EmbedBuilder()
               .setColor(0x00bfff)
-              .setTitle(title)
-              .setDescription(description.replaceAll("${link}", (global.server.link) ? `${global.server.link}?user=${encodeURIComponent((commandType(event) === "message") ? event.author.id : event.user.id)}` : "`Server not ready yet`").replaceAll("${password}", global.server.password || "Server not ready yet"))
+              .setTitle(title || null)
+              .setDescription(description.replaceAll("{link}", (global.server.link) ? `${global.server.link}?user=${encodeURIComponent((commandType(event) === "message") ? event.author.id : event.user.id)}` : "`Server not ready yet`").replaceAll("{password}", global.server.password || "Server not ready yet") || null)
               .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
               .setTimestamp()
           ]

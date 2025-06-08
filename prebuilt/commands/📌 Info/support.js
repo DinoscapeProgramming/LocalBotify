@@ -15,12 +15,6 @@ module.exports = {
   ],
 
   variables: {
-    errorMessage: {
-      type: "textarea",
-      title: "Error Response Message",
-      description: "The message to send if the invite link is not set",
-      default: "Please set the invite link in the bot's settings."
-    },
     content: {
       type: "textarea",
       title: "Content",
@@ -28,7 +22,7 @@ module.exports = {
       default: ""
     },
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "The title of the response embed",
       default: "🎉  Join My Support Server!"
@@ -44,24 +38,30 @@ module.exports = {
       title: "Embed Description",
       description: "The description of the response embed",
       default: "Click the link above to join my support server!"
+    },
+    errorMessage: {
+      type: "textarea",
+      title: "Error Response Message",
+      description: "The message to send if the invite link is not set",
+      default: "Please set the invite link in the bot's settings."
     }
   },
 
   command: async ({
-    errorMessage,
     content,
     title,
     invite,
     description,
-    footer
+    footer,
+    errorMessage
   }, client, event) => {
-    if (!invite) return event.respond({ content: errorMessage, ephemeral: (commandType(event) === "interaction") });
+    if (!invite) return event.reject(errorMessage);
 
     const embed = new EmbedBuilder()
       .setColor(0x00bfff)
-      .setTitle(title)
+      .setTitle(title || null)
       .setURL(invite)
-      .setDescription(description)
+      .setDescription(description || null)
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
       .setTimestamp();
 

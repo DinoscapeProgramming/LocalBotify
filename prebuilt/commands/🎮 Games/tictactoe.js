@@ -26,21 +26,21 @@ module.exports = {
 
   variables: {
     turnMessage: {
-      type: "text",
+      type: "textarea",
       title: "Turn Message",
       description: "Message shown when it's a player's turn. Use {player} as a placeholder.",
       default: "It's your turn, {player}!"
     },
 
     winMessage: {
-      type: "text",
+      type: "textarea",
       title: "Win Message",
       description: "Message sent when a player wins. Use {player} as a placeholder.",
       default: "{player} wins! 🎉"
     },
 
     drawMessage: {
-      type: "text",
+      type: "textarea",
       title: "Draw Message",
       description: "Message sent when the game ends in a draw.",
       default: "It's a draw! 🤝"
@@ -68,21 +68,21 @@ module.exports = {
     },
 
     noOpponentMessage: {
-      type: "text",
+      type: "textarea",
       title: "No Opponent Message",
       description: "Message sent when no opponent is mentioned.",
       default: "❌ You must mention a user to play with."
     },
 
     selfPlayMessage: {
-      type: "text",
+      type: "textarea",
       title: "Self Play Message",
       description: "Message sent when a user tries to play against themselves.",
       default: "❌ You cannot play against yourself!"
     },
 
     cellTakenMessage: {
-      type: "text",
+      type: "textarea",
       title: "Cell Taken Message",
       description: "Message sent when a player tries to take an already occupied cell.",
       default: "❌ That cell is already taken!"
