@@ -2,6 +2,5 @@ build
 node_modules
 playground
 bots
-settings.json
 tools
 templates/nucleus/.gitignore
