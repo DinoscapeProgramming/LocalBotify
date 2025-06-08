@@ -21,7 +21,7 @@ module.exports = {
     },
 
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "Title of the embed message.",
       default: "🎯  Hangman Game"
@@ -182,7 +182,7 @@ sneeze`
       .map(w => w.trim().toLowerCase())
       .filter(w => /^[a-z]{3,}$/.test(w));
 
-    if (!wordList.length) return event.respond("⚠️ No valid words configured.");
+    if (!wordList.length) return event.reject("⚠️ No valid words configured.");
 
     const word = wordList[Math.floor(Math.random() * wordList.length)];
     const guessed = new Set();
@@ -198,8 +198,8 @@ sneeze`
         embeds: [
           new EmbedBuilder()
             .setColor(0x00bfff)
-            .setTitle(title)
-            .setDescription(description)
+            .setTitle(title || null)
+            .setDescription(description || null)
             .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
             .setTimestamp()
         ]
@@ -228,7 +228,17 @@ sneeze`
         const letter = msg.content.toLowerCase();
 
         if (guessed.has(letter)) {
-          await msg.reply(alreadyGuessed.replaceAll("{letter}", letter));
+          await msg.reply({
+            content: null,
+            embeds: [
+              new EmbedBuilder()
+                .setColor(0xffcc00)
+                .setTitle(title || null)
+                .setDescription(alreadyGuessed.replaceAll("{letter}", letter) || null)
+                .setFooter({ text: footer, iconURL: msg.author.displayAvatarURL() })
+                .setTimestamp()
+            ]
+          });
           continue;
         };
 

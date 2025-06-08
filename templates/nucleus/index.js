@@ -208,7 +208,7 @@ client.on("messageCreate", (message) => {
 
     commandFile.command({
       ...{
-        footer: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression))
+        footer: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)) || "Powered by LocalBotify.app"
       },
       ...Object.fromEntries(Object.entries(commandFile.variables || {}).map(([variableName, { default: defaultValue = null } = {}] = []) => [
         variableName,
@@ -322,7 +322,7 @@ client.on("interactionCreate", (interaction) => {
 
     commandFile.command({
       ...{
-        footer: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression))
+        footer: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)) || "Powered by LocalBotify.app"
       },
       ...Object.fromEntries(Object.entries(commandFile.variables || {}).map(([variableName, { default: defaultValue = null } = {}] = []) => [
         variableName,
@@ -357,7 +357,7 @@ fs.readdirSync("./events").forEach((event) => {
 
     eventFile.event({
       ...{
-        footer: config.footer
+        footer: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)) || "Powered by LocalBotify.app"
       },
       ...Object.entries(eventFile.variables || {}).map(([variableName]) => [
         variableName,

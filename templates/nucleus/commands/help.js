@@ -10,7 +10,6 @@ module.exports = {
 
   permissions: [
     "SEND_MESSAGES",
-    "MANAGE_MESSAGES",
     "EMBED_LINKS",
     "ATTACH_FILES",
     "READ_MESSAGE_HISTORY"
@@ -25,7 +24,7 @@ module.exports = {
     },
 
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "The title of the response embed",
       default: "📖  Help Menu${command}"
@@ -47,8 +46,8 @@ module.exports = {
   }, client, event) => {
     const embed = new EmbedBuilder()
       .setColor(0x00bfff)
-      .setTitle(title.replaceAll("${command}", (fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? `: ${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}` : ""))
-      .setDescription((!fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? description : require(`../commands/${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`).description)
+      .setTitle(title.replaceAll("${command}", (fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? `: ${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}` : "") || null)
+      .setDescription((!fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? (description || null) : require(`../commands/${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`).description)
       .setThumbnail(client.user.displayAvatarURL({ extension: "png" }))
       .addFields(
         ...(!fs.readdirSync("./commands").includes(`${(commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("command")}.js`)) ? [

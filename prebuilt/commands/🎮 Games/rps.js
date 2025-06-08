@@ -27,7 +27,7 @@ module.exports = {
     },
 
     embedTitleStart: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title - Start",
       description: "Title for the initial challenge embed",
       default: "🪨📄✂️  Rock-Paper-Scissors"
@@ -40,8 +40,22 @@ module.exports = {
       default: "{player1} has challenged {player2}!\n\nBoth players, please pick your choice by clicking one of the buttons below."
     },
 
+    embedTitleSelection: {
+      type: "textarea",
+      title: "Embed Title - Selection",
+      description: "Title for the embed shown when a player makes their choice",
+      default: "🪨📄✂️  Rock-Paper-Scissors Selection"
+    },
+
+    embedDescriptionSelection: {
+      type: "textarea",
+      title: "Embed Description - Selection",
+      description: "Description for the embed shown when a player makes their choice, use {choice} and {emoji} as placeholders",
+      default: "You picked **{choice}** {emoji}!"
+    },
+
     embedTitleResult: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title - Result",
       description: "Title for the result embed",
       default: "🪨📄✂️  Rock-Paper-Scissors Result"
@@ -76,63 +90,63 @@ module.exports = {
     },
 
     timeoutMessage: {
-      type: "text",
+      type: "textarea",
       title: "Timeout Message",
       description: "Message shown if the game times out waiting for picks",
       default: "⏰ Game timed out. Both players did not pick in time."
     },
 
     errorNotMentioned: {
-      type: "text",
+      type: "textarea",
       title: "Error Message - No Opponent",
       description: "Message shown if no opponent was mentioned",
       default: "⚠️ You need to mention a user to challenge."
     },
 
     errorSelfChallenge: {
-      type: "text",
+      type: "textarea",
       title: "Error Message - Self Challenge",
       description: "Message shown if user tries to challenge themselves",
       default: "⚠️ You cannot play against yourself!"
     },
 
     errorAlreadyPicked: {
-      type: "text",
+      type: "textarea",
       title: "Error Message - Already Picked",
       description: "Message shown if a player tries to pick more than once",
       default: "⚠️ You already made your choice!"
     },
 
     errorTimeout: {
-      type: "text",
+      type: "textarea",
       title: "Error Message - Timeout",
       description: "Message shown if game times out waiting for picks",
       default: "⏰ Game timed out. Both players did not pick in time."
     },
 
     errorMissingPick: {
-      type: "text",
+      type: "textarea",
       title: "Error Message - Missing Pick",
       description: "Message shown if something went wrong and one or both picks are missing",
       default: "❌ Something went wrong. One or both players didn't pick."
     },
 
     buttonRockLabel: {
-      type: "text",
+      type: "textarea",
       title: "Button Label - Rock",
       description: "Label for the rock button",
       default: "Rock"
     },
 
     buttonPaperLabel: {
-      type: "text",
+      type: "textarea",
       title: "Button Label - Paper",
       description: "Label for the paper button",
       default: "Paper"
     },
 
     buttonScissorsLabel: {
-      type: "text",
+      type: "textarea",
       title: "Button Label - Scissors",
       description: "Label for the scissors button",
       default: "Scissors"
@@ -143,6 +157,8 @@ module.exports = {
     content,
     embedTitleStart,
     embedDescriptionStart,
+    embedTitleSelection,
+    embedDescriptionSelection,
     embedTitleResult,
     resultTieText,
     resultWinText,
@@ -167,8 +183,8 @@ module.exports = {
       challenged = event.options.getUser("user");
     };
 
-    if (!challenged) return event.respond(errorNotMentioned);
-    if (challenged.id === challenger.id) return event.respond(errorSelfChallenge);
+    if (!challenged) return event.reject(errorNotMentioned);
+    if (challenged.id === challenger.id) return event.reject(errorSelfChallenge);
 
     const startDescription = embedDescriptionStart
       .replaceAll("{player1}", `<@${challenger.id}>`)
@@ -193,8 +209,9 @@ module.exports = {
     );
 
     const challengeEmbed = new EmbedBuilder()
-      .setTitle(embedTitleStart)
-      .setDescription(startDescription)
+      .setColor(0x00bfff)
+      .setTitle(embedTitleStart || null)
+      .setDescription(startDescription || null)
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? challenger : challenger).displayAvatarURL() })
       .setTimestamp();
 
@@ -221,14 +238,28 @@ module.exports = {
       const playerId = interaction.user.id;
 
       if (picks.has(playerId)) {
-        await interaction.reply({ content: errorAlreadyPicked, ephemeral: true });
+        await interaction.reply({ content: null, embeds: [
+          new EmbedBuilder()
+            .setColor(0xffcc00)
+            .setTitle(embedTitleStart || null)
+            .setDescription(errorAlreadyPicked || null)
+            .setFooter({ text: footer, iconURL: interaction.user.displayAvatarURL() })
+            .setTimestamp()
+        ], ephemeral: true });
         return;
       };
 
       const choice = interaction.customId.split("_")[1];
       picks.set(playerId, choice);
 
-      await interaction.reply({ content: `You selected **${choice}** ${emojis[choice]}`, ephemeral: true });
+      await interaction.reply({ content: null, embeds: [
+        new EmbedBuilder()
+          .setColor(0x00bfff)
+          .setTitle(embedTitleSelection || null)
+          .setDescription(embedDescriptionSelection.replaceAll("{choice}", choice).replaceAll("{emoji}", emojis[choice]) || null)
+          .setFooter({ text: footer, iconURL: interaction.user.displayAvatarURL() })
+          .setTimestamp()
+      ], ephemeral: true });
 
       if (bothPicked()) {
         collector.stop("completed");
@@ -238,7 +269,14 @@ module.exports = {
     collector.on("end", async (_, reason) => {
       if (reason !== "completed") {
         await challengeMessage.edit({ components: [] });
-        return event.respond(timeoutMessage);
+        return event.respond({ content: null, embeds: [
+          new EmbedBuilder()
+            .setColor(0xff3333)
+            .setTitle(embedTitleResult || null)
+            .setDescription(timeoutMessage || null)
+            .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? challenger : challenger).displayAvatarURL() })
+            .setTimestamp()
+        ] });
       };
 
       const p1Choice = picks.get(challenger.id);
@@ -246,7 +284,14 @@ module.exports = {
 
       if (!p1Choice || !p2Choice) {
         await challengeMessage.edit({ components: [] });
-        return event.respond(errorMissingPick);
+        return event.respond({ content: null, embeds: [
+          new EmbedBuilder()
+            .setColor(0xff3333)
+            .setTitle(embedTitleResult || null)
+            .setDescription(errorMissingPick || null)
+            .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? challenger : challenger).displayAvatarURL() })
+            .setTimestamp()
+        ] });
       };
 
       let resultText;
@@ -284,8 +329,8 @@ module.exports = {
       await challengeMessage.edit({ components: [] });
 
       const resultEmbed = new EmbedBuilder()
-        .setTitle(embedTitleResult)
-        .setDescription(resultText)
+        .setTitle(embedTitleResult || null)
+        .setDescription(resultText || null)
         .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? challenger : challenger).displayAvatarURL() })
         .setTimestamp();
 

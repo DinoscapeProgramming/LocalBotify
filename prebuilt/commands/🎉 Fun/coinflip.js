@@ -20,31 +20,31 @@ module.exports = {
     },
 
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "The title of the embed.",
       default: "🎲  Coin Flip"
     },
 
     headsText: {
-      type: "text",
+      type: "textarea",
       title: "Heads Text",
       description: "The message shown when the coin lands on heads.",
       default: "🪙  The coin landed on **Heads!**"
     },
 
     tailsText: {
-      type: "text",
+      type: "textarea",
       title: "Tails Text",
       description: "The message shown when the coin lands on tails.",
       default: "🪙  The coin landed on **Tails!**"
     },
 
     errorMessage: {
-      type: "text",
+      type: "textarea",
       title: "Error Message",
       description: "Message to show if something goes wrong.",
-      default: "❌ Couldn't flip the coin. Try again!"
+      default: "Couldn't flip the coin. Try again!"
     }
   },
 
@@ -61,15 +61,15 @@ module.exports = {
 
       const embed = new EmbedBuilder()
         .setColor(0x00bfff)
-        .setTitle(title)
-        .setDescription(result)
+        .setTitle(title || null)
+        .setDescription(result || null)
         .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
         .setTimestamp();
 
       event.respond({ content, embeds: [embed] });
     } catch {
-      event.respond(errorMessage);
-    }
+      event.reject(errorMessage);
+    };
   },
 
   slashCommand: (SlashCommandBuilder) ? new SlashCommandBuilder() : null

@@ -20,14 +20,14 @@ module.exports = {
     },
 
     generalJokeTitle: {
-      type: "text",
+      type: "textarea",
       title: "General Joke Embed Title",
       description: "The title of the embed that contains a general joke.",
       default: ":laughing:  General Joke"
     },
 
     programmingJokeTitle: {
-      type: "text",
+      type: "textarea",
       title: "Programming Joke Embed Title",
       description: "The title of the embed that contains a programming joke.",
       default: ":man_technologist:  Programming Joke"
@@ -36,7 +36,7 @@ module.exports = {
     description: {
       type: "textarea",
       title: "Embed Description",
-      description: "Description of the embed.",
+      description: "Description of the embed. Use {setup} for the joke setup and {punchline} for the punchline.",
       default: "**{setup}**\n\n||{punchline}||"
     },
 
@@ -60,18 +60,18 @@ module.exports = {
       const res = await fetch("https://official-joke-api.appspot.com/jokes/random");
       const joke = await res.json();
 
-      if (!joke?.setup || !joke?.punchline) return event.respond(errorMessage);
+      if (!joke?.setup || !joke?.punchline) return event.reject(errorMessage);
 
       const embed = new EmbedBuilder()
         .setColor(0x00bfff)
-        .setTitle((joke?.type === "general") ? generalJokeTitle : programmingJokeTitle)
-        .setDescription(description.replaceAll("{setup}", joke.setup).replaceAll("{punchline}", joke.punchline))
+        .setTitle(((joke?.type === "general") ? generalJokeTitle : programmingJokeTitle) || null)
+        .setDescription(description.replaceAll("{setup}", joke.setup).replaceAll("{punchline}", joke.punchline) || null)
         .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
         .setTimestamp();
 
       event.respond({ content, embeds: [embed] });
     } catch {
-      event.respond(errorMessage);
+      event.reject(errorMessage);
     };
   },
 

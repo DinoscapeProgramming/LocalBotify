@@ -20,7 +20,8 @@ module.exports = {
   description: "Play Tic-Tac-Toe with another user (no board display).",
 
   permissions: [
-    "SEND_MESSAGES"
+    "SEND_MESSAGES",
+    "EMBED_LINKS"
   ],
 
   variables: {

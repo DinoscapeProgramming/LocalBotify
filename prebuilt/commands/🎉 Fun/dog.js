@@ -20,7 +20,7 @@ module.exports = {
     },
 
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "Title of the embed.",
       default: "🐶  Woof!"
@@ -37,7 +37,7 @@ module.exports = {
       type: "textarea",
       title: "Error Message",
       description: "Message to send if no dog image is found.",
-      default: "❌ Failed to fetch a dog. Please try again later!"
+      default: "Failed to fetch a dog. Please try again later!"
     }
   },
 
@@ -56,16 +56,16 @@ module.exports = {
 
       const embed = new EmbedBuilder()
         .setColor(0x00bfff)
-        .setTitle(title)
-        .setDescription(description)
+        .setTitle(title || null)
+        .setDescription(description || null)
         .setImage(data.link)
         .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
         .setTimestamp();
 
       event.respond({ content, embeds: [embed] });
     } catch {
-      event.respond(errorMessage);
-    }
+      event.reject(errorMessage);
+    };
   },
 
   slashCommand: (SlashCommandBuilder) ? new SlashCommandBuilder() : null

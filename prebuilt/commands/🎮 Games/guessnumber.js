@@ -21,7 +21,7 @@ module.exports = {
     },
 
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "Title used for all embeds.",
       default: "🔢  Guess the Number"
@@ -133,7 +133,7 @@ module.exports = {
     const max = Math.floor(maxNumber);
 
     if (min >= max) {
-      return event.respond("⚠️ Invalid range configuration. Minimum must be less than maximum.");
+      return event.reject("⚠️ Invalid range configuration. Minimum must be less than maximum.");
     };
 
     const target = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -142,8 +142,8 @@ module.exports = {
     const sendEmbed = (description) => {
       const embed = new EmbedBuilder()
         .setColor(0x00bfff)
-        .setTitle(title)
-        .setDescription(description)
+        .setTitle(title || null)
+        .setDescription(description || null)
         .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
         .setTimestamp();
       return event.respond({ content, embeds: [embed] });
@@ -175,8 +175,8 @@ module.exports = {
           if (invalidateGuesses) await guessMsg.reply({ embeds: [
             new EmbedBuilder()
               .setColor(0x00bfff)
-              .setTitle(title)
-              .setDescription(invalidGuessMessage.replaceAll("{min}", min).replaceAll("{max}", max))
+              .setTitle(title || null)
+              .setDescription(invalidGuessMessage.replaceAll("{min}", min).replaceAll("{max}", max) || null)
               .setFooter({ text: footer, iconURL: guessMsg.author.displayAvatarURL() })
               .setTimestamp()
             ]
@@ -190,8 +190,8 @@ module.exports = {
           await guessMsg.reply({ embeds: [
             new EmbedBuilder()
               .setColor(0x00bfff)
-              .setTitle(title)
-              .setDescription(winMessage.replaceAll("{guess}", guess).replaceAll("{attempts}", attempts))
+              .setTitle(title || null)
+              .setDescription(winMessage.replaceAll("{guess}", guess).replaceAll("{attempts}", attempts) || null)
               .setFooter({ text: footer, iconURL: guessMsg.author.displayAvatarURL() })
               .setTimestamp()
             ]
@@ -201,8 +201,8 @@ module.exports = {
           await guessMsg.reply({ embeds: [
             new EmbedBuilder()
               .setColor(0x00bfff)
-              .setTitle(title)
-              .setDescription(tooLowMessage.replaceAll("{guess}", guess))
+              .setTitle(title || null)
+              .setDescription(tooLowMessage.replaceAll("{guess}", guess) || null)
               .setFooter({ text: footer, iconURL: guessMsg.author.displayAvatarURL() })
               .setTimestamp()
             ]
@@ -211,8 +211,8 @@ module.exports = {
           await guessMsg.reply({ embeds: [
             new EmbedBuilder()
               .setColor(0x00bfff)
-              .setTitle(title)
-              .setDescription(tooHighMessage.replaceAll("{guess}", guess))
+              .setTitle(title || null)
+              .setDescription(tooHighMessage.replaceAll("{guess}", guess) || null)
               .setFooter({ text: footer, iconURL: guessMsg.author.displayAvatarURL() })
               .setTimestamp()
             ]

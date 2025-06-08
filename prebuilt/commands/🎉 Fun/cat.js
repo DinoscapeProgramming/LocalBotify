@@ -20,7 +20,7 @@ module.exports = {
     },
 
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "Title of the embed.",
       default: "🐱  Meow!"
@@ -37,7 +37,7 @@ module.exports = {
       type: "textarea",
       title: "Error Message",
       description: "Message to send if no cat image is found.",
-      default: "❌ Failed to fetch a cat. Please try again later!"
+      default: "Failed to fetch a cat. Please try again later!"
     }
   },
 
@@ -52,12 +52,12 @@ module.exports = {
       const res = await fetch("https://api.some-random-api.com/img/cat");
       const data = await res.json();
 
-      if (!data?.link) return event.respond(errorMessage);
+      if (!data?.link) return event.reject(errorMessage);
 
       const embed = new EmbedBuilder()
         .setColor(0x00bfff)
-        .setTitle(title)
-        .setDescription(description)
+        .setTitle(title || null)
+        .setDescription(description || null)
         .setImage(data.link)
         .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
         .setTimestamp();

@@ -6,71 +6,86 @@ module.exports = {
   description: "Challenge someone to a game of Connect Four!",
 
   permissions: [
-    "SEND_MESSAGES"
+    "SEND_MESSAGES",
+    "EMBED_LINKS"
   ],
 
   variables: {
     content: {
       type: "textarea",
       title: "Content",
-      description: "Regular message above the embed.",
+      description: "Regular message above the invite embed.",
       default: ""
     },
 
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "Title of the embed message.",
-      default: "🎮  Connect Four Challenge"
+      default: "🧩  Connect Four"
     },
 
     inviteMessage: {
-      type: "text",
+      type: "textarea",
       title: "Invite Title",
-      description: "Title of the invite message.",
+      description: "Title of the invite message. Use {challenger} and {opponent} to mention the players.",
       default: "{challenger} vs {opponent}"
     },
 
     acceptMessage: {
-      type: "text",
+      type: "textarea",
       title: "Accepted Message",
-      description: "Title of the acceptation message.",
+      description: "Title of the acceptation message. Use {challenger}, {opponent}, and {turn} to mention the players and show whose turn it is.",
       default: "🎮 {challenger} vs {opponent} — It's {turn}'s move!"
     },
 
     rejectMessage: {
-      type: "text",
+      type: "textarea",
       title: "Rejected Message",
-      description: "Title of the rejection message.",
+      description: "Title of the rejection message. Use {opponent} to mention the player who declined.",
       default: "❌ {opponent} declined the challenge."
     },
 
     timeoutMessage: {
-      type: "text",
+      type: "textarea",
       title: "Timeout Message",
       description: "Title of the timeout message.",
       default: "⌛ Challenge timed out."
     },
 
     winMessage: {
-      type: "text",
+      type: "textarea",
       title: "Win Message",
-      description: "Title of the win message.",
+      description: "Title of the win message. Use {player} to mention the winning player.",
       default: "🏆 {player} wins the game!"
     },
 
     tieMessage: {
-      type: "text",
+      type: "textarea",
       title: "Tie Message",
       description: "Title of the tie message.",
       default: "🤝 It's a draw!"
     },
 
     expirationMessage: {
-      type: "text",
+      type: "textarea",
       title: "Expiration Message",
       description: "Title of the expiration message.",
       default: "⏱️ Game expired."
+    },
+
+    invalidUserMessage: {
+      type: "textarea",
+      title: "Invalid User Message",
+      description: "Message shown when the opponent is not valid (e.g., bot or self).",
+      default: "❌ Please mention a valid user to challenge."
+    },
+
+    fullColumnMessage: {
+      type: "textarea",
+      title: "Full Column Message",
+      description: "Message shown when a player tries to place a piece in a full column.",
+      default: "⚠️ This column is full! Please choose another."
     }
   },
 
@@ -84,18 +99,21 @@ module.exports = {
     winMessage,
     tieMessage,
     expirationMessage,
-    footer
+    footer,
+    invalidUserMessage,
+    fullColumnMessage
   }, client, event) => {
     const challenger = event.member || event.author;
     const opponent = event.mentions?.users?.first() || event.options?.getUser("opponent");
 
-    if (!opponent || opponent.bot || opponent.id === challenger.id) return event.respond("❌ Mention a valid user to challenge.");
+    if (!opponent || opponent.bot || opponent.id === challenger.id) return event.reject(invalidUserMessage);
 
     const inviteEmbed = new EmbedBuilder()
       .setColor(0x00bfff)
-      .setTitle(title)
-      .setDescription(inviteMessage.replaceAll("{challenger}", challenger.toString()).replaceAll("{opponent}", opponent.toString()))
-      .setFooter({ text: footer });
+      .setTitle(title || null)
+      .setDescription(inviteMessage.replaceAll("{challenger}", challenger.toString()).replaceAll("{opponent}", opponent.toString()) || null)
+      .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
+      .setTimestamp();
 
     const inviteMsg = await event.respond({
       content,
@@ -117,7 +135,14 @@ module.exports = {
       await interaction.deferUpdate();
       if (interaction.customId === "reject") {
         inviteCollector.stop("rejected");
-        return inviteMsg.edit({ content: rejectMessage.replaceAll("{opponent}", opponent.toString()), embeds: [], components: [] });
+        return inviteMsg.edit({ content: null, embeds: [
+          new EmbedBuilder()
+            .setColor(0xff0000)
+            .setTitle(title || null)
+            .setDescription(rejectMessage.replaceAll("{opponent}", opponent.toString()) || null)
+            .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
+            .setTimestamp()
+        ], components: [] });
       };
 
       inviteCollector.stop("accepted");
@@ -125,9 +150,16 @@ module.exports = {
     });
 
     inviteCollector.on("end", async (_, reason) => {
-      if (reason !== "accepted" && reason !== "rejected") {
-        await inviteMsg.edit({ content: timeoutMessage, embeds: [], components: [] });
-      }
+      if ((reason !== "accepted") && (reason !== "rejected")) {
+        await inviteMsg.edit({ content: null, embeds: [
+          new EmbedBuilder()
+            .setColor(0xff0000)
+            .setTitle(title || null)
+            .setDescription(timeoutMessage || null)
+            .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
+            .setTimestamp()
+        ], components: [] });
+      };
     });
 
     async function startGame(p1, p2, msg) {
@@ -148,15 +180,16 @@ module.exports = {
               .setStyle(ButtonStyle.Primary)
               .setDisabled(board[0][i] !== "⚪")
           );
-        }
+        };
         return row;
       };
 
       const embed = new EmbedBuilder()
         .setColor(0x00bfff)
-        .setTitle("🧩 Connect Four")
+        .setTitle(title || null)
         .setDescription(drawBoard())
-        .setFooter({ text: footer });
+        .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
+        .setTimestamp();
 
       const gameMsg = await msg.edit({
         content: acceptMessage
@@ -183,8 +216,8 @@ module.exports = {
               return true;
             if (r - 3 >= 0 && c + 3 < 7 && board[r][c] === symbol && board[r - 1][c + 1] === symbol && board[r - 2][c + 2] === symbol && board[r - 3][c + 3] === symbol)
               return true;
-          }
-        }
+          };
+        };
         return false;
       };
 
@@ -197,20 +230,27 @@ module.exports = {
             board[r][col] = symbols[players[turn].id];
             placed = true;
             break;
-          }
-        }
+          };
+        };
 
-        if (!placed) return i.reply({ content: "❌ Column is full!", ephemeral: true });
+        if (!placed) return i.reply({ content: null, embeds: [
+          new EmbedBuilder()
+            .setColor(0xff0000)
+            .setTitle(title || null)
+            .setDescription(fullColumnMessage || null)
+            .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
+            .setTimestamp()
+        ], ephemeral: true });
 
         if (checkWin(symbols[players[turn].id])) {
           collector.stop("win");
           return;
-        }
+        };
 
         if (board.every(row => row.every(cell => cell !== "⚪"))) {
           collector.stop("tie");
           return;
-        }
+        };
 
         turn = 1 - turn;
         embed.setDescription(drawBoard());

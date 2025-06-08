@@ -20,7 +20,7 @@ module.exports = {
     },
 
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "The title of the response embed.",
       default: "🖼️  Meme"
@@ -60,19 +60,19 @@ module.exports = {
       const res = await fetch("https://meme-api.com/gimme");
       const data = await res.json();
 
-      if (!data || data.nsfw || data.spoiler) return event.respond(unsafeMessage);
+      if (!data || data.nsfw || data.spoiler) return event.reject(unsafeMessage);
 
       const embed = new EmbedBuilder()
         .setColor(0x00bfff)
-        .setTitle(title)
-        .setDescription(description)
+        .setTitle(title || null)
+        .setDescription(description || null)
         .setImage(data.url)
         .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
         .setTimestamp()
 
       event.respond({ content, embeds: [embed] });
     } catch {
-      event.respond(errorMessage);
+      event.reject(errorMessage);
     };
   },
 

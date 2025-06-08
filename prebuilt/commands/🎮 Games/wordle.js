@@ -21,7 +21,9 @@ module.exports = {
   description: "Start a Wordle game — guess the word in 6 tries!",
 
   permissions: [
-    "SEND_MESSAGES"
+    "SEND_MESSAGES",
+    "EMBED_LINKS",
+    "READ_MESSAGE_HISTORY"
   ],
 
   variables: {

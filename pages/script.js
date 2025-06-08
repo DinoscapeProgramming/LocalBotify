@@ -367,6 +367,8 @@ class LocalBotify {
             this.saveBots();
             this.renderContent();
 
+            ipcRenderer.send("closeTerminal", bot.id);
+
             const path = require("path");
 
             fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString()));

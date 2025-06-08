@@ -20,10 +20,17 @@ module.exports = {
     },
 
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "The title of the response embed.",
       default: "🎱  Magic 8-Ball"
+    },
+
+    description: {
+      type: "textarea",
+      title: "Embed Description",
+      description: "The description of the response embed.",
+      default: ""
     },
 
     inline: {
@@ -34,30 +41,30 @@ module.exports = {
     },
 
     questionName: {
-      type: "text",
+      type: "textarea",
       title: "Question Field Name",
       description: "The name of the field that will display the question.",
       default: "❓  Your Question"
     },
 
     questionValue: {
-      type: "text",
+      type: "textarea",
       title: "Question Field Value",
-      description: "The value of the field that will display the question.",
+      description: "The value of the field that will display the question. Use {question} to insert the user's question.",
       default: "{question}"
     },
 
     answerName: {
-      type: "text",
+      type: "textarea",
       title: "Answer Field Name",
       description: "The name of the field that will display the answer.",
       default: "🎱  My Answer"
     },
 
     answerValue: {
-      type: "text",
+      type: "textarea",
       title: "Answer Field Value",
-      description: "The value of the field that will display the answer.",
+      description: "The value of the field that will display the answer. Use {answer} to insert the bot's answer.",
       default: "{answer}"
     },
 
@@ -72,13 +79,14 @@ module.exports = {
       type: "textarea",
       title: "Error Response Message",
       description: "The message to send if the question is not provided.",
-      default: "🎱 You need to ask a question! Example: `!8ball Will I be rich?`"
+      default: "You need to ask a question!"
     }
   },
 
   command: ({
     content,
     title,
+    description,
     inline,
     questionName,
     questionValue,
@@ -90,14 +98,15 @@ module.exports = {
   }, client, event) => {
     const question = event.content?.split(" ").slice(1).join(" ");
 
-    if (!question) return event.respond({ content: errorMessage, ephemeral: (commandType(event) === "interaction") });
+    if (!question) return event.reject(errorMessage);
 
     const answers = answerOptions?.trim().split("\n").filter(Boolean);
     const response = answers[Math.floor(Math.random() * answers.length)];
 
     const embed = new EmbedBuilder()
       .setColor(0x00bfff)
-      .setTitle(title)
+      .setTitle(title || null)
+      .setDescription(description || null)
       .addFields(
         { name: questionName, value: questionValue.replaceAll("{question}", question), inline },
         { name: answerName, value: answerValue.replaceAll("{answer}", response), inline }

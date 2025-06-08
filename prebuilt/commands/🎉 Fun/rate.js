@@ -20,21 +20,21 @@ module.exports = {
     },
 
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "Title of the embed message.",
       default: "📊  Rating"
     },
 
     description: {
-      type: "text",
+      type: "textarea",
       title: "Embed Description",
       description: "Description of the embed message. Use {item} for what is being rated and {score} for the number.",
       default: "I'd rate **{item}** a **{score}/10**!"
     },
 
     missingInput: {
-      type: "text",
+      type: "textarea",
       title: "Missing Input Message",
       description: "Message shown when nothing is provided to rate.",
       default: "❌ You need to tell me what to rate!"
@@ -51,20 +51,20 @@ module.exports = {
     try {
       const args = (event.content?.split(" ").slice(1).join(" ") || "").trim();
 
-      if (!args) return event.respond(missingInput);
+      if (!args) return event.reject(missingInput);
 
       const score = Math.floor(Math.random() * 10) + 1;
 
       const embed = new EmbedBuilder()
         .setColor(0x00bfff)
-        .setTitle(title)
-        .setDescription(description.replaceAll("{item}", args).replaceAll("{score}", score.toString()))
+        .setTitle(title || null)
+        .setDescription(description.replaceAll("{item}", args).replaceAll("{score}", score.toString()) || null)
         .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
         .setTimestamp();
 
       event.respond({ content, embeds: [embed] });
     } catch {
-      event.respond("❌ Something went wrong. Try again.");
+      event.reject("❌ Something went wrong. Try again.");
     }
   },
 

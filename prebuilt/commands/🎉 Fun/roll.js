@@ -20,15 +20,15 @@ module.exports = {
     },
 
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "The title of the embed.",
       default: "🎲  Dice Roll"
     },
 
     description: {
-      type: "text",
-      title: "Description",
+      type: "textarea",
+      title: "Embed Description",
       description: "The description of the embed. Use {number} to show the rolled value.",
       default: "You rolled a **{number}**!"
     },
@@ -48,7 +48,7 @@ module.exports = {
     },
 
     errorMessage: {
-      type: "text",
+      type: "textarea",
       title: "Error Message",
       description: "Message shown if something goes wrong.",
       default: "❌ Couldn't roll the dice. Try again!"
@@ -68,21 +68,21 @@ module.exports = {
       min = Number(min);
       max = Number(max);
 
-      if (isNaN(min) || isNaN(max) || min >= max) return event.respond("⚠️ Invalid min/max values!");
+      if (isNaN(min) || isNaN(max) || min >= max) return event.reject("⚠️ Invalid min/max values!");
 
       const rolled = Math.floor(Math.random() * (max - min + 1)) + min;
 
       const embed = new EmbedBuilder()
         .setColor(0x00bfff)
-        .setTitle(title)
-        .setDescription(description.replaceAll("{number}", rolled.toString()))
+        .setTitle(title || null)
+        .setDescription(description.replaceAll("{number}", rolled.toString()) || null)
         .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
         .setTimestamp();
 
       event.respond({ content, embeds: [embed] });
     } catch {
-      event.respond(errorMessage);
-    }
+      event.reject(errorMessage);
+    };
   },
 
   slashCommand: (SlashCommandBuilder) ? new SlashCommandBuilder() : null

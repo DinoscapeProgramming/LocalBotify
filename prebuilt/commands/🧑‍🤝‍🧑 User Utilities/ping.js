@@ -8,13 +8,19 @@ module.exports = {
 
   permissions: [
     "SEND_MESSAGES",
-    "MANAGE_MESSAGES",
     "EMBED_LINKS",
     "ATTACH_FILES",
     "READ_MESSAGE_HISTORY"
   ],
 
   variables: {
+    pingingMessage: {
+      type: "textarea",
+      title: "Pinging Message",
+      description: "The message to send while the bot is pinging.",
+      default: "Pinging..."
+    },
+
     content: {
       type: "textarea",
       title: "Content",
@@ -73,6 +79,7 @@ module.exports = {
   },
 
   command: async ({
+    pingingMessage,
     content,
     title,
     description,
@@ -85,7 +92,7 @@ module.exports = {
   }, client, event) => {
     const start = Date.now();
 
-    const sent = await event.respond("Pinging...");
+    const sent = await event.respond(pingingMessage || "Pinging...");
 
     const end = Date.now();
 
@@ -94,7 +101,7 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setColor(0x00bfff)
-      .setTitle(title)
+      .setTitle(title || null)
       .setDescription(description || null)
       .addFields(
         {

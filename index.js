@@ -154,6 +154,15 @@ const createWindow = () => {
     };
   });
 
+  ipcMain.on("closeTerminal", (_, botId) => {
+    if (ptyProcesses[botId]) {
+      try {
+        ptyProcesses[botId].kill();
+        delete ptyProcesses[botId];
+      } catch {};
+    };
+  });
+
   ipcMain.handle("importGitHubRepository", async (_, [botId, repo]) => {
     const url = `${repo}/archive/refs/heads/main.zip`;
     const outputDirectory = path.join(process.cwd(), "bots", botId.toString());
