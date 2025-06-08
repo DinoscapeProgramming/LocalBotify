@@ -8,117 +8,131 @@ module.exports = {
 
   permissions: [
     "SEND_MESSAGES",
-    "EMBED_LINKS",
-    "READ_MESSAGE_HISTORY"
+    "EMBED_LINKS"
   ],
 
   variables: {
-    errorMessage: {
-      type: "textarea",
-      title: "Error Response Message",
-      description: "The message to send if the role is not mentioned or invalid.",
-      default: "Please mention a valid role."
-    },
     content: {
       type: "textarea",
       title: "Content",
       description: "The regular text content above the response embed.",
       default: ""
     },
+
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "The title of the response embed.",
       default: "📘  Role Information"
     },
+
     description: {
       type: "textarea",
       title: "Embed Description",
-      description: "The description of the embed. Use <@&${roleId}> to mention the role.",
-      default: "Here is some information about <@&${roleId}>:"
+      description: "The description of the embed. Use {roleId} for the role id.",
+      default: "Here is some information about <@&{roleId}>:"
     },
+
     inline: {
       type: "switch",
       title: "Inline Fields",
       description: "Whether the fields in the embed should be displayed inline.",
       default: false
     },
+
     roleIdName: {
-      type: "text",
+      type: "textarea",
       title: "Role ID Field",
       description: "The name of the field that will display the role ID in the embed.",
       default: "🆔  Role ID"
     },
+
     roleIdValue: {
-      type: "text",
+      type: "textarea",
       title: "Role ID Value",
       description: "The value of the field that will display the role ID in the embed.",
       default: "${roleId}"
     },
+
     createdAtName: {
-      type: "text",
+      type: "textarea",
       title: "Created At Field",
       description: "The name of the field that will display when the role was created.",
       default: "📅  Created At"
     },
+
     createdAtValue: {
-      type: "text",
+      type: "textarea",
       title: "Created At Value",
       description: "The value of the field that will display when the role was created.",
-      default: "<t:${createdAtTimestamp}:F>"
+      default: "<t:{createdAtTimestamp}:F>"
     },
+
     colorName: {
-      type: "text",
+      type: "textarea",
       title: "Color Field",
       description: "The name of the field that will display the role color.",
       default: "🎨  Color"
     },
+
     colorValue: {
-      type: "text",
+      type: "textarea",
       title: "Color Value",
       description: "The value of the field that will display the role color.",
-      default: "#${colorHex}"
+      default: "#{colorHex}"
     },
+
     membersName: {
-      type: "text",
+      type: "textarea",
       title: "Members Field",
       description: "The name of the field that will display the number of members with this role.",
       default: "👥  Members"
     },
+
     membersValue: {
-      type: "text",
+      type: "textarea",
       title: "Members Value",
       description: "The value of the field that will display the number of members with this role.",
-      default: "${membersCount}"
+      default: "{membersCount}"
     },
+
     mentionableName: {
-      type: "text",
+      type: "textarea",
       title: "Mentionable Field",
       description: "The name of the field that will display if the role is mentionable.",
       default: "🔒  Mentionable"
     },
+
     mentionableValue: {
-      type: "text",
+      type: "textarea",
       title: "Mentionable Value",
       description: "The value of the field that will display if the role is mentionable.",
-      default: "${mentionableStatus}"
+      default: "{mentionableStatus}"
     },
+
     positionName: {
-      type: "text",
+      type: "textarea",
       title: "Position Field",
       description: "The name of the field that will display the role's position in the hierarchy.",
       default: "📌  Position"
     },
+
     positionValue: {
-      type: "text",
+      type: "textarea",
       title: "Position Value",
       description: "The value of the field that will display the role's position in the hierarchy.",
-      default: "${rolePosition}"
+      default: "{rolePosition}"
+    },
+
+    errorMessage: {
+      type: "textarea",
+      title: "Error Response Message",
+      description: "The message to send if the role is not mentioned or invalid.",
+      default: "Please mention a valid role."
     }
   },
 
   command: async ({
-    errorMessage,
     content,
     title,
     description,
@@ -135,29 +149,30 @@ module.exports = {
     mentionableValue,
     positionName,
     positionValue,
-    footer
+    footer,
+    errorMessage
   }, client, event) => {
     let role = (commandType(event) === "message") ? event.mentions?.roles?.first() : event.options.getRole("role");
 
     if (role) {
       const embed = new Discord.EmbedBuilder()
         .setColor(role.color || 0x00bfff)
-        .setTitle(title.replaceAll("${roleId}", role.id.toString()))
-        .setDescription(description.replaceAll("${roleId}", role.id.toString()))
+        .setTitle(title.replaceAll("{roleId}", role.id.toString()) || null)
+        .setDescription(description.replaceAll("{roleId}", role.id.toString()) || null)
         .addFields(
-          { name: roleIdName, value: roleIdValue.replaceAll("${roleId}", role.id.toString()), inline },
-          { name: createdAtName, value: createdAtValue.replaceAll("${createdAtTimestamp}", Math.floor(role.createdTimestamp / 1000).toString()), inline },
-          { name: colorName, value: colorValue.replaceAll("${colorHex}", role.color.toString(16).padStart(6, "0")), inline },
-          { name: membersName, value: membersValue.replaceAll("${membersCount}", role.members.size.toString()), inline },
-          { name: mentionableName, value: mentionableValue.replaceAll("${mentionableStatus}", (role.mentionable) ? "Yes" : "No"), inline },
-          { name: positionName, value: positionValue.replaceAll("${rolePosition}", role.position.toString()), inline }
+          { name: roleIdName, value: roleIdValue.replaceAll("{roleId}", role.id.toString()), inline },
+          { name: createdAtName, value: createdAtValue.replaceAll("{createdAtTimestamp}", Math.floor(role.createdTimestamp / 1000).toString()), inline },
+          { name: colorName, value: colorValue.replaceAll("{colorHex}", role.color.toString(16).padStart(6, "0")), inline },
+          { name: membersName, value: membersValue.replaceAll("{membersCount}", role.members.size.toString()), inline },
+          { name: mentionableName, value: mentionableValue.replaceAll("{mentionableStatus}", (role.mentionable) ? "Yes" : "No"), inline },
+          { name: positionName, value: positionValue.replaceAll("{rolePosition}", role.position.toString()), inline }
         )
         .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
         .setTimestamp();
 
       event.respond({ content, embeds: [embed] });
     } else {
-      event.respond({ content: errorMessage, ephemeral: (commandType(event) === "interaction") });
+      event.reject(errorMessage);
     };
   },
 

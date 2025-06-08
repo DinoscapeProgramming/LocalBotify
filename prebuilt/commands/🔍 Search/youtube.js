@@ -19,36 +19,35 @@ module.exports = {
       description: "Text to show above the embed message.",
       default: ""
     },
-    embedColor: {
-      type: "color",
-      title: "Embed Color",
-      description: "Color of the embed.",
-      default: "#FF0000"
-    },
-    embedTitle: {
+
+    title: {
       type: "text",
       title: "Embed Title",
       description: "Title for the embed.",
       default: "📺  YouTube Results"
     },
+
     maxResults: {
       type: "number",
       title: "Max Results",
       description: "Max number of results to fetch.",
       default: 10
     },
+
     fieldFormat: {
       type: "textarea",
       title: "Result Field Format",
       description: "Use {title}, {channel}, {views}, {length}, {url}.",
       default: "**{title}**\n\n📺 {channel} • ⏱️ {length} • 👁️ {views}\n🔗 {url}"
     },
+
     errorMessage: {
       type: "textarea",
       title: "Error Message",
       description: "Message to send if no results found or an error occurred.",
       default: "❌ No results found or something went wrong!"
     },
+
     missingArgs: {
       type: "textarea",
       title: "Missing Arguments Message",
@@ -59,8 +58,7 @@ module.exports = {
 
   command: async ({
     content,
-    embedColor,
-    embedTitle,
+    title,
     maxResults,
     fieldFormat,
     footer,
@@ -71,7 +69,7 @@ module.exports = {
       ? event.content.split(" ").slice(1).join(" ")
       : event.options.getString("query");
 
-    if (!query) return event.respond(missingArgs);
+    if (!query) return event.reject(missingArgs);
 
     try {
       const data = await youtubesearchapi.GetListByKeyword(
@@ -80,7 +78,7 @@ module.exports = {
 
       const items = data.items.filter((i) => i.type === "video");
 
-      if (!items.length) return event.respond(errorMessage);
+      if (!items.length) return event.reject(errorMessage);
 
       let page = 0;
       const user = (commandType(event) === "message") ? event.author : event.user;
@@ -98,9 +96,9 @@ module.exports = {
           .replaceAll("{url}", url);
 
         return new Discord.EmbedBuilder()
-          .setColor(embedColor)
-          .setTitle(embedTitle)
-          .setDescription(formatted)
+          .setColor(0x00bfff)
+          .setTitle(title || null)
+          .setDescription(formatted || null)
           .setThumbnail(video.thumbnail.thumbnails[0]?.url || null)
           .setFooter({ text: footer, iconURL: user.displayAvatarURL() })
           .setTimestamp();
@@ -158,9 +156,8 @@ module.exports = {
           components: components()
         });
       });
-
     } catch {
-      event.respond(errorMessage);
+      event.reject(errorMessage);
     };
   },
 

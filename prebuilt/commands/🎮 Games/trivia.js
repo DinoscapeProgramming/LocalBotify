@@ -19,18 +19,21 @@ module.exports = {
       description: "Text to show above the embed message.",
       default: ""
     },
+
     title: {
       type: "textarea",
       title: "Embed Title",
       description: "The title of the trivia embed.",
       default: "🧠 Trivia Time!"
     },
+
     category: {
       type: "textarea",
       title: "Trivia Category (optional)",
       description: "Leave blank for any. Examples: 18 (CS), 9 (General Knowledge)",
       default: ""
     },
+
     difficulty: {
       type: "select",
       title: "Difficulty",
@@ -43,24 +46,28 @@ module.exports = {
       },
       default: "any"
     },
+
     correctMsg: {
       type: "textarea",
       title: "Correct Answer Message",
       description: "Message shown when the user answers correctly. Use {answer} to show the correct answer.",
       default: "✅ Correct! You're smart!"
     },
+
     wrongMsg: {
       type: "textarea",
       title: "Wrong Answer Message",
       description: "Message shown when the user answers incorrectly. Use {answer} to show the correct answer.",
       default: "❌ Wrong! The correct answer was **{answer}**."
     },
+
     timeoutMsg: {
       type: "textarea",
       title: "Timeout Message",
       description: "Message shown when the time runs out. Use {answer} to show the correct answer.",
       default: "⏱️ Time's up! The answer was **{answer}**."
     },
+
     secondsToAnswer: {
       type: "number",
       title: "Seconds to Answer",
@@ -83,7 +90,7 @@ module.exports = {
     const url = new URL("https://opentdb.com/api.php");
     url.searchParams.set("amount", "1");
     if (category) url.searchParams.set("category", category);
-    if (difficulty) url.searchParams.set("difficulty", difficulty);
+    if (difficulty !== "any") url.searchParams.set("difficulty", difficulty);
     url.searchParams.set("type", "multiple");
 
     try {

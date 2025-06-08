@@ -33,17 +33,20 @@ module.exports = {
       description: "Title of the embed message.",
       default: "🟩  Wordle"
     },
+
     startMessage: {
       type: "textarea",
       title: "Start Message",
       description: "Message shown when Wordle game begins.",
       default: "🎮 Wordle Game started! Reply with a 5-letter guess."
     },
+
     wrongLength: {
       type: "textarea",
       title: "Wrong Length Message",
       default: "❌ Your guess must be 5 letters."
     },
+
     color: {
       type: "color",
       title: "Embed Color",

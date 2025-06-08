@@ -232,9 +232,7 @@ module.exports = {
 
   permissions: [
     "SEND_MESSAGES",
-    "MANAGE_MESSAGES",
     "EMBED_LINKS",
-    "ATTACH_FILES",
     "READ_MESSAGE_HISTORY"
   ],
 
@@ -245,18 +243,21 @@ module.exports = {
       description: "The title of the response embed when the user is not connected to the AI agent.",
       default: "🧠  Connect to AI Agent"
     },
+
     description: {
       type: "textarea",
       title: "Connection Description",
       description: "The description of the response embed when the user is not connected to the AI agent. Use {link} to insert the link to connect to the AI agent and {password} to insert the password.",
       default: `Please connect using the following link: {link}\nEnter the following password to connect: \`{password}\``
     },
+
     personality: {
       type: "textarea",
       title: "Personality",
       description: "The personality of the AI agent. This will be used to set the context for the AI. You can use markdown syntax here.",
       default: "You are a helpful AI assistant. You will answer the user's questions based on the context provided. The user in this conversation is called {user}, so treat the user as such."
     },
+
     errorMessage: {
       type: "textarea",
       title: "Error Response Message",

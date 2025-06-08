@@ -18,12 +18,14 @@ module.exports = {
       description: "The regular text content above the response embed.",
       default: ""
     },
+
     title: {
       type: "textarea",
       title: "Embed Title",
       description: "The title of the response embed.",
       default: "🔐  Bot Permissions"
     },
+
     description: {
       type: "textarea",
       title: "Embed Description",

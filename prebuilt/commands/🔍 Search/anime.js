@@ -6,7 +6,10 @@ const { commandType } = requireCore("localbotify");
 module.exports = {
   description: "Search for anime information using MyAnimeList via the Jikan API.",
 
-  permissions: ["SEND_MESSAGES", "EMBED_LINKS"],
+  permissions: [
+    "SEND_MESSAGES",
+    "EMBED_LINKS"
+  ],
 
   variables: {
     content: {
@@ -15,66 +18,77 @@ module.exports = {
       description: "Text to show above the embed message.",
       default: ""
     },
-    embedTitle: {
-      type: "text",
+
+    title: {
+      type: "textarea",
       title: "Embed Title",
-      description: "The title of the embed. Use `{title}`.",
+      description: "The title of the embed. Use {title}.",
       default: "🎌  Anime Search: {title}"
     },
-    embedColor: {
-      type: "color",
-      title: "Embed Color",
-      description: "Color of the embed.",
-      default: "#F472B6"
+
+    description: {
+      type: "textarea",
+      title: "Embed Description",
+      description: "The description of the embed.",
+      default: ""
     },
+
     inline: {
       type: "switch",
       title: "Inline Fields",
       description: "Whether to display fields inline.",
       default: false
     },
+
     fieldTitleTitle: {
-      type: "text",
+      type: "textarea",
       title: "Title Field Title",
       description: "Name of the title field.",
       default: "📺  Title"
     },
+
     fieldTitleValue: {
-      type: "text",
+      type: "textarea",
       title: "Title Field Value",
-      description: "Value of the title field. Use `{title_english}` or `{title_japanese}`.",
+      description: "Value of the title field. Use {title_english} or {title_japanese}.",
       default: "{title_english} / {title_japanese}"
     },
+
     fieldEpisodesTitle: {
-      type: "text",
+      type: "textarea",
       title: "Episodes Field Title",
       description: "Title for the episodes field.",
       default: "📦  Episodes"
     },
+
     fieldEpisodesValue: {
-      type: "text",
+      type: "textarea",
       title: "Episodes Field Value",
-      description: "Value for the episodes field. Use `{episodes}`.",
+      description: "Value for the episodes field. Use {episodes}.",
       default: "{episodes}"
     },
+
     fieldScoreTitle: {
-      type: "text",
+      type: "textarea",
       title: "Score Field Title",
       description: "Title for the score field.",
       default: "⭐  Score"
     },
+
     fieldScoreValue: {
-      type: "text",
+      type: "textarea",
       title: "Score Field Value",
-      description: "Value for the score field. Use `{score}`.",
+      description: "Value for the score field. Use {score}.",
       default: "{score}/10"
     },
+
     errorMessage: {
       type: "textarea",
       title: "Error Message",
       description: "What to send if nothing is found.",
       default: "❌ Could not find any anime by that name."
     },
+
     missingArgs: {
       type: "textarea",
       title: "Missing Arguments Message",
@@ -83,43 +97,40 @@ module.exports = {
     }
   },
 
-  command: async (
-    {
-      content,
-      embedTitle,
-      embedColor,
-      inline,
-      fieldTitleTitle,
-      fieldTitleValue,
-      fieldEpisodesTitle,
-      fieldEpisodesValue,
-      fieldScoreTitle,
-      fieldScoreValue,
-      footer,
-      errorMessage,
-      missingArgs
-    },
-    client,
-    event
-  ) => {
+  command: async ({
+    content,
+    title,
+    description,
+    inline,
+    fieldTitleTitle,
+    fieldTitleValue,
+    fieldEpisodesTitle,
+    fieldEpisodesValue,
+    fieldScoreTitle,
+    fieldScoreValue,
+    footer,
+    errorMessage,
+    missingArgs
+  }, client, event) => {
     const query =
       commandType(event) === "message"
         ? event.content.split(" ").slice(1).join(" ")
         : event.options.getString("name");
 
-    if (!query) return event.respond(missingArgs);
+    if (!query) return event.reject(missingArgs);
 
     const res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=5`);
     const data = await res.json();
 
-    if (!data.data || data.data.length === 0) return event.respond(errorMessage);
+    if (!data.data || data.data.length === 0) return event.reject(errorMessage);
 
     let index = 0;
 
     const generateEmbed = (anime) => {
       const embed = new Discord.EmbedBuilder()
-        .setColor(embedColor)
-        .setTitle(embedTitle.replaceAll("{title}", anime.title))
+        .setColor(0x00bfff)
+        .setTitle(title.replaceAll("{title}", anime.title) || null)
+        .setDescription(description || null)
         .setThumbnail(anime.images?.jpg?.image_url)
         .addFields(
           {

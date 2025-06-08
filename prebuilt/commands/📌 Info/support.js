@@ -21,24 +21,28 @@ module.exports = {
       description: "The regular text content above the response embed",
       default: ""
     },
+
     title: {
       type: "textarea",
       title: "Embed Title",
       description: "The title of the response embed",
       default: "🎉  Join My Support Server!"
     },
+
     invite: {
       type: "link",
       title: "Support Server Invite Link",
       description: "The invite link of the bot's support server",
       default: ""
     },
+
     description: {
       type: "textarea",
       title: "Embed Description",
       description: "The description of the response embed",
       default: "Click the link above to join my support server!"
     },
+
     errorMessage: {
       type: "textarea",
       title: "Error Response Message",

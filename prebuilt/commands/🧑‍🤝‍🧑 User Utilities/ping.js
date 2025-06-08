@@ -8,9 +8,7 @@ module.exports = {
 
   permissions: [
     "SEND_MESSAGES",
-    "EMBED_LINKS",
-    "ATTACH_FILES",
-    "READ_MESSAGE_HISTORY"
+    "EMBED_LINKS"
   ],
 
   variables: {
@@ -29,7 +27,7 @@ module.exports = {
     },
 
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "The title of the response embed",
       default: "🏓  Pong!"

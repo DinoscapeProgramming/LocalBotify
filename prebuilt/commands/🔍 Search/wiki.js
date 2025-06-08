@@ -18,48 +18,49 @@ module.exports = {
       description: "Text to show above the embed message.",
       default: ""
     },
-    embedTitle: {
-      type: "text",
+
+    title: {
+      type: "textarea",
       title: "Embed Title",
-      description: "Title of the embed message. Use `{title}` for the article title.",
+      description: "Title of the embed message. Use {title} for the article title.",
       default: "📚  Wikipedia Article: {title}"
     },
-    embedColor: {
-      type: "color",
-      title: "Embed Color",
-      description: "Color of the embed.",
-      default: "#3C8DBC"
-    },
-    embedDescription: {
+
+    description: {
       type: "textarea",
       title: "Embed Description",
-      description: "Description of the embed. Use `{extract}` for the article summary and `{description}` for the wiki description.",
+      description: "Description of the embed. Use {extract} for the article summary and {description} for the wiki description.",
       default: "*{description}*\n\n{extract}"
     },
+
     showImage: {
       type: "switch",
       title: "Show Image",
       description: "Whether to show the thumbnail image if available.",
       default: true
     },
+
     fieldLinkTitle: {
-      type: "text",
+      type: "textarea",
       title: "Link Field Title",
       description: "Title for the Wikipedia link field.",
       default: "🔗  Read More"
     },
+
     fieldLinkValue: {
-      type: "text",
+      type: "textarea",
       title: "Link Field Value",
-      description: "Value of the link field. Use `{url}` to include the Wikipedia URL.",
+      description: "Value of the link field. Use {url} to include the Wikipedia URL.",
       default: "[Click here to read more]({url})"
     },
+
     errorMessage: {
       type: "textarea",
       title: "Error Message",
       description: "Message to send if no Wikipedia article is found.",
       default: "❌ No Wikipedia article found for that title."
     },
+
     missingArgs: {
       type: "textarea",
       title: "Missing Arguments Message",
@@ -70,9 +71,8 @@ module.exports = {
 
   command: async ({
     content,
-    embedTitle,
-    embedColor,
-    embedDescription,
+    title,
+    description,
     showImage,
     fieldLinkTitle,
     fieldLinkValue,
@@ -84,33 +84,31 @@ module.exports = {
       ? event.content.split(" ").slice(1).join(" ")
       : event.options.getString("topic");
 
-    if (!topic) return event.respond(missingArgs);
+    if (!topic) return event.reject(missingArgs);
 
     try {
       const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic)}`);
-      if (!res.ok) return event.respond(errorMessage);
+      if (!res.ok) return event.reject(errorMessage);
 
       const data = await res.json();
 
-      if (!data.extract) return event.respond(errorMessage);
+      if (!data.extract) return event.reject(errorMessage);
 
       const displayTitle = data.title || topic;
       const wikiUrl = data.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(topic)}`;
       const image = data.thumbnail?.source;
 
       const embed = new Discord.EmbedBuilder()
-        .setColor(embedColor)
-        .setTitle(embedTitle.replaceAll("{title}", displayTitle))
-        .setDescription(
-          embedDescription
-            .replaceAll("{extract}", data.extract)
-            .replaceAll("{description}", data.description || "No description available.")
+        .setColor(0x00bfff)
+        .setTitle(title.replaceAll("{title}", displayTitle) || null)
+        .setDescription(description.replaceAll("{extract}", data.extract).replaceAll("{description}", data.description || "No description available.") || null)
+        .addFields(
+          {
+            name: fieldLinkTitle,
+            value: fieldLinkValue.replaceAll("{url}", wikiUrl),
+            inline: false
+          }
         )
-        .addFields({
-          name: fieldLinkTitle,
-          value: fieldLinkValue.replaceAll("{url}", wikiUrl),
-          inline: false
-        })
         .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
         .setTimestamp();
 
@@ -118,7 +116,7 @@ module.exports = {
 
       event.respond({ content, embeds: [embed] });
     } catch {
-      event.respond(errorMessage);
+      event.reject(errorMessage);
     };
   },
 

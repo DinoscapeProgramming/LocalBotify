@@ -18,66 +18,77 @@ module.exports = {
       description: "Text to show above the embed message.",
       default: ""
     },
-    embedTitle: {
-      type: "text",
+
+    title: {
+      type: "textarea",
       title: "Embed Title",
-      description: "Title of the embed message.",
+      description: "Title of the embed message. Use {name} to show the city name.",
       default: "🌤️  Weather - {name}"
     },
-    embedColor: {
-      type: "color",
-      title: "Embed Color",
-      description: "Color of the embed.",
-      default: "#1E90FF"
+
+    description: {
+      type: "textarea",
+      title: "Embed Description",
+      description: "Description of the embed message.",
+      default: ""
     },
+
     inline: {
       type: "switch",
       title: "Inline Fields",
       description: "Whether to display the fields in the embed inline.",
       default: false
     },
+
     fieldTemperatureTitle: {
-      type: "text",
+      type: "textarea",
       title: "Temperature Field Title",
-      description: "Title for the temperature field in the embed. Use `{name}` to show the city name.",
+      description: "Title for the temperature field in the embed.",
       default: "🌡️  Temperature"
     },
+
     fieldTemperatureValue: {
-      type: "text",
+      type: "textarea",
       title: "Temperature Field Value",
-      description: "Value for the temperature field in the embed. Use `{temperature}` to show the temperature.",
+      description: "Value for the temperature field in the embed. Use {temperature} to show the temperature.",
       default: "{temperature}°C"
     },
+
     fieldWindTitle: {
-      type: "text",
+      type: "textarea",
       title: "Wind Speed Field Title",
       description: "Title for the wind speed field in the embed.",
       default: "💨  Wind Speed"
     },
+
     fieldWindValue: {
-      type: "text",
+      type: "textarea",
       title: "Wind Speed Field Value",
-      description: "Value for the wind speed field in the embed. Use `{windspeed}` to show the wind speed.",
+      description: "Value for the wind speed field in the embed. Use {windspeed} to show the wind speed.",
       default: "{windspeed} km/h"
     },
+
     fieldConditionTitle: {
-      type: "text",
+      type: "textarea",
       title: "Condition Field Title",
       description: "Title for the weather condition field in the embed.",
       default: "🔍 Weather Code"
     },
+
     fieldConditionValue: {
-      type: "text",
+      type: "textarea",
       title: "Condition Prefix",
-      description: "Value for the weather condition field in the embed. Use `{weathercode}` to show the weather code.",
+      description: "Value for the weather condition field in the embed. Use {weathercode} to show the weather code.",
       default: "{weathercode}"
     },
+
     errorMessage: {
       type: "textarea",
       title: "Error Message",
       description: "Message to send if the weather data cannot be retrieved.",
       default: "❌ Could not retrieve weather data. Please check the location."
     },
+
     missingArgs: {
       type: "textarea",
       title: "Missing Arguments Message",
@@ -88,8 +99,8 @@ module.exports = {
 
   command: async ({
     content,
-    embedTitle,
-    embedColor,
+    title,
+    description,
     inline,
     fieldTemperatureTitle,
     fieldTemperatureValue,
@@ -103,13 +114,13 @@ module.exports = {
   }, client, event) => {
     const city = (commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("city");
 
-    if (!city) return event.respond(missingArgs);
+    if (!city) return event.reject(missingArgs);
 
     try {
       const geoResult = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}`);
       const geoData = await geoResult.json();
 
-      if (!geoData.results || geoData.results.length === 0) return event.respond(errorMessage);
+      if (!geoData.results || geoData.results.length === 0) return event.reject(errorMessage);
 
       const location = geoData.results[0];
       const lat = location.latitude;
@@ -119,14 +130,14 @@ module.exports = {
       const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
       const weatherData = await weatherRes.json();
 
-      if (!weatherData.current_weather)
-        return event.respond(errorMessage);
+      if (!weatherData.current_weather) return event.reject(errorMessage);
 
       const weather = weatherData.current_weather;
 
       const embed = new Discord.EmbedBuilder()
-        .setColor(embedColor)
-        .setTitle(embedTitle.replaceAll("{name}", resolvedName))
+        .setColor(0x00bfff)
+        .setTitle(title.replaceAll("{name}", resolvedName) || null)
+        .setDescription(description || null)
         .addFields(
           { name: fieldTemperatureTitle, value: fieldTemperatureValue.replaceAll("{temperature}", weather.temperature.toString()), inline },
           { name: fieldWindTitle, value: fieldWindValue.replaceAll("{windspeed}", weather.windspeed), inline },
@@ -137,7 +148,7 @@ module.exports = {
 
       event.respond({ content, embeds: [embed] });
     } catch {
-      event.respond(errorMessage);
+      event.reject(errorMessage);
     };
   },
 

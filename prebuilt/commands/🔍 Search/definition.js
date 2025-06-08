@@ -20,48 +20,56 @@ module.exports = {
       description: "Text to show above the embed message.",
       default: ""
     },
-    embedTitle: {
-      type: "text",
+
+    title: {
+      type: "textarea",
       title: "Embed Title",
-      description: "Title of the embed message. Use `{word}` to show the queried word.",
+      description: "Title of the embed message. Use {word} to show the queried word.",
       default: "📖  Definition of \"{word}\""
     },
-    embedColor: {
-      type: "color",
-      title: "Embed Color",
-      description: "Color of the embed.",
-      default: "#0099ff"
+
+    description: {
+      type: "textarea",
+      title: "Embed Description",
+      description: "Description of the embed message.",
+      default: ""
     },
+
     fieldPartOfSpeechTitle: {
-      type: "text",
+      type: "textarea",
       title: "Part of Speech Field Title",
       description: "Title for the part of speech field.",
       default: "Part of Speech"
     },
+
     fieldDefinitionTitle: {
-      type: "text",
+      type: "textarea",
       title: "Definition Field Title",
       description: "Title for the definition field.",
       default: "Definition"
     },
+
     fieldExampleTitle: {
-      type: "text",
+      type: "textarea",
       title: "Example Sentence Field Title",
       description: "Title for the example sentence field.",
       default: "Example"
     },
+
     noExampleText: {
-      type: "text",
+      type: "textarea",
       title: "No Example Text",
       description: "Text to show when no example sentence is available.",
       default: "No example provided."
     },
+
     errorMessage: {
       type: "textarea",
       title: "Error Message",
       description: "Message to send if no definitions are found or on other errors.",
       default: "❌ No definitions found for this word."
     },
+
     missingArgs: {
       type: "textarea",
       title: "Missing Arguments Message",
@@ -72,8 +80,8 @@ module.exports = {
 
   command: async ({
     content,
-    embedTitle,
-    embedColor,
+    title,
+    description,
     fieldPartOfSpeechTitle,
     fieldDefinitionTitle,
     fieldExampleTitle,
@@ -84,7 +92,7 @@ module.exports = {
   }, client, event) => {
     const word = (commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ").toLowerCase() : event.options.getString("word").toLowerCase();
 
-    if (!word) return event.respond(missingArgs);
+    if (!word) return event.reject(missingArgs);
 
     try {
       const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
@@ -92,7 +100,7 @@ module.exports = {
 
       const data = await res.json();
 
-      if (data.title === "No Definitions Found") return event.respond(errorMessage);
+      if (data.title === "No Definitions Found") return event.reject(errorMessage);
 
       const entry = data[0];
 
@@ -114,14 +122,15 @@ module.exports = {
       const createEmbed = (index) => {
         const definition = definitions[index];
         return new Discord.EmbedBuilder()
-          .setColor(embedColor)
-          .setTitle(embedTitle.replaceAll("{word}", entry.word))
+          .setColor(0x00bfff)
+          .setTitle(title.replaceAll("{word}", entry.word) || null)
+          .setDescription(description || null)
           .addFields(
             { name: fieldPartOfSpeechTitle, value: definition.partOfSpeech || "N/A", inline: true },
             { name: fieldDefinitionTitle, value: definition.definition, inline: false },
             { name: fieldExampleTitle, value: definition.example, inline: false }
           )
-          .setFooter({ text: `${footer} — ${index + 1}/${definitions.length}`, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
+          .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
           .setTimestamp();
       };
 
@@ -181,7 +190,7 @@ module.exports = {
         msg.edit({ components: [disabledRow] }).catch(() => {});
       });
     } catch {
-      event.respond(errorMessage);
+      event.reject(errorMessage);
     };
   },
 

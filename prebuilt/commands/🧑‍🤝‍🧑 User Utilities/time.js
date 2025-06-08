@@ -2,7 +2,7 @@ if (!global.requireCore) (global.requireCore = () => ({}));
 
 const Discord = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
-const { DateTime } = require("luxon"); // You may need to install luxon with `npm install luxon`
+const { DateTime } = requireCore("luxon");
 
 module.exports = {
   description: "Get the current time in multiple countries",
@@ -14,11 +14,19 @@ module.exports = {
   
   variables: {
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
-      description: "The title of the embed that will be sent in response to the command.",
+      description: "The title of the response embed.",
       default: "🕒  World Time"
     },
+
+    description: {
+      type: "textarea",
+      title: "Embed Description",
+      description: "The description of the response embed.",
+      default: ""
+    },
+
     times: {
       type: "textarea",
       title: "Times",
@@ -35,6 +43,7 @@ USA: America/New_York`
 
   command: ({
     title,
+    description,
     times,
     footer
   }, client, event) => {
@@ -46,13 +55,14 @@ USA: America/New_York`
     });
 
     const embed = new Discord.EmbedBuilder()
-      .setTitle(title)
       .setColor(0x00bfff)
+      .setTitle(title || null)
+      .setDescription(description || null)
       .addFields(fields)
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
       .setTimestamp();
 
-    event.respond({ embeds: [embed] });
+    event.respond({ content: null, embeds: [embed] });
   },
 
   slashCommand: (Discord.SlashCommandBuilder) ? new Discord.SlashCommandBuilder() : null

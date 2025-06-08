@@ -8,105 +8,117 @@ module.exports = {
 
   permissions: [
     "SEND_MESSAGES",
-    "EMBED_LINKS",
-    "READ_MESSAGE_HISTORY"
+    "EMBED_LINKS"
   ],
 
   variables: {
-    errorMessage: {
-      type: "textarea",
-      title: "Error Response Message",
-      description: "The message to send if the user is not mentioned or invalid.",
-      default: "Please mention a valid user."
-    },
     content: {
       type: "textarea",
       title: "Content",
       description: "The regular text content above the response embed.",
       default: ""
     },
+
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "The title of the response embed.",
       default: "👤  User Information"
     },
+
     description: {
       type: "textarea",
       title: "Embed Description",
-      description: "The description of the embed. Use <@${userId}> to mention the user.",
-      default: "Here is some information about <@${userId}>:"
+      description: "The description of the embed. Use <@{userId}> to mention the user.",
+      default: "Here is some information about <@{userId}>:"
     },
+
     inline: {
       type: "switch",
       title: "Inline Fields",
       description: "Whether the fields in the embed should be displayed inline.",
       default: false
     },
+
     userIdName: {
-      type: "text",
+      type: "textarea",
       title: "User ID Field",
       description: "The name of the field that will display the user ID.",
       default: "🆔  User ID"
     },
+
     userIdValue: {
-      type: "text",
+      type: "textarea",
       title: "User ID Value",
       description: "The value of the field that will display the user ID.",
-      default: "${userId}"
+      default: "{userId}"
     },
+
     usernameName: {
-      type: "text",
+      type: "textarea",
       title: "Username Field",
       description: "The name of the field that will display the username.",
       default: "📛  Username"
     },
+
     usernameValue: {
-      type: "text",
+      type: "textarea",
       title: "Username Value",
       description: "The value of the field that will display the username.",
-      default: "${username}"
+      default: "{username}"
     },
+
     createdAtName: {
-      type: "text",
+      type: "textarea",
       title: "Created At Field",
       description: "The name of the field that will display when the account was created.",
       default: "📅  Created At"
     },
+
     createdAtValue: {
-      type: "text",
+      type: "textarea",
       title: "Created At Value",
       description: "The value of the field that will display when the account was created.",
-      default: "<t:${createdAtTimestamp}:F>"
+      default: "<t:{createdAtTimestamp}:F>"
     },
+
     joinedAtName: {
-      type: "text",
+      type: "textarea",
       title: "Joined At Field",
       description: "The name of the field that will display when the user joined the server.",
       default: "📥  Joined Server"
     },
+
     joinedAtValue: {
-      type: "text",
+      type: "textarea",
       title: "Joined At Value",
       description: "The value of the field that will display when the user joined the server.",
-      default: "<t:${joinedAtTimestamp}:F>"
+      default: "<t:{joinedAtTimestamp}:F>"
     },
+
     botName: {
-      type: "text",
+      type: "textarea",
       title: "Bot Field",
       description: "The name of the field that will display whether the user is a bot.",
       default: "🤖  Is Bot"
     },
+
     botValue: {
-      type: "text",
+      type: "textarea",
       title: "Bot Value",
       description: "The value of the field that will display whether the user is a bot.",
-      default: "${isBot}"
+      default: "{isBot}"
+    },
+
+    errorMessage: {
+      type: "textarea",
+      title: "Error Response Message",
+      description: "The message to send if the user is not mentioned or invalid.",
+      default: "Please mention a valid user."
     }
   },
 
   command: async ({
-    errorMessage,
     content,
     title,
     description,
@@ -121,7 +133,8 @@ module.exports = {
     joinedAtValue,
     botName,
     botValue,
-    footer
+    footer,
+    errorMessage
   }, client, event) => {
     let member = (commandType(event) === "message") ? event.mentions?.members?.first() : event.options.getMember("user");
 
@@ -130,22 +143,22 @@ module.exports = {
 
       const embed = new Discord.EmbedBuilder()
         .setColor(0x00bfff)
-        .setTitle(title.replaceAll("${userId}", user.id))
-        .setDescription(description.replaceAll("${userId}", user.id))
+        .setTitle(title.replaceAll("{userId}", user.id) || null)
+        .setDescription(description.replaceAll("{userId}", user.id) || null)
         .setThumbnail(user.displayAvatarURL({ dynamic: true }))
         .addFields(
-          { name: userIdName, value: userIdValue.replaceAll("${userId}", user.id), inline },
-          { name: usernameName, value: usernameValue.replaceAll("${username}", user.tag), inline },
-          { name: createdAtName, value: createdAtValue.replaceAll("${createdAtTimestamp}", Math.floor(user.createdTimestamp / 1000).toString()), inline },
-          { name: joinedAtName, value: joinedAtValue.replaceAll("${joinedAtTimestamp}", Math.floor(member.joinedTimestamp / 1000).toString()), inline },
-          { name: botName, value: botValue.replaceAll("${isBot}", user.bot ? "Yes" : "No"), inline }
+          { name: userIdName, value: userIdValue.replaceAll("{userId}", user.id), inline },
+          { name: usernameName, value: usernameValue.replaceAll("{username}", user.tag), inline },
+          { name: createdAtName, value: createdAtValue.replaceAll("{createdAtTimestamp}", Math.floor(user.createdTimestamp / 1000).toString()), inline },
+          { name: joinedAtName, value: joinedAtValue.replaceAll("{joinedAtTimestamp}", Math.floor(member.joinedTimestamp / 1000).toString()), inline },
+          { name: botName, value: botValue.replaceAll("{isBot}", user.bot ? "Yes" : "No"), inline }
         )
         .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
         .setTimestamp();
 
       event.respond({ content, embeds: [embed] });
     } else {
-      event.respond({ content: errorMessage, ephemeral: (commandType(event) === "interaction") });
+      event.reject(errorMessage);
     };
   },
 

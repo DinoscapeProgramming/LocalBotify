@@ -19,78 +19,91 @@ module.exports = {
       description: "The regular text content above the response embed.",
       default: ""
     },
+
     title: {
       type: "textarea",
       title: "Embed Title",
       description: "The title of the response embed.",
       default: "🤖  Bot Information"
     },
+
     description: {
       type: "textarea",
       title: "Embed Description",
       description: "The description of the embed. Use {botName} to insert the bot's name and {botId} to insert the bot's ID.",
       default: "Here is some information about **{botName}**:"
     },
+
     inline: {
       type: "switch",
       title: "Inline Fields",
       description: "Whether the fields in the embed should be displayed inline.",
       default: false
     },
+
     botIdName: {
       type: "textarea",
       title: "Bot ID Field",
       description: "The name of the field that will display the bot ID.",
       default: "🆔  Bot ID"
     },
+
     botIdValue: {
       type: "textarea",
       title: "Bot ID Value",
       description: "The value of the field that will display the bot ID. Use {botId} to insert the bot's ID.",
       default: "{botId}"
     },
+
     usernameName: {
       type: "textarea",
       title: "Bot Tag Field",
       description: "The name of the field that will display the bot's tag.",
       default: "📛  Bot Tag"
     },
+
     usernameValue: {
       type: "textarea",
       title: "Bot Tag Value",
       description: "The value of the field that will display the bot's tag. Use {botTag} to insert the bot's tag.",
       default: "{botTag}"
     },
+
     createdAtName: {
       type: "textarea",
       title: "Created At Field",
       description: "The name of the field that will display when the bot account was created.",
       default: "📅  Created At"
     },
+
     createdAtValue: {
       type: "textarea",
       title: "Created At Value",
       description: "The value of the field that will display the bot creation time. Use {createdAtTimestamp} to insert the timestamp of when the bot account was created.",
       default: "<t:{createdAtTimestamp}:F>"
     },
+
     serversName: {
       type: "textarea",
       title: "Servers Field",
       description: "The name of the field that will show how many servers the bot is in.",
       default: "🌍  Servers"
     },
+
     serversValue: {
       type: "textarea",
       title: "Servers Value",
       description: "The value of the field that will show how many servers the bot is in. Use {serverCount} to insert the number of servers.",
       default: "{serverCount}"
     },
+
     usersName: {
       type: "textarea",
       title: "Users Field",
       description: "The name of the field that will show how many users the bot can see.",
       default: "👥  Users"
     },
+
     usersValue: {
       type: "textarea",
       title: "Users Value",

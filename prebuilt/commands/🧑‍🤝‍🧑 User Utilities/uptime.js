@@ -11,16 +11,17 @@ module.exports = {
 
   variables: {
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "The title of the embed that will be sent in response to the command.",
       default: "⏱️  Bot Uptime"
     },
+
     description: {
       type: "textarea",
       title: "Embed Description",
-      description: "The message to display in the embed. Use ${days}, ${hours}, ${minutes}, and ${seconds} to show the respective values.",
-      default: "The bot has been online for ${days}d ${hours}h ${minutes}m ${seconds}s."
+      description: "The message to display in the embed. Use {days}, {hours}, {minutes}, and {seconds} to show the respective values.",
+      default: "The bot has been online for {days}d {hours}h {minutes}m {seconds}s."
     }
   },
 
@@ -37,8 +38,8 @@ module.exports = {
 
     const embed = new Discord.EmbedBuilder()
       .setColor(0x00bfff)
-      .setTitle(title)
-      .setDescription(description.replaceAll("${days}", days).replaceAll("${hours}", hours).replaceAll("${minutes}", minutes).replaceAll("${seconds}", seconds))
+      .setTitle(title || null)
+      .setDescription(description.replaceAll("{days}", days).replaceAll("{hours}", hours).replaceAll("{minutes}", minutes).replaceAll("{seconds}", seconds) || null)
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
       .setTimestamp();
 

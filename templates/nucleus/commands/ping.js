@@ -8,9 +8,7 @@ module.exports = {
 
   permissions: [
     "SEND_MESSAGES",
-    "EMBED_LINKS",
-    "ATTACH_FILES",
-    "READ_MESSAGE_HISTORY"
+    "EMBED_LINKS"
   ],
 
   variables: {
@@ -50,28 +48,28 @@ module.exports = {
     },
 
     botLatencyName: {
-      type: "textarea",
+      type: "text",
       title: "Bot Latency Field",
       description: "The name of the field that will display the bot's latency.",
       default: "🤖  Bot Latency"
     },
 
     botLatencyValue: {
-      type: "textarea",
+      type: "text",
       title: "Bot Latency Value",
       description: "The value of the field that will display the bot's latency.",
       default: "${botLatency}ms"
     },
 
     apiLatencyName: {
-      type: "textarea",
+      type: "text",
       title: "API Latency Field",
       description: "The name of the field that will display the API latency.",
       default: "🌐  API Latency"
     },
 
     apiLatencyValue: {
-      type: "textarea",
+      type: "text",
       title: "API Latency Value",
       description: "The value of the field that will display the API latency.",
       default: "${apiLatency}ms"

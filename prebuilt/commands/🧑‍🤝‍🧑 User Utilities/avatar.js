@@ -8,40 +8,47 @@ module.exports = {
 
   permissions: [
     "SEND_MESSAGES",
-    "MANAGE_MESSAGES",
-    "EMBED_LINKS",
-    "ATTACH_FILES",
-    "READ_MESSAGE_HISTORY"
+    "EMBED_LINKS"
   ],
 
   variables: {
     content: {
       type: "textarea",
       title: "Content",
-      description: "The regular text content above the response embed",
+      description: "The regular text content above the response embed.",
       default: ""
     },
+
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
-      description: "The title of the response embed",
+      description: "The title of the response embed.",
       default: "🖼️  Avatar"
+    },
+
+    description: {
+      type: "textarea",
+      title: "Embed Description",
+      description: "The description of the reponse embed.",
+      default: ""
     }
   },
 
   command: async ({
     content,
     title,
+    description,
     footer
   }, client, event) => {
     const embed = new EmbedBuilder()
       .setColor(0x00bfff)
-      .setTitle(title.replaceAll("${userId}", ((commandType(event) === "message") ? event.mentions.users.first()?.id : event.options.getUser("user")?.id) || ((commandType(event) === "message") ? event.author.id : event.user.id)))
+      .setTitle(title.replaceAll("{userId}", ((commandType(event) === "message") ? event.mentions.users.first()?.id : event.options.getUser("user")?.id) || ((commandType(event) === "message") ? event.author.id : event.user.id)) || null)
+      .setDescription(description || null)
       .setImage(((commandType(event) === "message") ? event.mentions.users.first()?.displayAvatarURL({ size: 512, dynamic: true }) : event.options.getUser("user")?.displayAvatarURL({ size: 512, dynamic: true })) || ((commandType(event) === "message") ? event.author.displayAvatarURL({ size: 512, dynamic: true }) : event.user.displayAvatarURL({ size: 512, dynamic: true })))
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
       .setTimestamp();
 
-    event.respond({ content: content.replaceAll("${userId}", ((commandType(event) === "message") ? event.mentions.users.first()?.id : event.options.getUser("user")?.id) || ((commandType(event) === "message") ? event.author.id : event.user.id)), embeds: [embed] });
+    event.respond({ content: content.replaceAll("{userId}", ((commandType(event) === "message") ? event.mentions.users.first()?.id : event.options.getUser("user")?.id) || ((commandType(event) === "message") ? event.author.id : event.user.id)), embeds: [embed] });
   },
 
   slashCommand: (SlashCommandBuilder) ? (new SlashCommandBuilder()
