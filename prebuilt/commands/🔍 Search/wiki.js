@@ -37,7 +37,7 @@ module.exports = {
       default: "*{description}*\n\n{extract}"
     },
     showImage: {
-      type: "boolean",
+      type: "switch",
       title: "Show Image",
       description: "Whether to show the thumbnail image if available.",
       default: true

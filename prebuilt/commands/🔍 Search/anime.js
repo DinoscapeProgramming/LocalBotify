@@ -28,7 +28,7 @@ module.exports = {
       default: "#F472B6"
     },
     inline: {
-      type: "boolean",
+      type: "switch",
       title: "Inline Fields",
       description: "Whether to display fields inline.",
       default: false

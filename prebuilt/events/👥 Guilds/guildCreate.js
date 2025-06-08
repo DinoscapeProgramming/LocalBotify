@@ -9,7 +9,7 @@ module.exports = {
 
   variables: {
     content: {
-      type: "text",
+      type: "textarea",
       title: "Content",
       description: "The regular text message above your welcome embed"
     },

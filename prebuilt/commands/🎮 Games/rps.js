@@ -20,7 +20,7 @@ module.exports = {
 
   variables: {
     content: {
-      type: "text",
+      type: "textarea",
       title: "Content",
       description: "Regular message above the embed.",
       default: ""

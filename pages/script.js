@@ -1223,7 +1223,7 @@ class LocalBotify {
               right: 4rem;
               display: flex;
             ">
-              <button id="workbench-play-btn" class="workbench-action-btn" style="margin-right: 7.5px;">
+              <button id="workbench-play-btn" class="workbench-action-btn" style="margin-right: 7.25px;">
                 ${(((this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/process.txt")) || "OFFLINE").trim() || "OFFLINE") === "OFFLINE") ? `<i class="fas fa-play"></i>Run` : `<i class="fas fa-stop"></i>Stop`}
               </button>
               <button id="workbench-invite-btn" class="workbench-action-btn" style="padding: 0.5rem 0.575rem; margin-right: 7.25px;">
@@ -1568,6 +1568,7 @@ class LocalBotify {
           editorView.querySelector(".editor-terminal .xterm-viewport").style.display = "none";
           editorView.style.visibility = "hidden";
           suiteView.style.display = "none";
+          workbenchView.scrollTop = 0;
           workbenchView.style.display = "block";
           workbenchEditorView.style.display = "none";
           workbenchMainView.style.display = "block";
@@ -1603,6 +1604,10 @@ class LocalBotify {
           }, 500);
         };
       });
+    });
+
+    window.addEventListener("resize", () => {
+      workbenchEditorView.style.setProperty("--workbench-editor-view-scrollbar", (workbenchView.scrollHeight > workbenchView.clientHeight) ? "8px" : "0px");
     });
 
     workbenchMainView.querySelector("#workbench-invite-btn").addEventListener("click", () => {
@@ -1669,7 +1674,7 @@ class LocalBotify {
 
         workbenchEditorView.innerHTML = `
           <h3 class="command-header">
-            <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i><span contenteditable spellcheck="false">${this.escapeHtml(command.textContent.trim().replace(/[^A-Za-z]/g, ""))}</span>
+            <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i><span contenteditable spellcheck="false">${this.escapeHtml((command.dataset.category === "commands") ? command.textContent.trim() : command.textContent.trim().replace(/[^A-Za-z]/g, ""))}</span>
             <button class="add-command-btn" style="position: absolute; right: 39.5px;">
               <i class="fas fa-code"></i>
               Edit in code lab
@@ -1709,15 +1714,15 @@ class LocalBotify {
                     ` : ""
                   }
                   ${(type === "textarea") ? `
-                    <textarea style="height: 130px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}</textarea>
+                    <textarea style="height: 3.15rem; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px - var(--workbench-editor-view-scrollbar, 0px)); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}</textarea>
                   ` : ((type === "select") ? `
-                    <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                    <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px - var(--workbench-editor-view-scrollbar, 0px)); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                       ${Object.entries(options).map(([optionId, optionName]) => `
                         <option value="${optionId}">${optionName}</option>
                       `)}
                     </select>
                   ` : `
-                    <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                    <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px - var(--workbench-editor-view-scrollbar, 0px)); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                   `)}
                 </label>
               `}
@@ -1731,6 +1736,14 @@ class LocalBotify {
             </div>
           `).join("")}
         `;
+
+        requestAnimationFrame(() => {
+          workbenchEditorView.style.setProperty("--workbench-editor-view-scrollbar", (workbenchView.scrollHeight > workbenchView.clientHeight) ? "8px" : "0px");
+
+          workbenchEditorView.querySelectorAll(".command-item.setting-item textarea").forEach((commandItemInput) => {
+            commandItemInput.style.height = `${(commandItemInput.scrollHeight + 4.4).toString()}px`;
+          });
+        });
 
         workbenchEditorView.querySelector(".command-header span").addEventListener("blur", () => {
           if (workbenchEditorView.querySelector(".command-header span").textContent.trim() === command.textContent.trim()) return;
@@ -2506,7 +2519,7 @@ class LocalBotify {
 
           workbenchEditorView.innerHTML = `
             <h3 class="command-header">
-              <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i><span contenteditable spellcheck="false">${this.escapeHtml(command.textContent.trim().replace(/[^A-Za-z]/g, ""))}</span>
+              <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i><span contenteditable spellcheck="false">${this.escapeHtml((command.dataset.category === "commands") ? command.textContent.trim() : command.textContent.trim().replace(/[^A-Za-z]/g, ""))}</span>
               <button class="add-command-btn" style="position: absolute; right: 39.5px;">
                 <i class="fas fa-code"></i>
                 Edit in code lab
@@ -2546,15 +2559,15 @@ class LocalBotify {
                       ` : ""
                     }
                     ${(type === "textarea") ? `
-                      <textarea style="height: 130px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}</textarea>
+                      <textarea style="height: 3.15rem; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px - var(--workbench-editor-view-scrollbar, 0px)); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}</textarea>
                     ` : ((type === "select") ? `
-                      <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                      <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px - var(--workbench-editor-view-scrollbar, 0px)); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                         ${Object.entries(options).map(([optionId, optionName]) => `
                           <option value="${optionId}">${optionName}</option>
                         `)}
                       </select>
                     ` : `
-                      <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                      <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px - var(--workbench-editor-view-scrollbar, 0px)); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                     `)}
                   </label>
                 `}
@@ -2568,6 +2581,14 @@ class LocalBotify {
               </div>
             `).join("")}
           `;
+
+          requestAnimationFrame(() => {
+            workbenchEditorView.style.setProperty("--workbench-editor-view-scrollbar", (workbenchView.scrollHeight > workbenchView.clientHeight) ? "8px" : "0px");
+
+            workbenchEditorView.querySelectorAll(".command-item.setting-item textarea").forEach((commandItemInput) => {
+              commandItemInput.style.height = `${(commandItemInput.scrollHeight + 4.4).toString()}px`;
+            });
+          });
 
           workbenchEditorView.querySelector(".command-header span").addEventListener("blur", () => {
             if (workbenchEditorView.querySelector(".command-header span").textContent.trim() === command.textContent.trim()) return;
@@ -4147,7 +4168,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
           workbenchEditorView.innerHTML = `
             <h3 class="command-header">
-              <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i><span contenteditable spellcheck="false">${this.escapeHtml(command.textContent.trim().replace(/[^A-Za-z]/g, ""))}</span>
+              <i class="fas fa-${(command.dataset.category === "commands") ? "code" : "calendar-days"}"></i><span contenteditable spellcheck="false">${this.escapeHtml((command.dataset.category === "commands") ? command.textContent.trim() : command.textContent.trim().replace(/[^A-Za-z]/g, ""))}</span>
               <button class="add-command-btn" style="position: absolute; right: 39.5px;">
                 <i class="fas fa-code"></i>
                 Edit in code lab
@@ -4187,15 +4208,15 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                       ` : ""
                     }
                     ${(type === "textarea") ? `
-                      <textarea style="height: 130px; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}</textarea>
+                      <textarea style="height: 3.15rem; margin-top: 60px; width: calc((100vw - 10rem) - 2.5px - var(--workbench-editor-view-scrollbar, 0px)); min-height: 3.15rem; font-family: system-ui; background-color: #00000030; resize: vertical;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}</textarea>
                     ` : ((type === "select") ? `
-                      <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                      <select style="margin-top: 60px; width: calc((100vw - 10rem) - 2.5px - var(--workbench-editor-view-scrollbar, 0px)); min-height: 3.15rem; font-family: system-ui; background-color: #151618;" placeholder="Enter ${title.toLowerCase()}..." ${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                         ${Object.entries(options).map(([optionId, optionName]) => `
                           <option value="${optionId}">${optionName}</option>
                         `)}
                       </select>
                     ` : `
-                      <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
+                      <input type="${type.replace("slider", "range").replace("telephone", "tel").replace("link", "url") || "text"}" ${(type !== "color") ? `style="margin-top: ${(60 - ((type === "slider") * 17.5) - (!description * 31.5)).toString()}px; width: calc((100vw - 10rem) - 2.5px - var(--workbench-editor-view-scrollbar, 0px)); min-height: 3.15rem; font-family: system-ui; background-color: #00000030;"` : `style="margin-top: ${(55 - (!description * 31.5)).toString()}px;"`}placeholder="Enter ${title.toLowerCase()}..." value="${JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.variables?.[command.dataset.category]?.[command.textContent.trim()]?.[id] ?? defaultValue ?? ""}" ${(datalist) ? `list=workbench-datalist-${index} ` : "" }${Object.entries(properties).map((property) => [this.escapeHtml(property[0]), `"${this.escapeHtml(property[1].toString())}"`].join("=")).join(" ")}>
                     `)}
                   </label>
                 `}
@@ -4209,6 +4230,14 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
               </div>
             `).join("")}
           `;
+
+          requestAnimationFrame(() => {
+            workbenchEditorView.style.setProperty("--workbench-editor-view-scrollbar", (workbenchView.scrollHeight > workbenchView.clientHeight) ? "8px" : "0px");
+
+            workbenchEditorView.querySelectorAll(".command-item.setting-item textarea").forEach((commandItemInput) => {
+              commandItemInput.style.height = `${(commandItemInput.scrollHeight + 4.4).toString()}px`;
+            });
+          });
 
           workbenchEditorView.querySelector(".command-header span").addEventListener("blur", () => {
             if (workbenchEditorView.querySelector(".command-header span").textContent.trim() === command.textContent.trim()) return;

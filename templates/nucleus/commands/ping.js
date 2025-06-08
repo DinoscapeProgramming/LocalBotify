@@ -33,7 +33,7 @@ module.exports = {
       type: "textarea",
       title: "Embed Description",
       description: "Description of the embed.",
-      default: ""
+      default: null
     },
 
     inline: {
@@ -95,7 +95,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor(0x00bfff)
       .setTitle(title)
-      .setDescription(description)
+      .setDescription(description || null)
       .addFields(
         {
           name: botLatencyName,

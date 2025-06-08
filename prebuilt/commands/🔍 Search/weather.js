@@ -22,7 +22,7 @@ module.exports = {
       type: "text",
       title: "Embed Title",
       description: "Title of the embed message.",
-      default: "🌤️  Weather"
+      default: "🌤️  Weather - {name}"
     },
     embedColor: {
       type: "color",
@@ -31,7 +31,7 @@ module.exports = {
       default: "#1E90FF"
     },
     inline: {
-      type: "boolean",
+      type: "switch",
       title: "Inline Fields",
       description: "Whether to display the fields in the embed inline.",
       default: false
@@ -40,7 +40,7 @@ module.exports = {
       type: "text",
       title: "Temperature Field Title",
       description: "Title for the temperature field in the embed. Use `{name}` to show the city name.",
-      default: "🌡️  Temperature - {name}"
+      default: "🌡️  Temperature"
     },
     fieldTemperatureValue: {
       type: "text",

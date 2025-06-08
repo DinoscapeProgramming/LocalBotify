@@ -20,7 +20,7 @@
     "discord.js": "^14.18.0",
     "he": "^1.2.0",
     "localbotify": "^2.1.0",
-    "localtunnel": "^2.0.2",
+    "localtunnel": "github:lpolish/localtunnel#feature/enhanced-functionality",
     "luxon": "^3.6.1",
     "markdown-wasm": "^1.2.0",
     "node-cron": "^3.0.3",

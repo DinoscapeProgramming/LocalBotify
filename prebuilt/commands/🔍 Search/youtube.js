@@ -38,10 +38,10 @@ module.exports = {
       default: 10
     },
     fieldFormat: {
-      type: "text",
+      type: "textarea",
       title: "Result Field Format",
       description: "Use {title}, {channel}, {views}, {length}, {url}.",
-      default: "**{title}**\n📺 {channel} • ⏱️ {length} • 👁️ {views}\n🔗 {url}"
+      default: "**{title}**\n\n📺 {channel} • ⏱️ {length} • 👁️ {views}\n🔗 {url}"
     },
     errorMessage: {
       type: "textarea",

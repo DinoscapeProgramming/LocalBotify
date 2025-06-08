@@ -7,10 +7,11 @@ requireCore("@teeny-tiny/dotenv").config();
 const updateStatus = require("./trackers/status.js");
 const updateStatistics = require("./trackers/statistics.js");
 const fs = require("fs");
-const { REST, Routes, Client, GatewayIntentBits, PresenceUpdateStatus, ActivityType } = requireCore("discord.js");
+const { REST, Routes, Client, GatewayIntentBits, PresenceUpdateStatus, ActivityType, EmbedBuilder } = requireCore("discord.js");
 const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 const SyncStore = requireCore("syncstore.json");
 const db = new SyncStore("./store.json");
+const categories = require("./data/categories.json");
 const PERMISSIONS = require("./data/permissions.json");
 let config = JSON.parse(fs.readFileSync("./config.json", "utf8") || "{}");
 
@@ -122,13 +123,83 @@ client.on("messageCreate", (message) => {
   let command = message.content.toLowerCase();
   let commandName = command.substring((db[message.guild.id]?.prefix || config.prefix).length).split(" ")[0];
 
+  try {
+    if (db[message.guild.id]?.disabledFeatures?.includes("all")) return message.channel.send({
+      content: null,
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0xff0000)
+          .setTitle("⚠️  Command Disabled")
+          .setDescription("All commands are currently disabled in this server.")
+          .setFooter({ text: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), iconURL: message.author.displayAvatarURL() })
+          .setTimestamp()
+      ]
+    });
+
+    if (db[message.guild.id]?.disabledFeatures?.includes(commandName)) return message.channel.send({
+      content: null,
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0xff0000)
+          .setTitle("⚠️  Command Disabled")
+          .setDescription(`The command \`${commandName}\` is currently disabled in this server.`)
+          .setFooter({ text: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), iconURL: message.author.displayAvatarURL() })
+          .setTimestamp()
+      ]
+    });
+
+    if (db[message.guild.id]?.disabledFeatures?.includes(Object.entries(categories || {}).find(([_, commands]) => commands.includes(commandName))[0].substring(4).toLowerCase())) return message.channel.send({
+      content: null,
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0xff0000)
+          .setTitle("⚠️  Command Disabled")
+          .setDescription(`All commands in the category \`${Object.entries(categories || {}).find(([_, commands]) => commands.includes(commandName))[0].replaceAll("  ", " ")}\` are currently disabled in this server.`)
+          .setFooter({ text: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), iconURL: message.author.displayAvatarURL() })
+          .setTimestamp()
+      ]
+    });
+  } catch {};
+
   if (fs.readdirSync("./commands").includes(`${commandName}.js`)) {
     delete require.cache[require.resolve(`./commands/${commandName}.js`)];
     const commandFile = require(`./commands/${commandName}.js`);
 
+    if (!Array.from(new Set([...["VIEW_CHANNEL", "SEND_MESSAGES"], ...commandFile.permissions])).every((permission) => message.channel.permissionsFor(message.channel.guild.members.me).has(permission.split("_").map((part) => part[0].toUpperCase() + part.slice(1).toLowerCase()).join("")))) {
+      try {
+        return message.channel.send({
+          content: null,
+          embeds: [
+            new EmbedBuilder()
+              .setColor(0xff0000)
+              .setTitle("⚠️  Missing Permissions")
+              .setDescription(`I don't have the required permissions to execute the command \`${commandName}\` in this channel. Please ensure I have the following permissions: \`\`\`diff\n+ ${Array.from(new Set([...["VIEW_CHANNEL", "SEND_MESSAGES"], ...commandFile.permissions])).map((permission) => permission.split("_").map((part) => part[0].toUpperCase() + part.slice(1).toLowerCase()).join("")).filter((permission) => !message.channel.permissionsFor(message.channel.guild.members.me).has(permission)).join("\n+ ")}\n\`\`\``)
+              .setFooter({ text: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), iconURL: message.author.displayAvatarURL() })
+              .setTimestamp()
+          ]
+        });
+      } catch {};
+    };
+
     message.respond = (...args) => {
       try {
         return message.channel.send(...args);
+      } catch {};
+    };
+
+    message.reject = (error) => {
+      try {
+        message.channel.send({
+          content: null,
+          embeds: [
+            new EmbedBuilder()
+              .setColor(0xff0000)
+              .setTitle("⚠️  Error")
+              .setDescription(`An error occurred while executing the command \`${commandName}\`\n\`\`\`${error.message || error}\`\`\``)
+              .setFooter({ text: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), iconURL: message.author.displayAvatarURL() })
+              .setTimestamp()
+          ]
+        });
       } catch {};
     };
 
@@ -166,13 +237,83 @@ client.on("interactionCreate", (interaction) => {
 
   let commandName = interaction.commandName;
 
+  try {
+    if (db[interaction.guild.id]?.disabledFeatures?.includes("all")) return interaction.reply({
+      content: null,
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0xff0000)
+          .setTitle("⚠️  Command Disabled")
+          .setDescription("All commands are currently disabled in this server.")
+          .setFooter({ text: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), iconURL: interaction.user.displayAvatarURL() })
+          .setTimestamp()
+      ]
+    });
+
+    if (db[interaction.guild.id]?.disabledFeatures?.includes(commandName)) return interaction.reply({
+      content: null,
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0xff0000)
+          .setTitle("⚠️  Command Disabled")
+          .setDescription(`The command \`${commandName}\` is currently disabled in this server.`)
+          .setFooter({ text: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), iconURL: interaction.user.displayAvatarURL() })
+          .setTimestamp()
+      ]
+    });
+
+    if (db[interaction.guild.id]?.disabledFeatures?.includes(Object.entries(categories || {}).find(([_, commands]) => commands.includes(commandName))[0].substring(4).toLowerCase())) return interaction.reply({
+      content: null,
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0xff0000)
+          .setTitle("⚠️  Command Disabled")
+          .setDescription(`All commands in the category \`${Object.entries(categories || {}).find(([_, commands]) => commands.includes(commandName))[0].replaceAll("  ", " ")}\` are currently disabled in this server.`)
+          .setFooter({ text: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), iconURL: interaction.user.displayAvatarURL() })
+          .setTimestamp()
+      ]
+    });
+  } catch {};
+
   if (fs.readdirSync("./commands").includes(`${commandName}.js`)) {
     delete require.cache[require.resolve(`./commands/${commandName}.js`)];
     const commandFile = require(`./commands/${commandName}.js`);
+
+    if (!Array.from(new Set([...["VIEW_CHANNEL", "SEND_MESSAGES"], ...commandFile.permissions])).every((permission) => interaction.channel.permissionsFor(interaction.channel.guild.members.me).has(permission.split("_").map((part) => part[0].toUpperCase() + part.slice(1).toLowerCase()).join("")))) {
+      try {
+        return interaction.reply({
+          content: null,
+          embeds: [
+            new EmbedBuilder()
+              .setColor(0xff0000)
+              .setTitle("⚠️  Missing Permissions")
+              .setDescription(`I don't have the required permissions to execute the command \`${commandName}\` in this channel. Please ensure I have the following permissions: \`\`\`diff\n+ ${Array.from(new Set([...["VIEW_CHANNEL", "SEND_MESSAGES"], ...commandFile.permissions])).map((permission) => permission.split("_").map((part) => part[0].toUpperCase() + part.slice(1).toLowerCase()).join("")).filter((permission) => !interaction.channel.permissionsFor(interaction.channel.guild.members.me).has(permission)).join("\n+ ")}\n\`\`\``)
+              .setFooter({ text: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), iconURL: interaction.user.displayAvatarURL() })
+              .setTimestamp()
+          ]
+        });
+      } catch {};
+    };
     
     interaction.respond = (...args) => {
       try {
         return interaction.reply(...args);
+      } catch {};
+    };
+
+    interaction.reject = (error) => {
+      try {
+        interaction.reply({
+          content: null,
+          embeds: [
+            new EmbedBuilder()
+              .setColor(0xff0000)
+              .setTitle("⚠️  Error")
+              .setDescription(`An error occurred while executing the command \`${commandName}\`\n\`\`\`${error.message || error}\`\`\``)
+              .setFooter({ text: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), iconURL: message.author.displayAvatarURL() })
+              .setTimestamp()
+          ]
+        });
       } catch {};
     };
 

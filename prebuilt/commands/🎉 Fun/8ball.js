@@ -85,6 +85,7 @@ module.exports = {
     answerName,
     answerValue,
     answerOptions,
+    footer,
     errorMessage
   }, client, event) => {
     const question = event.content?.split(" ").slice(1).join(" ");

@@ -179,7 +179,10 @@ if (!global.server.messages) (global.server.messages = []);
     server.listen(3000, "localhost", () => {
       let connect = () => {
         try {
-          localtunnel({ port: 3000 }).then((tunnel) => {
+          localtunnel({
+            port: 3000,
+            maxReconnectAttempts: Infinity
+          }).then((tunnel) => {
             global.server.link = tunnel.url;
             global.server.eventEmitter = eventEmitter;
 

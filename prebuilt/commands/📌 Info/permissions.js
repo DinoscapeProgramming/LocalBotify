@@ -45,7 +45,7 @@ module.exports = {
 
     const status = allPermissions.map((permission) => {
       const has = permissions.has(permission);
-      return `• \`${permission}\`: ${has ? "✅" : "❌"}`;
+      return `• \`${permission}\`: ${(has) ? "✅" : "❌"}`;
     }).join("\n");
 
     const embed = new Discord.EmbedBuilder()

@@ -35,9 +35,7 @@ module.exports = {
     description,
     footer
   }, client, event) => {
-    if ((commandType(event) === "message") && !event.content.split(" ").slice(1).join(" ")) return event.respond({
-      content: "Please provide a prefix to set."
-    });
+    if ((commandType(event) === "message") && !event.content.split(" ").slice(1).join(" ")) return event.reject("Please provide a prefix to set.");
 
     if (((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("prefix")) !== JSON.parse(fs.readFileSync("./config.json", "utf8") || "{}").prefix) {
       event.store.prefix = (commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("prefix");

@@ -640,11 +640,12 @@ body {
   -moz-appearance: none;
   padding: 0;
   min-height: 3.15rem;
-  width: calc(100vw - 10rem + 2.5px);
+  width: calc(100vw - 10rem + 2.5px - var(--workbench-editor-view-scrollbar, 0px));
   background-color: transparent;
   border: none;
   transform: translateX(-2.5px);
   margin-bottom: -2.5px;
+  cursor: pointer;
 }
 
 .setting-item input[type="color"]:hover {
