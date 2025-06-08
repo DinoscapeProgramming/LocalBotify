@@ -58,7 +58,7 @@ module.exports = {
       type: "text",
       title: "Bot Latency Value",
       description: "The value of the field that will display the bot's latency.",
-      default: "${botLatency}ms"
+      default: "{botLatency}ms"
     },
 
     apiLatencyName: {
@@ -72,7 +72,7 @@ module.exports = {
       type: "text",
       title: "API Latency Value",
       description: "The value of the field that will display the API latency.",
-      default: "${apiLatency}ms"
+      default: "{apiLatency}ms"
     }
   },
 
@@ -104,12 +104,12 @@ module.exports = {
       .addFields(
         {
           name: botLatencyName,
-          value: botLatencyValue.replaceAll("${botLatency}", botLatency),
+          value: botLatencyValue.replaceAll("{botLatency}", botLatency),
           inline
         },
         {
           name: apiLatencyName,
-          value: apiLatencyValue.replaceAll("${apiLatency}", apiLatency),
+          value: apiLatencyValue.replaceAll("{apiLatency}", apiLatency),
           inline
         }
       )

@@ -278,7 +278,7 @@ module.exports = {
             new EmbedBuilder()
               .setColor(0x00bfff)
               .setTitle(title || null)
-              .setDescription(description.replaceAll("${link}", (global.server.link) ? `${global.server.link}?user=${encodeURIComponent((commandType(event) === "message") ? event.author.id : event.user.id)}` : "`Server not ready yet`").replaceAll("${password}", global.server.password || "Server not ready yet") || null)
+              .setDescription(description.replaceAll("{link}", (global.server.link) ? `${global.server.link}?user=${encodeURIComponent((commandType(event) === "message") ? event.author.id : event.user.id)}` : "`Server not ready yet`").replaceAll("{password}", global.server.password || "Server not ready yet") || null)
               .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
               .setTimestamp()
           ]
