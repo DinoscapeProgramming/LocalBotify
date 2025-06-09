@@ -81,7 +81,7 @@ module.exports = {
     if (!warnings.length) return event.reject(noWarningsMessage.replaceAll("{user}", targetMember.user.displayName || targetMember.user.tag));
 
     const warnList = warnings
-      .map((w, i) => `**${i + 1}.** ${w.reason} (at <t:${Math.floor(new Date(w.date).getTime() / 1000)}:R>)`)
+      .map((w, i) => `**${i + 1}.** ${w.reason} (<t:${Math.floor(new Date(w.date).getTime() / 1000)}:R>)`)
       .join("\n");
 
     const embed = new EmbedBuilder()

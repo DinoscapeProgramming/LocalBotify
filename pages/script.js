@@ -1138,6 +1138,8 @@ class LocalBotify {
       });
 
       window.addEventListener("resize", () => {
+        if (!document.querySelector(".editor-terminal")) return;
+
         let character = document.createElement("span");
         character.textContent = "W";
         character.style.visibility = "hidden";
