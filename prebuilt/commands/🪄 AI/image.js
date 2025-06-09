@@ -233,8 +233,7 @@ module.exports = {
   permissions: [
     "SEND_MESSAGES",
     "EMBED_LINKS",
-    "ATTACH_FILES",
-    "READ_MESSAGE_HISTORY"
+    "ATTACH_FILES"
   ],
 
   variables: {

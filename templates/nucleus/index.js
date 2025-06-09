@@ -154,7 +154,7 @@ client.on("messageCreate", (message) => {
         new EmbedBuilder()
           .setColor(0xff0000)
           .setTitle("⚠️  Command Disabled")
-          .setDescription(`All commands in the category \`${Object.entries(categories || {}).find(([_, commands]) => commands.includes(commandName))[0].replaceAll("   ", " ")}\` are currently disabled in this server.`)
+          .setDescription(`All commands in the category \`${Object.entries(categories || {}).find(([_, commands]) => commands.includes(commandName))[0].replaceAll("  ", " ")}\` are currently disabled in this server.`)
           .setFooter({ text: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), iconURL: message.author.displayAvatarURL() })
           .setTimestamp()
       ]
@@ -268,7 +268,7 @@ client.on("interactionCreate", (interaction) => {
         new EmbedBuilder()
           .setColor(0xff0000)
           .setTitle("⚠️  Command Disabled")
-          .setDescription(`All commands in the category \`${Object.entries(categories || {}).find(([_, commands]) => commands.includes(commandName))[0].replaceAll("   ", " ")}\` are currently disabled in this server.`)
+          .setDescription(`All commands in the category \`${Object.entries(categories || {}).find(([_, commands]) => commands.includes(commandName))[0].replaceAll("  ", " ")}\` are currently disabled in this server.`)
           .setFooter({ text: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), iconURL: interaction.user.displayAvatarURL() })
           .setTimestamp()
       ]

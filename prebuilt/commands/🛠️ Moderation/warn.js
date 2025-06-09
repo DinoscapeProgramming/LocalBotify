@@ -29,8 +29,8 @@ module.exports = {
     description: {
       type: "textarea",
       title: "Embed Description",
-      description: "Additional description shown in the embed. Use {user} and {count} placeholders.",
-      default: "**{user}** has been warned.\nThey now have **{count}** warning(s).\nReason: {reason}"
+      description: "Additional description shown in the embed. Use {user}, {count} and {reason} placeholders.",
+      default: "**{user}** has been warned.\nThey now have **{count}** warning(s).\n\nReason: ```{reason}```"
     },
 
     missingPermissions: {

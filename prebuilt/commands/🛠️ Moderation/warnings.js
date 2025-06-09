@@ -30,7 +30,7 @@ module.exports = {
       type: "textarea",
       title: "No Warnings Message",
       description: "Message shown if the user has no warnings.",
-      default: "**{user}** has no warnings."
+      default: "{user} has no warnings."
     },
 
     footer: {
@@ -78,10 +78,7 @@ module.exports = {
     const userId = targetMember.id;
     const warnings = event.store.warnings?.[userId] || [];
 
-    if (!warnings.length) return event.respond({
-      content: noWarningsMessage.replaceAll("{user}", targetMember.user.tag),
-      embeds: []
-    });
+    if (!warnings.length) return event.reject(noWarningsMessage.replaceAll("{user}", targetMember.user.displayName || targetMember.user.tag));
 
     const warnList = warnings
       .map((w, i) => `**${i + 1}.** ${w.reason} (at <t:${Math.floor(new Date(w.date).getTime() / 1000)}:R>)`)

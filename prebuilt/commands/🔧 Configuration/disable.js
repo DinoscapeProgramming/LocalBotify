@@ -67,7 +67,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor(0x00bfff)
       .setTitle(title || null)
-      .setDescription(description.replaceAll("{feature}", (Object.keys(categories || {}).map((name) => name.replace(/^[^\w]+/, "").trim().toLowerCase()).includes((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature"))) ? Object.keys(categories || {}).find((name) => (name.replace(/^[^\w]+/, "").trim().toLowerCase() === ((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).toLowerCase())).replaceAll("   ", " ") : ((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).toLowerCase()) || null)
+      .setDescription(description.replaceAll("{feature}", (Object.keys(categories || {}).map((name) => name.replace(/^[^\w]+/, "").trim().toLowerCase()).includes((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature"))) ? Object.keys(categories || {}).find((name) => (name.replace(/^[^\w]+/, "").trim().toLowerCase() === ((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).toLowerCase())).replaceAll("  ", " ") : ((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).toLowerCase()) || null)
       .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
       .setTimestamp();
 
