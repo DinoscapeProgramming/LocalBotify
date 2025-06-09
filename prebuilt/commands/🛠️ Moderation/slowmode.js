@@ -25,7 +25,7 @@ module.exports = {
       type: "textarea",
       title: "Embed Title",
       description: "Title of the embed.",
-      default: "🐢 Slowmode Updated"
+      default: "🐢  Slowmode Updated"
     },
 
     description: {

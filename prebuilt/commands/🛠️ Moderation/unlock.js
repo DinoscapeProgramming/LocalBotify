@@ -24,7 +24,7 @@ module.exports = {
       type: "textarea",
       title: "Embed Title",
       description: "Title of the embed.",
-      default: "🔓 Channel Unlocked"
+      default: "🔓  Channel Unlocked"
     },
 
     description: {

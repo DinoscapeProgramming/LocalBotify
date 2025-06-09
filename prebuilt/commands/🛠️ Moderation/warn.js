@@ -8,8 +8,7 @@ module.exports = {
 
   permissions: [
     "SEND_MESSAGES",
-    "EMBED_LINKS",
-    "MODERATE_MEMBERS"
+    "EMBED_LINKS"
   ],
 
   variables: {
@@ -24,7 +23,7 @@ module.exports = {
       type: "textarea",
       title: "Embed Title",
       description: "Title of the embed.",
-      default: "⚠️ User Warned"
+      default: "⚠️  User Warned"
     },
 
     description: {

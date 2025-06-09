@@ -25,7 +25,7 @@ module.exports = {
       type: "textarea",
       title: "Embed Title",
       description: "Title of the embed.",
-      default: "⏱️ User Timed Out"
+      default: "⏱️  User Timed Out"
     },
 
     description: {

@@ -24,7 +24,7 @@ module.exports = {
       type: "textarea",
       title: "Embed Title",
       description: "Title of the embed.",
-      default: "🔒 Channel Locked"
+      default: "🔒  Channel Locked"
     },
 
     description: {
@@ -86,7 +86,7 @@ module.exports = {
       event.respond({ content, embeds: [embed] });
     } catch (err) {
       event.reject(`❌ Failed to lock the channel: ${err.message}`);
-    }
+    };
   },
 
   slashCommand: (SlashCommandBuilder) ? (

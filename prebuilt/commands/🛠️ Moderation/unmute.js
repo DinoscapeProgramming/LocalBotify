@@ -24,7 +24,7 @@ module.exports = {
       type: "textarea",
       title: "Embed Title",
       description: "Title of the embed.",
-      default: "🔊 User Unmuted"
+      default: "🔊  User Unmuted"
     },
 
     description: {
