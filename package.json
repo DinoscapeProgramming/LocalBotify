@@ -68,7 +68,7 @@
     },
     "asarUnpack": [
       "**/node_modules/**",
-      "**/tools/node/**/*"
+      "**/tools/node/**"
     ]
   }
 }
