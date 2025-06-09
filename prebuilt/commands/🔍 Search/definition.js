@@ -16,7 +16,7 @@ module.exports = {
   variables: {
     content: {
       type: "textarea",
-      title: "Content Above Embed",
+      title: "Content",
       description: "Text to show above the embed message.",
       default: ""
     },
@@ -96,7 +96,7 @@ module.exports = {
 
     try {
       const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
-      if (!res.ok) return event.respond(errorMessage);
+      if (!res.ok) return event.reject(errorMessage);
 
       const data = await res.json();
 

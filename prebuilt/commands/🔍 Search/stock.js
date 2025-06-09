@@ -15,7 +15,7 @@ module.exports = {
   variables: {
     content: {
       type: "textarea",
-      title: "Content Above Embed",
+      title: "Content",
       description: "Text shown above the stock data.",
       default: ""
     },

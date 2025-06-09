@@ -128,7 +128,7 @@ module.exports = {
       type: "textarea",
       title: "Error Response Message",
       description: "The message to send if the command is used outside a server.",
-      default: "This command can only be used in a server."
+      default: "❌ This command can only be used in a server."
     }
   },
 

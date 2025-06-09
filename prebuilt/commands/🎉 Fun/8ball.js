@@ -79,7 +79,7 @@ module.exports = {
       type: "textarea",
       title: "Error Response Message",
       description: "The message to send if the question is not provided.",
-      default: "You need to ask a question!"
+      default: "❌ You need to ask a question!"
     }
   },
 

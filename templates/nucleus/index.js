@@ -195,7 +195,7 @@ client.on("messageCreate", (message) => {
             new EmbedBuilder()
               .setColor(0xff0000)
               .setTitle("⚠️  Error")
-              .setDescription(`An error occurred while executing the command \`${commandName}\`\n\`\`\`${error.message || error}\`\`\``)
+              .setDescription(`An error occurred while executing the command \`${commandName}\`\n\`\`\`${error.message || error || "Internal Server Error"}\`\`\``)
               .setFooter({ text: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), iconURL: message.author.displayAvatarURL() })
               .setTimestamp()
           ]
@@ -309,7 +309,7 @@ client.on("interactionCreate", (interaction) => {
             new EmbedBuilder()
               .setColor(0xff0000)
               .setTitle("⚠️  Error")
-              .setDescription(`An error occurred while executing the command \`${commandName}\`\n\`\`\`${error.message || error}\`\`\``)
+              .setDescription(`An error occurred while executing the command \`${commandName}\`\n\`\`\`${error.message || error || "Internal Server Error"}\`\`\``)
               .setFooter({ text: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)), iconURL: message.author.displayAvatarURL() })
               .setTimestamp()
           ]

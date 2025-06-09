@@ -255,7 +255,7 @@ module.exports = {
       type: "textarea",
       title: "Error Response Message",
       description: "The message to send if the user does not attach a file.",
-      default: "Please attach a file to describe."
+      default: "❌ Please attach a file to describe."
     }
   },
 

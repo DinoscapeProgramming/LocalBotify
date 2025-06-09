@@ -47,7 +47,7 @@ module.exports = {
       type: "textarea",
       title: "Error Response Message",
       description: "The message to send if the invite link is not set",
-      default: "Please set the invite link in the bot's settings."
+      default: "❌ Please set the invite link in the bot's settings."
     }
   },
 

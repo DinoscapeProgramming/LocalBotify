@@ -1,72 +1,132 @@
 if (!global.requireCore) (global.requireCore = () => ({}));
 
-const { EmbedBuilder, SlashCommandBuilder } = require("discord.js");
-const { commandType } = require("localbotify");
+const { EmbedBuilder, SlashCommandBuilder } = requireCore("discord.js");
+const { commandType } = requireCore("localbotify");
 
 module.exports = {
-  description: "Ban a user from the server",
+  description: "Ban a user from the server with an optional reason.",
 
   permissions: [
     "SEND_MESSAGES",
-    "BAN_MEMBERS",
-    "MANAGE_MESSAGES"
+    "EMBED_LINKS",
+    "BAN_MEMBERS"
   ],
 
   variables: {
-    banMessage: {
-      title: "Ban Message",
-      description: "The message sent when a user is banned",
-      type: "text",
-      properties: {
-        placeholder: "You have been banned from the server."
-      }
+    content: {
+      type: "textarea",
+      title: "Content",
+      description: "Text above the embed response.",
+      default: ""
     },
-    defaultReason: {
-      title: "Default Ban Reason",
-      description: "The default reason if no reason is provided",
-      type: "text",
-      properties: {
-        placeholder: "Violation of server rules"
-      }
+
+    title: {
+      type: "textarea",
+      title: "Embed Title",
+      description: "Title of the embed.",
+      default: "🚫 User Banned"
+    },
+
+    description: {
+      type: "textarea",
+      title: "Embed Description",
+      description: "Additional description shown in the embed.",
+      default: ""
+    },
+
+    footer: {
+      type: "textarea",
+      title: "Footer Text",
+      description: "Footer text for the embed.",
+      default: "Ban executed"
+    },
+
+    missingPermissions: {
+      type: "textarea",
+      title: "Missing Permissions Message",
+      description: "Message shown if the user lacks the required permissions.",
+      default: "🚫 You need the **Manage Server** permission to use this command."
+    },
+
+    errorNoUser: {
+      type: "textarea",
+      title: "Error: No User Specified",
+      description: "Message if no user is specified in command.",
+      default: "❌ You must specify a user to ban."
+    },
+
+    errorCannotBan: {
+      type: "textarea",
+      title: "Error: Cannot Ban User",
+      description: "Message if the bot cannot ban the user (permissions/role).",
+      default: "❌ I cannot ban this user due to role hierarchy or permissions."
+    },
+
+    errorSelfBan: {
+      type: "textarea",
+      title: "Error: Trying to Ban Yourself",
+      description: "Message if user tries to ban themselves.",
+      default: "❌ You cannot ban yourself."
     }
   },
 
-  command: (variables, client, event) => {
-    const user = event.mentions.users.first();
-    const reason = variables.defaultReason || "No reason provided.";
-    
-    if (!user) return event.reply("User not found.");
-    const member = event.guild.members.cache.get(user.id);
-    if (!member) return event.reply("User is not a member of this server.");
+  command: async ({
+    content,
+    title,
+    description,
+    footer,
+    missingPermissions,
+    errorNoUser,
+    errorCannotBan,
+    errorSelfBan
+  }, client, event) => {
+    if (!event.member.permissions.has("ManageGuild")) return event.reject(missingPermissions);
 
-    member.ban({ reason })
-      .then(() => {
-        const embed = new EmbedBuilder()
-          .setColor("#e74c3c")
-          .setTitle("User Banned 🚫")
-          .setDescription(`${user.tag} has been banned.`)
-          .addField("Reason", reason)
-          .setFooter(`Banned by ${event.author.tag}`)
-          .setTimestamp();
+    let targetMember, reason;
 
-        ((commandType(event) === "message") ? event.channel.send({ embeds: [embed] }) : event.reply({ embeds: [embed] }));
-      })
-      .catch(() => event.reply("Unable to ban user."));
+    if (commandType(event) === "message") {
+      targetMember = event.mentions.members?.first();
+      reason = event.content.split(" ").slice(2).join(" ") || "No reason provided";
+    } else {
+      targetMember = event.options.getMember("user");
+      reason = event.options.getString("reason") || "No reason provided";
+    };
+
+    if (!targetMember) return event.reject(errorNoUser);
+
+    if (targetMember.id === ((commandType(event) === "message") ? event.author.id : event.user.id)) return event.reject(errorSelfBan);
+
+    if (!targetMember.bannable) return event.reject(errorCannotBan);
+
+    try {
+      await targetMember.ban({ reason });
+
+      const embed = new EmbedBuilder()
+        .setColor(0xff0000)
+        .setTitle(title || null)
+        .setDescription(description || `**${targetMember.user.tag}** has been banned.\nReason: ${reason}`)
+        .setFooter({ text: footer, iconURL: ((commandType(event) === "message") ? event.author : event.user).displayAvatarURL() })
+        .setTimestamp();
+
+      event.respond({ content, embeds: [embed] });
+    } catch (err) {
+      event.reject(`❌ Failed to ban user: ${err.message}`);
+    };
   },
 
-  slashCommand: new SlashCommandBuilder()
-    .setName("ban")
-    .setDescription("Ban a user")
-    .addUserOption((option) =>
-      option
-        .setName("user")
-        .setDescription("User to ban")
-        .setRequired(true)
-    )
-    .addStringOption((option) =>
-      option
-        .setName("reason")
-        .setDescription("Reason for the ban")
-        .setRequired(false)
-    )
+  slashCommand: (SlashCommandBuilder) ? (
+    new SlashCommandBuilder()
+      .setName("ban")
+      .setDescription("Ban a user from the server")
+      .addUserOption(option =>
+        option.setName("user")
+          .setDescription("User to ban")
+          .setRequired(true)
+      )
+      .addStringOption(option =>
+        option.setName("reason")
+          .setDescription("Reason for ban")
+          .setRequired(false)
+      )
+  ) : null
 };

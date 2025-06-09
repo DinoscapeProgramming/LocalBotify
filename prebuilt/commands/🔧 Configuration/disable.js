@@ -14,28 +14,52 @@ module.exports = {
 
   variables: {
     title: {
-      type: "text",
+      type: "textarea",
       title: "Embed Title",
       description: "The title of the response embed",
       default: "🚫  Feature Disabled"
     },
 
     description: {
-      type: "text",
+      type: "textarea",
       title: "Embed Description",
       description: "The description of the response embed. Use {feature} to show the feature that has been disabled.",
       default: "The feature `{feature}` has been disabled."
     },
+
+    missingPermissions: {
+      type: "textarea",
+      title: "Missing Permissions Message",
+      description: "Message shown if the user lacks the required permissions.",
+      default: "🚫 You need the **Manage Server** permission to use this command."
+    },
+
+    missingFeature: {
+      type: "textarea",
+      title: "Missing Feature Message",
+      description: "Message shown if the user doesn't provide a feature to disable.",
+      default: "❌ Please provide a feature to disable."
+    },
+
+    invalidFeature: {
+      type: "textarea",
+      title: "Invalid Feature Message",
+      description: "Message shown if the user provides an invalid feature to disable.",
+      default: "❌ Please provide a valid feature to disable."
+    }
   },
 
   command: async ({
     title,
     description,
-    footer
+    footer,
+    missingPermissions,
+    missingFeature,
+    invalidFeature
   }, client, event) => {
-    if (!event.member.permissions.has("ManageGuild")) return event.reject("🚫 You need the **Manage Server** permission to use this command.");
-    if ((commandType(event) === "message") && !event.content.split(" ").slice(1).join(" ")) return event.reject("Please provide a feature to disable.");
-    if ((((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).toLowerCase() !== "all") && !Object.keys(categories || {}).map((name) => name.replace(/^[^\w]+/, "").trim().toLowerCase()).includes(((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).toLowerCase()) && !Object.values(categories || {}).flat().includes(((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).toLowerCase())) return event.reject("Please provide a valid feature to disable.");
+    if (!event.member.permissions.has("ManageGuild")) return event.reject(missingPermissions);
+    if ((commandType(event) === "message") && !event.content.split(" ").slice(1).join(" ")) return event.reject(missingFeature);
+    if ((((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).toLowerCase() !== "all") && !Object.keys(categories || {}).map((name) => name.replace(/^[^\w]+/, "").trim().toLowerCase()).includes(((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).toLowerCase()) && !Object.values(categories || {}).flat().includes(((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).toLowerCase())) return event.reject(invalidFeature);
 
     if (!event.store.disabledFeatures) (event.store.disabledFeatures = []);
     event.store.disabledFeatures.push(((commandType(event) === "message") ? event.content.split(" ").slice(1).join(" ") : event.options.getString("feature")).toLowerCase());

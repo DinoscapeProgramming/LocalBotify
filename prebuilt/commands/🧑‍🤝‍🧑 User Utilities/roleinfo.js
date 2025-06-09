@@ -128,7 +128,7 @@ module.exports = {
       type: "textarea",
       title: "Error Response Message",
       description: "The message to send if the role is not mentioned or invalid.",
-      default: "Please mention a valid role."
+      default: "❌ Please mention a valid role."
     }
   },
 

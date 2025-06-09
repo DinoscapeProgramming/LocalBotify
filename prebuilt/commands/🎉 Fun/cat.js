@@ -37,7 +37,7 @@ module.exports = {
       type: "textarea",
       title: "Error Message",
       description: "Message to send if no cat image is found.",
-      default: "Failed to fetch a cat. Please try again later!"
+      default: "❌ Failed to fetch a cat. Please try again later!"
     }
   },
 

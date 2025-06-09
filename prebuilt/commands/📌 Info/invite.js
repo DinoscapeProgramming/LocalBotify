@@ -21,18 +21,21 @@ module.exports = {
       description: "The regular text content above the response embed",
       default: ""
     },
+
     title: {
       type: "textarea",
       title: "Embed Title",
       description: "The title of the response embed",
       default: "🎉  Invite Me!"
     },
+
     invite: {
       type: "link",
       title: "Invite Link",
       description: "The invite link of the bot",
       default: (global.isLocalBotify) ? fs.readFileSync("./channels/invite.txt", "utf8") : fs.readFileSync(path.join(path.dirname(__dirname), "channels/invite.txt"), "utf8") || ""
     },
+
     description: {
       type: "textarea",
       title: "Embed Description",

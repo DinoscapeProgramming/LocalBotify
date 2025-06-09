@@ -114,7 +114,7 @@ module.exports = {
       type: "textarea",
       title: "Error Response Message",
       description: "The message to send if the user is not mentioned or invalid.",
-      default: "Please mention a valid user."
+      default: "❌ Please mention a valid user."
     }
   },
 

@@ -44,7 +44,7 @@ module.exports = {
       type: "textarea",
       title: "Error Message",
       description: "Message to show if something goes wrong.",
-      default: "Couldn't flip the coin. Try again!"
+      default: "❌ Couldn't flip the coin. Try again!"
     }
   },
 

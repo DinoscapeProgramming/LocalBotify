@@ -256,7 +256,7 @@ module.exports = {
       type: "textarea",
       title: "Error Response Message",
       description: "The message to send if the user does not specify a prompt.",
-      default: "Please provide a prompt to send to the AI agent."
+      default: "❌ Please provide a prompt to send to the AI agent."
     }
   },
 

@@ -44,13 +44,8 @@ module.exports = {
     wrongLength: {
       type: "textarea",
       title: "Wrong Length Message",
+      description: "Message shown when the user guess does not have 5 letters.",
       default: "❌ Your guess must be 5 letters."
-    },
-
-    color: {
-      type: "color",
-      title: "Embed Color",
-      default: "#00bfff"
     }
   },
 

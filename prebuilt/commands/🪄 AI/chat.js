@@ -262,7 +262,7 @@ module.exports = {
       type: "textarea",
       title: "Error Response Message",
       description: "The message to send if the user has not specified a message to send to the AI agent.",
-      default: "Please specify a message to send to the AI agent."
+      default: "❌ Please specify a message to send to the AI agent."
     }
   },
 
