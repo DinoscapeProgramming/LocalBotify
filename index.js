@@ -48,12 +48,7 @@ const createWindow = () => {
       },
       {
         label: "Exit",
-        click: () => {
-          window.webContents.executeJavaScript("localStorage.getItem('settings');").then((settings) => {
-            if (!(JSON.parse(settings) || {}).runInBackgroundOnClose) return (tray.destroy(), tray = null);
-            app.quit();
-          });
-        }
+        click: () => app.quit()
       }
     ]));
   };
