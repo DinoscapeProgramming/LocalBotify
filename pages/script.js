@@ -977,7 +977,7 @@ class LocalBotify {
 
     helpView.innerHTML = `
       <div class="help-explorer">
-        <div class="help-tree">${this.renderFileTree(this.generateFileTree("./docs"), true)}</div>
+        <div class="help-tree">${this.renderFileTree(this.generateFileTree((this.isPackaged) ? path.join(process.resourcesPath, "app.asar/docs") : "./docs"), true)}</div>
       </div>
 
       <div class="markdown-body" style="padding: 50px; overflow-y: auto;"></div>
@@ -989,7 +989,7 @@ class LocalBotify {
 
     document.querySelector(".app").style.backgroundColor = "#0d1117";
 
-    ipcRenderer.invoke("parseMarkdown", this.escapeHtml(fs.readFileSync(path.join(__dirname, "../docs/User Guide/Getting Started.md"), "utf8"))).then((parsedMarkdown) => {
+    ipcRenderer.invoke("parseMarkdown", this.escapeHtml(fs.readFileSync((this.isPackaged) ? path.join(process.resourcesPath, "app.asar/docs/User Guide/Getting Started.md") : path.join(__dirname, "../docs/User Guide/Getting Started.md"), "utf8"))).then((parsedMarkdown) => {
       helpView.querySelector(".markdown-body").innerHTML = parsedMarkdown;
 
       helpView.querySelectorAll(".markdown-body a").forEach((link) => {
@@ -2735,7 +2735,7 @@ class LocalBotify {
         assistant.contentWindow.postMessage(`You are a skilled software engineer helping to build a Discord bot using a specific development guide. Use the following guide as a reference for best practices, structure, and implementation style:
 
 **Guide (as Markdown):**
-${fs.readFileSync(`./docs/Developer Guide/${category[0].toUpperCase() + category.substring(1, category.length - 1)}Tutorial.md`, "utf8")}
+${fs.readFileSync((this.isPackaged) ? path.join(process.resourcesPath, "app.asar/docs/Developer Guide", `${category[0].toUpperCase() + category.substring(1, category.length - 1)}Tutorial.md`) : `./docs/Developer Guide/${category[0].toUpperCase() + category.substring(1, category.length - 1)}Tutorial.md`, "utf8")}
 
 Based on this guide, create a complete and clean implementation of a new Discord bot ${category.substring(0, category.length - 1)}.
 
@@ -4060,7 +4060,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         <div class="modal-body">
           <form id="botForm">
             <div class="form-group">
-              ${(!fs.readdirSync(`./prebuilt/${category}`).length) ? `<span style="color: #d1d1d1;">No ${category} found</span>` : fs.readdirSync(`./prebuilt/${category}`).map((subcategory) => `
+              ${(!fs.readdirSync((this.isPackaged) ? path.join(process.resourcesPath, "app.asar/prebuilt", category) : `./prebuilt/${category}`).length) ? `<span style="color: #d1d1d1;">No ${category} found</span>` : fs.readdirSync((this.isPackaged) ? path.join(process.resourcesPath, "app.asar/prebuilt", category) : `./prebuilt/${category}`).map((subcategory) => `
                 <div class="category-header" style="
                   text-transform: uppercase;
                   font-size: 12px;
@@ -4082,7 +4082,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                   ">${this.escapeHtml(character)}</span>` : this.escapeHtml(character)).join("")}
                 </div>
                 <div style="display: flex; flex-wrap: wrap; gap: 0.375rem; margin-bottom: 15px;">
-                  ${fs.readdirSync(`./prebuilt/${category}/${subcategory}`).map((interactionItem) => `
+                  ${fs.readdirSync((this.isPackaged) ? path.join(process.resourcesPath, "app.asar/prebuilt", category, subcategory) : `./prebuilt/${category}/${subcategory}`).map((interactionItem) => `
                     <div class="setting-item interaction-item" style="width: fit-content; padding: 0.25rem 0.55rem; cursor: pointer; margin: 0; font-size: 0.9rem;">${interactionItem.substring(0, interactionItem.length - 3)}</div>
                   `).join("\n")}
                 </div>
@@ -4131,7 +4131,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
       e.preventDefault();
 
       Array.from(modal.querySelectorAll(".interaction-item")).filter((interactionItem) => interactionItem.classList.contains("active")).forEach((interactionItem) => {
-        fs.copyFileSync(`./prebuilt/${category}/${interactionItem.parentElement.previousElementSibling.textContent.trim()}/${interactionItem.textContent.trim()}.js`, path.join(process.cwd(), "bots", bot.id.toString(), category, `${interactionItem.textContent.trim()}.js`));
+        fs.copyFileSync((this.isPackaged) ? path.join(process.resourcesPath, "app.asar/prebuilt", category, interactionItem.parentElement.previousElementSibling.textContent.trim(), `${interactionItem.textContent.trim()}.js`) : `./prebuilt/${category}/${interactionItem.parentElement.previousElementSibling.textContent.trim()}/${interactionItem.textContent.trim()}.js`, path.join(process.cwd(), "bots", bot.id.toString(), category, `${interactionItem.textContent.trim()}.js`));
       });
 
       workbenchMainView.querySelector(".workbench-section").innerHTML = `
@@ -4677,7 +4677,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
           const filePath = this.getFilePath(item);
 
-          ipcRenderer.invoke("parseMarkdown", this.escapeHtml(fs.readFileSync(path.join(__dirname, "../docs", filePath), "utf8"))).then((parsedMarkdown) => {
+          ipcRenderer.invoke("parseMarkdown", this.escapeHtml(fs.readFileSync((this.isPackaged) ? path.join(process.resourcesPath, "app.asar/docs", filePath) : path.join(__dirname, "../docs", filePath), "utf8"))).then((parsedMarkdown) => {
             helpView.querySelector(".markdown-body").innerHTML = parsedMarkdown;
 
             helpView.querySelectorAll(".markdown-body a").forEach((link) => {
