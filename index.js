@@ -15,6 +15,7 @@ const nodeFetch = (...args) => import("node-fetch").then(({ default: fetch }) =>
 let highlighter;
 let tray;
 let ptyProcesses = [];
+let isQuitting = false;
 
 const createWindow = () => {
   const window = new BrowserWindow({
@@ -49,6 +50,8 @@ const createWindow = () => {
       {
         label: "Exit",
         click: () => {
+          isQuitting = true;
+
           Object.values(ptyProcesses).forEach((ptyProcess) => {
             try {
               ptyProcess.kill();
@@ -234,6 +237,8 @@ const createWindow = () => {
   });
 
   window.on("close", (e) => {
+    if (isQuitting) return;
+
     e.preventDefault();
 
     if (tray) return (tray.destroy(), tray = null);
@@ -254,6 +259,8 @@ const createWindow = () => {
       {
         label: "Exit",
         click: () => {
+          isQuitting = true;
+
           Object.values(ptyProcesses).forEach((ptyProcess) => {
             try {
               ptyProcess.kill();
