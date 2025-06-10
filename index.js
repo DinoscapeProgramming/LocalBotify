@@ -312,5 +312,13 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
+  if (process.platform !== "darwin") {
+    Object.values(ptyProcesses).forEach((ptyProcess) => {
+      try {
+        ptyProcess.kill();
+      } catch {};
+    });
+
+    app.quit();
+  };
 });
