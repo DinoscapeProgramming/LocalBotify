@@ -95,7 +95,7 @@ module.exports = {
     const end = Date.now();
 
     const botLatency = (commandType(event)  === "message") ? (sent.createdTimestamp - event.createdTimestamp) : (end - start);
-    const apiLatency = (client.ws.ping >= 0) ? Math.round(client.ws.ping) : "N/A";
+    const apiLatency = (client.ws.ping >= 0) ? Math.round(client.ws.ping) : "N/A ";
 
     const embed = new EmbedBuilder()
       .setColor(0x00bfff)

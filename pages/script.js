@@ -1184,7 +1184,7 @@ class LocalBotify {
         ],
         "footer": "Powered by LocalBotify.app",
         "commands": {
-          "initialization": "npm install",
+          "initialization": "",
           "startup": ".\\node . "
         },
         "variables": {
@@ -3954,7 +3954,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         ],
         "footer": "Powered by LocalBotify.app",
         "commands": {
-          "initialization": "npm install",
+          "initialization": "",
           "startup": ".\\node . "
         },
         "variables": {
@@ -3974,11 +3974,11 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           <form id="botForm">
             <div class="form-group">
               <label for="initializationCommand">Initialization Command</label>
-              <input type="text" id="initializationCommand" value="${this.escapeHtml(configFile?.commands?.initialization)}" style="font-family: Consolas;">
+              <input type="text" id="initializationCommand" value="${this.escapeHtml(configFile?.commands?.initialization || "")}" style="font-family: Consolas;">
             </div>
             <div class="form-group">
               <label for="startupCommand">Startup Command</label>
-              <input type="text" id="startupCommand" value="${this.escapeHtml(configFile?.commands?.startup)}" style="font-family: Consolas;">
+              <input type="text" id="startupCommand" value="${this.escapeHtml(configFile?.commands?.startup || "")}" style="font-family: Consolas;">
             </div>
             <div class="form-actions" style="margin-top: 0;">
               <button type="submit" class="submit-btn">
@@ -4041,7 +4041,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         ],
         "footer": "Powered by LocalBotify.app",
         "commands": {
-          "initialization": "npm install",
+          "initialization": "",
           "startup": ".\\node . "
         },
         "variables": {

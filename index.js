@@ -22,7 +22,7 @@ const createWindow = () => {
     title: "LocalBotify",
     icon: path.join(__dirname, "assets/favicon.png"),
     autoHideMenuBar: true,
-    skipTaskbar: ((app.getLoginItemSettings().wasOpenedAtLogin || process.argv.includes("--startup"))),
+    skipTaskbar: app.getLoginItemSettings().wasOpenedAtLogin || process.argv.includes("--startup"),
     webPreferences: {
       nodeIntegration: true,
       nodeIntegrationInWorker: true,
@@ -48,7 +48,15 @@ const createWindow = () => {
       },
       {
         label: "Exit",
-        click: () => app.quit()
+        click: () => {
+          Object.values(ptyProcesses).forEach((ptyProcess) => {
+            try {
+              ptyProcess.kill();
+            } catch {};
+          });
+
+          app.quit();
+        }
       }
     ]));
   };
@@ -245,7 +253,15 @@ const createWindow = () => {
       },
       {
         label: "Exit",
-        click: () => app.quit()
+        click: () => {
+          Object.values(ptyProcesses).forEach((ptyProcess) => {
+            try {
+              ptyProcess.kill();
+            } catch {};
+          });
+
+          app.quit()
+        }
       }
     ]));
   });
@@ -269,7 +285,21 @@ const createWindow = () => {
       ]
     });
   };
+
+  app.on("second-instance", () => {
+    if (tray) {
+      window.show();
+      window.setSkipTaskbar(false);
+      tray.destroy();
+      tray = null;
+    } else {
+      if (window.isMinimized()) window.restore();
+      window.focus();
+    };
+  });
 };
+
+if (!app.requestSingleInstanceLock()) app.quit();
 
 app.whenReady().then(() => {
   createWindow();
