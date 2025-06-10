@@ -1923,7 +1923,7 @@ class LocalBotify {
       playBtn.addEventListener("click", () => {
         ipcRenderer.send("terminalData", [
           bot.id,
-          (playBtn.children[0].className === "fas fa-stop") ? "\x03" : (((bot.initialized) ? "" : ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.initialization || "") + "; ")) + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`)
+          (playBtn.children[0].className === "fas fa-stop") ? "\x03" : (((bot.initialized || !JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.initialization) ? "" : ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.initialization || "") + "; ")) + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`)
         ]);
 
         if (playBtn.children[0].className === "fas fa-stop") {
@@ -4942,7 +4942,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
       ipcRenderer.invoke("runBotCommand", [
         newBot.id,
-        (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization || "") + "; " + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`
+        ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization) ? ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization || "") + "; ") : "") + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`
       ]);
     } else {
       ipcRenderer.invoke("importGitHubRepository", [
@@ -4961,7 +4961,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
         ipcRenderer.invoke("runBotCommand", [
           newBot.id,
-          (JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization || "") + "; " + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`
+          ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization) ? ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization || "") + "; ") : "") + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`
         ]);
       });
     };
@@ -5324,7 +5324,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     this.bots.forEach((bot) => {
       ipcRenderer.invoke("runBotCommand", [
         bot.id,
-        ((bot.initialized) ? "" : ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.initialization || "") + "; ")) + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`
+        ((bot.initialized || !JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.initialization) ? "" : ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.initialization || "") + "; ")) + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`
       ]).then((success) => {
         if (!success || bot.initialized) return;
 
