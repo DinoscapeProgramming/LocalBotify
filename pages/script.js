@@ -1184,7 +1184,7 @@ class LocalBotify {
         ],
         "footer": "Powered by LocalBotify.app",
         "commands": {
-          "initialization": "",
+          "initialization": null,
           "startup": ".\\node . "
         },
         "variables": {
@@ -3954,7 +3954,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         ],
         "footer": "Powered by LocalBotify.app",
         "commands": {
-          "initialization": "",
+          "initialization": null,
           "startup": ".\\node . "
         },
         "variables": {
@@ -4041,7 +4041,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         ],
         "footer": "Powered by LocalBotify.app",
         "commands": {
-          "initialization": "",
+          "initialization": null,
           "startup": ".\\node . "
         },
         "variables": {
@@ -4678,6 +4678,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           const filePath = this.getFilePath(item);
 
           ipcRenderer.invoke("parseMarkdown", this.escapeHtml(fs.readFileSync((this.isPackaged) ? path.join(process.resourcesPath, "app.asar/docs", filePath) : path.join(__dirname, "../docs", filePath), "utf8"))).then((parsedMarkdown) => {
+            helpView.querySelector(".markdown-body").scrollTop = 0;
             helpView.querySelector(".markdown-body").innerHTML = parsedMarkdown;
 
             helpView.querySelectorAll(".markdown-body a").forEach((link) => {
@@ -4981,7 +4982,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           <form id="upgradeForm">
             <div class="form-group" style="margin-bottom: 1rem;">
               <p style="margin-bottom: 0.5rem;">Looks like you tried to access a LocalBotify Pro feature. 👀</p>
-              <p style="text-decoration: underline; color: #ffb100de;">Upgrading only costs 5$ / month!</p>
+              <p style="text-decoration: underline; color: #ffb100de;">Upgrading only costs 5$ / forever!</p>
             </div>
             <div class="form-actions" style="margin-top: 0;">
               <button type="submit" class="submit-btn">
