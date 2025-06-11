@@ -4,26 +4,28 @@ Writing commands for the bot is straightforward and powerful. Just follow the st
 
 ---
 
-## 🗂️ 1. Create Your Command File
+## 🗂️ 1. Create Your Event File
 
-Navigate to the bot's `commands/` directory and create a new file.  
-**The file name becomes the command name.**
+Navigate to the bot's `events/` directory and create a new file.  
+**The file name becomes the event name.**
 
 > 📌 Example:  
-> Creating a file named `ping.js` will allow users to trigger it with:
+> Creating a file named `guildCreate.js` will allow users to trigger it with:
 > ```
-> prefix + ping
+> guildCreate
 > ```
+
+All special symbols are excluded to allow duplicate event files.
 
 ---
 
 ## 🎨 2. Write Your Description
 
-Descriptions are necessary for the help command, but aren't required. This is how to provide one:
+Descriptions are necessary for better displaying and organizing duplicate events, but aren't required. This is how to provide one:
 
 ```js
 module.exports = {
-  description: "Check the bot's response time."
+  description: "Say hello to a new guild the bot got added to."
 };
 ```
 
@@ -33,7 +35,7 @@ Permissions will influence the bot's invite link accordingly. In addition, Local
 
 ```js
 module.exports = {
-  description: "Check the bot's response time.",
+  description: "Check the bot's response time",
 
   permissions: [
     "SEND_MESSAGES",
@@ -53,7 +55,7 @@ Variables are used to make the command customizable globally. This means the bot
 
 ```js
 module.exports = {
-  description: "Check the bot's response time.",
+  description: "Check the bot's response time",
 
   permissions: [
     "SEND_MESSAGES",
@@ -159,10 +161,6 @@ event.store.prefix = "!";
 console.log(event.store.prefix); // --> "!"
 ```
 
----
-
-Instead of having to differentiate between messages and interactions, the event's `respond()` method is always binded to the corresponding reply function (`message.channel.send()` for messages; `interaction.reply()` for interactions).
-
 Here's the full structure again for clarity:
 
 ```js
@@ -172,7 +170,7 @@ const Discord = requireCore("discord.js");
 const { commandType } = requireCore("localbotify");
 
 module.exports = {
-  description: "Check the bot's response time.",
+  description: "Check the bot's response time",
 
   permissions: [
     "SEND_MESSAGES",
@@ -195,46 +193,6 @@ module.exports = {
   command: (variables, client, event) => {
     event.respond(variables.responseMessage);
   }
-};
-```
-
-## 🔧 6. Register the Slash Command
-
-The description will be applied automatically using the description you specified. Define the `slashCommand` property like this:
-
-```js
-if (!global.requireCore) (global.requireCore = () => ({}));
-
-const Discord = requireCore("discord.js");
-const { commandType } = requireCore("localbotify");
-
-module.exports = {
-  description: "Check the bot's response time.",
-
-  permissions: [
-    "SEND_MESSAGES",
-    "MANAGE_MESSAGES",
-    "EMBED_LINKS",
-    "ATTACH_FILES",
-    "READ_MESSAGE_HISTORY"
-  ],
-
-  variables: {
-    responseMessage: {
-      title: "Response Message",
-      type: "text",
-      properties: {
-        placeholder: "Hey there!"
-      }
-    }
-  },
-
-  command: (variables, client, event) => {
-    event.respond(variables.responseMessage)
-  },
-
-  slashCommand: (Discord.SlashCommandBuilder) ? (new Discord.SlashCommandBuilder()
-    .setName("ping")) : null
 };
 ```
 

@@ -1,3 +1,5 @@
+- FONTAWESOME OFFLINE 😡
+- PICMO OFFLINE 😡
 - Fix website
 - Add prebuilt commands & events
 - Write documentation

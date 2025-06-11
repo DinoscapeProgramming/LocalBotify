@@ -3,4 +3,4 @@ node_modules
 playground
 bots
 tools
-templates/nucleus/.gitignore
+packages/fontawesome

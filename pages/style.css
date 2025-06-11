@@ -481,6 +481,10 @@ body {
   background-color: #5d6269;
 }
 
+.picmo__picker .picmo__error button {
+  margin-top: 15px;
+}
+
 .feedback-star {
   cursor: pointer;
   font: 37.5px/1 FontAwesome;

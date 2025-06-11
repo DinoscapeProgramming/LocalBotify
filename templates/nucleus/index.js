@@ -355,6 +355,9 @@ fs.readdirSync("./events").forEach((event) => {
     delete require.cache[require.resolve(`./events/${event}`)];
     const eventFile = require(`./events/${event}`);
 
+    if (!db[args[0].guild.id]) (db[args[0].guild.id] = {});
+    args[0].store = db[args[0].guild.id];
+
     eventFile.event({
       ...{
         footer: config.footer.replace(/\{(.*?)\}/g, (_, expression) => eval(expression)) || "Powered by LocalBotify.app"

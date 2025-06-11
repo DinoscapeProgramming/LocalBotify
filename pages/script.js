@@ -623,6 +623,8 @@ class LocalBotify {
     form.addEventListener("submit", (e) => {
       e.preventDefault();
 
+      if (!navigator.onLine) return (closeModal(), this.alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!"));
+
       fetch(process.env.FEEDBACK_WEBHOOK, {
         method: "POST",
         headers: {
@@ -792,6 +794,9 @@ class LocalBotify {
     if (window.isSecureContext && "credentials" in navigator && (typeof navigator.credentials.create === "function") && (typeof PublicKeyCredential === "function")) {
       settings.querySelector("#appLock").addEventListener("click", (e) => {
         if (!settings.querySelector("#appLock").checked) return;
+        if (!navigator.onLine) return this.alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!").then(() => {
+          settings.querySelector("#appLock").checked = false
+        });
 
         const blockade = document.createElement("div");
         blockade.style.position = "absolute";
@@ -826,6 +831,8 @@ class LocalBotify {
     };
 
     settings.querySelector("#activateProToken").addEventListener("click", () => {
+      if (!navigator.onLine) return this.alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!");
+
       this.prompt("Activate LocalBotify Pro", "Enter token...").then((token) => {
         fetch(process.env.SERVER + "/api/v1/pro/activate", {
           method: "POST",
@@ -1429,7 +1436,7 @@ class LocalBotify {
             <h3 style="flex-direction: row; margin-bottom: 1rem;">
               <i class="fas fa-user-group"></i>Collaboration
             </h3>
-            <span class="missing-internet-connection" style="display: ${(navigator.onLine) ? "none" : "block"}; color: grey;">No internet connection</span>
+            <span class="missing-internet-connection" style="display: ${(navigator.onLine) ? "none" : "block"}; color: grey;">No Internet Connection</span>
             <div class="private-join-link" style="display: ${(navigator.onLine) ? "block" : "none"};">
               <div class="setting-item" style="margin-top: 20px; margin-bottom: 0.25rem;">
                 <label data-tooltip="Develop your bot together with your friends">
@@ -1615,7 +1622,7 @@ class LocalBotify {
     });
 
     workbenchMainView.querySelector("#workbench-invite-btn").addEventListener("click", () => {
-      if (!fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/invite.txt"), "utf8")) return;
+      if (!fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/invite.txt"), "utf8")) return this.alert("⚠️ Missing Invite Link", "Please run the bot to generate an invite link.");
 
       const childProcess = require("child_process");
 
@@ -1850,13 +1857,18 @@ class LocalBotify {
           commandItem.querySelector("input, textarea, select").addEventListener("change", (e) => {
             if (!e.target.reportValidity()) return;
 
-            if (!configFile) (configFile = {});
-            if (!configFile.variables) (configFile.variables = {});
-            if (!configFile.variables[command.dataset.category]) (configFile.variables[command.dataset.category] = {});
-            if (!configFile.variables[command.dataset.category][command.textContent.trim()]) (configFile.variables[command.dataset.category][command.textContent.trim()] = {});
-            configFile.variables[command.dataset.category][command.textContent.trim()][commandItem.dataset.id] = ((e.target.tagName === "INPUT") && (e.target.type === "checkbox")) ? e.target.checked : ((["number", "range"].includes(e.target.type)) ? parseInt(e.target.value) : e.target.value);
+            if (e.target.type !== "file") {
+              if (!configFile) (configFile = {});
+              if (!configFile.variables) (configFile.variables = {});
+              if (!configFile.variables[command.dataset.category]) (configFile.variables[command.dataset.category] = {});
+              if (!configFile.variables[command.dataset.category][command.textContent.trim()]) (configFile.variables[command.dataset.category][command.textContent.trim()] = {});
+              configFile.variables[command.dataset.category][command.textContent.trim()][commandItem.dataset.id] = ((e.target.tagName === "INPUT") && (e.target.type === "checkbox")) ? e.target.checked : ((["number", "range"].includes(e.target.type)) ? parseInt(e.target.value) : e.target.value);
 
-            fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
+              fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "config.json"), JSON.stringify(configFile, null, 2), "utf8");
+            } else {
+              if (!fs.existsSync(path.join(process.cwd(), "bots", bot.id.toString(), "assets"))) fs.mkdirSync(path.join(process.cwd(), "bots", bot.id.toString(), "assets"));
+
+            };
           });
         });
 
@@ -2460,6 +2472,8 @@ class LocalBotify {
 
     suiteMainView.querySelector("#assistantSection form").addEventListener("submit", (e) => {
       e.preventDefault();
+
+      if (!navigator.onLine) return this.alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!");
 
       const category = `${suiteMainView.querySelector("#assistantSection form select").value.toLowerCase()}s`;
       const fileName = `${suiteMainView.querySelector("#assistantSection form input").value}.js`;
@@ -3236,6 +3250,8 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
           suiteMainView.querySelector("#landingPageSection .grid-container").insertBefore(featureCard, Array.from(suiteMainView.querySelector("#landingPageSection .grid-container").children).at(-1));
         } else if (button.querySelector("i").className === "fas fa-upload") {
+          if (!navigator.onLine) return this.alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!");
+
           this.prompt("Publish Landing Page", "Enter custom subdomain...", null, bot.landingPages).then((subdomain) => {
             if (!subdomain) return;
 
@@ -3366,6 +3382,9 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     });
 
     suiteMainView.querySelector("#vanityLinksSection .add-command-btn").addEventListener("click", async () => {
+      if (!navigator.onLine) return this.alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!");
+      if (!fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/invite.txt"), "utf8")) return this.alert("⚠️ Missing Invite Link", "Please run the bot to generate an invite link.");
+
       const customAlias = await this.prompt("Enter Custom Alias", "Enter a custom alias (optional)").catch(() => {
         return null;
       });
@@ -3853,6 +3872,8 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
   };
 
   showPublicationModal(bot) {
+    if (!navigator.onLine) return this.alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!");
+
     const modal = document.createElement("div");
     modal.className = "modal";
 
@@ -5454,7 +5475,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
   };
 
   async showAnnouncement() {
-    if (!(JSON.parse(localStorage.getItem("settings") || "{}").announcementNotifications ?? true)) return;
+    if (!navigator.onLine || !(JSON.parse(localStorage.getItem("settings") || "{}").announcementNotifications ?? true)) return;
 
     const childProcess = require("child_process");
 
