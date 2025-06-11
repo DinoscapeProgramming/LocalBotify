@@ -5110,7 +5110,8 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
       emojiPickerScript.addEventListener("load", () => {
         picmo.createPicker({
-          rootElement: modal
+          rootElement: modal,
+          emojiCDN: "../packages/picmo/assets/"
         }).addEventListener("emoji:select", ({ emoji }) => {
           document.querySelector("#botForm #botAvatar span").textContent = emoji;
           document.querySelector("#botForm #botAvatar span").style.removeProperty("opacity");
@@ -5122,7 +5123,8 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
       document.head.appendChild(emojiPickerScript);
     } else {
       picmo.createPicker({
-        rootElement: modal
+        rootElement: modal,
+        emojiCDN: "../packages/picmo/assets/"
       }).addEventListener("emoji:select", ({ emoji }) => {
         document.querySelector("#botForm #botAvatar span").textContent = emoji;
         document.querySelector("#botForm #botAvatar span").style.removeProperty("opacity");

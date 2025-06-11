@@ -14,6 +14,7 @@
   "license": "ISC",
   "dependencies": {
     "@lydell/node-pty": "^1.1.0",
+    "@lydell/node-pty-win32-x64": "^1.1.0",
     "@teeny-tiny/dotenv": "^1.0.10",
     "@teeny-tiny/open": "^1.1.4",
     "@xterm/xterm": "^5.5.0",
