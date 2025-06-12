@@ -1566,6 +1566,13 @@ class LocalBotify {
     const suiteMainView = workspaceView.querySelector("#suiteMainView");
     const suiteDetailView = workspaceView.querySelector("#suiteDetailView");
 
+    requestAnimationFrame(() => {
+      if (workbenchView.scrollHeight <= (workbenchView.clientHeight + 15)) (workbenchView.style.overflowY = "hidden");
+      setTimeout(() => {
+        workbenchView.style.removeProperty("overflow-y");
+      }, 500);
+    });
+
     workspaceView.querySelectorAll(".workspace-tabs button").forEach((tab) => {
       tab.addEventListener("click", () => {
         if (tab.classList.contains("active")) return;
@@ -1582,9 +1589,15 @@ class LocalBotify {
           editorView.style.visibility = "hidden";
           suiteView.style.display = "none";
           workbenchView.scrollTop = 0;
+          requestAnimationFrame(() => {
+            if (workbenchView.scrollHeight <= (workbenchView.clientHeight + 15)) (workbenchView.style.overflowY = "hidden");
+          });
           workbenchView.style.display = "block";
           workbenchEditorView.style.display = "none";
           workbenchMainView.style.display = "block";
+          setTimeout(() => {
+            workbenchView.style.removeProperty("overflow-y");
+          }, 500);
         } else if (tab.querySelector("i").className === "fas fa-code") {
           workspaceView.querySelectorAll(".workspace-tabs button").forEach((activeTab) => activeTab.classList.remove("currentView"));
           tab.classList.add("currentView");
