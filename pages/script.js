@@ -683,6 +683,7 @@ class LocalBotify {
             Theme
             <select id="themeSelect">
               <option value="discord" ${((storedSettings.theme || "discord") === "discord") ? "selected" : ""}>Discord</option>
+              <option value="space" ${((storedSettings.theme || "discord") === "space") ? "selected" : ""}>Space</option>
               <option value="serenity" ${((storedSettings.theme || "discord") === "serenity") ? "selected" : ""}>Serenity</option>
               <option value="monokai" ${((storedSettings.theme || "discord") === "monokai") ? "selected" : ""}>Monokai</option>
               <option value="celestial" ${((storedSettings.theme || "discord") === "celestial") ? "selected" : ""}>Celestial</option>

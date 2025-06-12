@@ -6,6 +6,7 @@
   --discord-text: #dcddde;
   --discord-muted: #72767d;
   --discord-hover: #42464D;
+  --discord-button-hover: #4752c4;
   --discord-active: #393C43;
   --discord-green: #3ba55c;
   --discord-red: #ed4245;
@@ -192,7 +193,7 @@ body {
 }
 
 .create-btn:hover {
-  background-color: #4752c4;
+  background-color: var(--discord-button-hover);
 }
 
 .create-btn i {
@@ -457,7 +458,7 @@ body {
 }
 
 .submit-btn:hover {
-  background-color: #4752c4;
+  background-color: var(--discord-button-hover);
 }
 
 .submit-report-btn:hover {
@@ -862,7 +863,7 @@ body {
 }
 
 .settings-save-btn:hover {
-  background-color: #4752c4;
+  background-color: var(--discord-button-hover);
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
@@ -1122,7 +1123,7 @@ body {
 }
 
 .workbench-action-btn:hover {
-  background-color: #4752c4;
+  background-color: var(--discord-button-hover);
 }
 
 .workbench-action-btn i {
@@ -1174,7 +1175,7 @@ body {
 }
 
 .add-command-btn:hover {
-  background-color: #4752c4;
+  background-color: var(--discord-button-hover);
 }
 
 .add-command-btn i {
@@ -1456,7 +1457,7 @@ body {
 }
 
 .editor-content-missing div button:hover {
-  background-color: #4752c4;
+  background-color: var(--discord-button-hover);
 }
 
 .editor-content-missing div button:first-child {
@@ -1572,7 +1573,7 @@ body {
 }
 
 #collaborationSection .regenerate-link:hover {
-  color: #4752c4 !important;
+  color: var(--discord-button-hover) !important;
 }
 
 #landingPageSection .grid-container {

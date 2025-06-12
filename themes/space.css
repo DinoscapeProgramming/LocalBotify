@@ -1,0 +1,17 @@
+:root {
+  --discord-primary: #209b72;
+  --discord-bg: #181c2f;
+  --discord-dark: #232946;
+  --discord-darker: #161925;
+  --discord-text: #e0eaff;
+  --discord-muted: #7a8fa6;
+  --discord-hover: #2e3350;
+  --discord-button-hover: #2d755d;
+  --discord-active: #367b6a;
+  --discord-green: #24cc58;
+  --discord-red: #ed4245;
+}
+
+.help-tree .file-tree-item.active {
+  background-color: #24745a !important;
+}
