@@ -57,13 +57,13 @@ process.on("SIGTERM", () => {
 // Catch uncaught exceptions
 process.on("uncaughtException", (err) => {
   if ((err.message || err)?.includes("ENOTFOUND discord.com")) {
-    alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!");
+    alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!").catch(() => {});
   } else if ((err.message || err)?.includes("An invalid token was provided.")) {
-    alert("⚠️ Invalid Token", "Your bot token is invalid! Please provide a valid token.");
+    alert("⚠️ Invalid Token", "Your bot token is invalid! Please provide a valid token.").catch(() => {});
   } else if ((err.message || err)?.includes("Used disallowed intents")) {
-    alert("⚠️ Privileged Intents", "Privileged intents missing in Developer Portal! Please enable them.");
+    alert("⚠️ Privileged Intents", "Privileged intents missing in Developer Portal! Please enable them.").catch(() => {});
   } else if ((err.message || err)?.includes("(check your firewall settings)")) {
-    alert("⚠️ Connection Refused", "The connection to the LocalTunnel server was refused! Please restart your bot.");
+    alert("⚠️ Connection Refused", "The connection to the LocalTunnel server was refused! Please restart your bot.").catch(() => {});
   } else {
     const lines = [
       ...[`🔴   Uncaught exception:`],

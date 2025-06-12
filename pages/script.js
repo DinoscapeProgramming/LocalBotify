@@ -795,7 +795,7 @@ class LocalBotify {
     let currentAppLockId = storedSettings.appLock || false;
 
     if (window.isSecureContext && "credentials" in navigator && (typeof navigator.credentials.create === "function") && (typeof PublicKeyCredential === "function")) {
-      settings.querySelector("#appLock").addEventListener("click", (e) => {
+      settings.querySelector("#appLock").addEventListener("click", () => {
         if (!settings.querySelector("#appLock").checked) return;
         if (!navigator.onLine) return this.alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!").then(() => {
           settings.querySelector("#appLock").checked = false
@@ -832,6 +832,50 @@ class LocalBotify {
         });
       });
     };
+
+    settings.querySelector("#devMode").addEventListener("click", () => {
+      if (!settings.querySelector("#devMode").checked) return;
+      if (!navigator.onLine) return this.alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!").then(() => {
+        settings.querySelector("#devMode").checked = false
+      });
+
+      this.prompt("Activate Developer Mode", "Enter key...").then((key) => {
+        const blockade = document.createElement("div");
+        blockade.style.position = "absolute";
+        blockade.style.top = "0";
+        blockade.style.left = "0";
+        blockade.style.width = "100vw";
+        blockade.style.height = "100vh";
+        blockade.style.zIndex = "999";
+
+        document.body.appendChild(blockade);
+
+        fetch(process.env.SERVER + "/developerMode/verify", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            key
+          })
+        })
+        .then((response) => response.json())
+        .then((keyValidity) => {
+          if (!keyValidity) {
+            settings.querySelector("#devMode").checked = false;
+          };
+
+          blockade.remove();
+        })
+        .catch(() => {
+          settings.querySelector("#devMode").checked = false;
+
+          blockade.remove();
+        });
+      }).catch(() => {
+        settings.querySelector("#devMode").checked = false;
+      });
+    });
 
     settings.querySelector("#activateProToken").addEventListener("click", () => {
       if (!navigator.onLine) return this.alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!");
