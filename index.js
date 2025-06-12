@@ -16,6 +16,7 @@ let highlighter;
 let tray;
 let ptyProcesses = [];
 let isQuitting = false;
+let startupWindowMaximized = false;
 
 const createWindow = () => {
   const window = new BrowserWindow({
@@ -30,7 +31,7 @@ const createWindow = () => {
       contextIsolation: false
     }
   });
-  window.maximize();
+  if (!app.getLoginItemSettings().wasOpenedAtLogin && !process.argv.includes("--startup")) window.maximize();
   window.loadFile("pages/index.html");
   if (tray || (!app.getLoginItemSettings().wasOpenedAtLogin && !process.argv.includes("--startup"))) {
     window.show();
@@ -41,6 +42,10 @@ const createWindow = () => {
       {
         label: "Show",
         click: () => {
+          if ((app.getLoginItemSettings().wasOpenedAtLogin || process.argv.includes("--startup")) && !startupWindowMaximized) {
+            startupWindowMaximized = true;
+            window.maximize();
+          };
           window.show();
           window.setSkipTaskbar(false);
           tray.destroy();
@@ -250,6 +255,10 @@ const createWindow = () => {
       {
         label: "Show",
         click: () => {
+          if ((app.getLoginItemSettings().wasOpenedAtLogin || process.argv.includes("--startup")) && !startupWindowMaximized) {
+            startupWindowMaximized = true;
+            window.maximize();
+          };
           window.show();
           window.setSkipTaskbar(false);
           tray.destroy();
