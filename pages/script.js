@@ -4942,9 +4942,9 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     if (!fs.readdirSync(path.join(process.cwd(), "bots")).includes(newBot.id.toString())) fs.mkdirSync(path.join(process.cwd(), "bots", newBot.id.toString()));
 
     if (process.platform === "win32") {
-      fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), "node.bat"), `@echo off\n"${path.resolve((this.isPackaged) ? path.join(process.resourcesPath, "app.asar.unpacked/tools/node/win32/node.exe") : "./tools/node/win32/node.exe")}" %*`);
+      fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), "node.bat"), `@echo off\n"${path.resolve((this.isPackaged) ? path.join(process.resourcesPath, `app.asar.unpacked/tools/node/win32/${["x64", "x86", "arm64"].includes(process.arch) ? process.arch : "x64"}/node.exe`) : `./tools/node/win32/${["x64", "x86", "arm64"].includes(process.arch) ? process.arch : "x64"}/node.exe`)}" %*`);
     } else {
-      fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), "node"), `#!/bin/bash\n"${path.resolve((this.isPackaged) ? path.join(process.resourcesPath, `app.asar.unpacked/tools/node/${(process.platform === "linux") ? "linux" : "darwin"}/node`) : `./tools/node/${(process.platform === "linux") ? "linux" : "darwin"}/node`)}" "$@"`, { mode: 0o755 });
+      fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), "node"), `#!/bin/bash\n"${path.resolve((this.isPackaged) ? path.join(process.resourcesPath, `app.asar.unpacked/tools/node/${(process.platform === "linux") ? "linux" : "darwin"}/${["x64", "arm64"].includes(process.arch) ? process.arch : "x64"}/node`) : `./tools/node/${(process.platform === "linux") ? "linux" : "darwin"}/${["x64", "arm64"].includes(process.arch) ? process.arch : "x64"}/node`)}" "$@"`, { mode: 0o755 });
     };
 
     if (template === "none") return;
@@ -5871,74 +5871,6 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     const emojiRegex = /(?:\p{Emoji}(?:\p{Emoji_Modifier}|\uFE0F)?(?:\u200D\p{Emoji})*)/gu;
     const numberOrSpecialCharRegex = /^[0-9]$|[.*+?^${}()|[\]\\]/;
     return emojiRegex.test(emoji) && !numberOrSpecialCharRegex.test(emoji);
-  };
-
-  setupNode() {
-    const childProcess = require("child_process");
-
-    try {
-      childProcess.execSync("node -v");
-    } catch {
-      const path = require("path");
-      const os = require("os");
-
-      const platform = os.platform();
-      const electronBinaryPath = process.execPath;
-      const globalBinPath = (platform === "win32") ? "C:\\Windows\\System32" : "/usr/local/bin";
-
-      try {
-        execSync((platform === "win32") ? "net session" : "sudo -v", { stdio: "ignore" });
-
-        function createGlobalNodeScript() {
-          let nodeScriptContent = "";
-
-          if (platform === "win32") {
-            nodeScriptContent = `@echo off\n"${path.join(process.cwd(), "app.asar.unpacked/tools/node/windows/node.exe")}" %*`;
-            fs.writeFileSync(path.join(process.cwd(), "node.bat"), nodeScriptContent);
-          } else {
-            nodeScriptContent = `#!/bin/bash\n"${electronBinaryPath}" "$@"`;
-            fs.writeFileSync(path.join(process.cwd(), "node"), nodeScriptContent, { mode: 0o755 });
-          };
-
-          moveToGlobalBin();
-        };
-
-        function moveToGlobalBin() {
-          const scriptName = (platform === "win32") ? "node.bat" : "node";
-          const scriptPath = path.join(process.cwd(), scriptName);
-
-          try {
-            if (platform === "win32") {
-              childProcess.execSync(`move /Y ${scriptPath} ${globalBinPath}`);
-            } else {
-              childProcess.execSync(`mv ${scriptPath} ${globalBinPath}`);
-            };
-          } catch {};
-        };
-
-        createGlobalNodeScript();
-      } catch {
-        this.relaunchAsAdmin();
-      };
-    };
-  };
-
-  relaunchAsAdmin() {
-    this.alert("Please open LocalBotify with administrator rights! This is needed to register our node onto your system globally and will only needed to be done once.");
-
-    /*const os = require("os");
-    const path = require("path");
-    const childProcess = require("child_process");
-    const executablePath = path.resolve(process.execPath);
-    const args = [executablePath].concat(process.argv.slice(1));
-
-    if (os.platform() === "win32") {
-      childProcess.execSync(`runas /user:Administrator "${executablePath} ${args.join(' ')}"`);
-    } else if ((os.platform() === "darwin") || (os.platform() === "linux")) {
-      childProcess.execSync(`osascript -e "do shell script \\"${executablePath} ${args.join(' ')}\\" with administrator privileges"`);
-    };
-
-    app.quit();*/
   };
 };
 

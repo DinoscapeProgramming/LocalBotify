@@ -58,7 +58,10 @@
       "!**/license",
       "!**/.github/**",
       "!**/*.bak",
-      "!**/.vscode/**"
+      "!**/.vscode/**",
+      "!**/tools/node/win32/x86/**",
+      "!**/tools/node/darwin/**",
+      "!**/tools/node/linux/**"
     ],
     "nsis": {
       "installerIcon": "assets/favicon.ico",
