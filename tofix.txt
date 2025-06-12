@@ -1,0 +1,10 @@
+NOTE: THESE ARE SOME RARE BUGS I KNOW ABOUT, BUT DON'T CARE ENOUGH TO PRIORITIZE
+
+- Missing "not found" msg when deleting all cmds in-editor
+- Missing "not found" msg when deleting all files in-editor
+- Wrong color select inidicator on Space theme
+- Wrong animation in pro suite (visible when user scrolls to the bottom and reopens suite view)
+- Too little animations on landing page feature section
+- Different padding on top and bottom of settings section
+- Scroll bar not selectable on app tabs when cursor is moved to the very right
+- Better copy and paste instead of requiring keyboard shortcuts

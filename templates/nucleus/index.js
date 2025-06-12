@@ -105,7 +105,7 @@ ${lines.map(center).join('\n')}
 
     if (config.slashCommands !== previousConfig.slashCommands) {
       fs.readdirSync("./commands").forEach((command) => {
-        delete require.cache[require.resolve("./bots/" + command)];
+        delete require.cache[require.resolve("./commands/" + command)];
       });
 
       rest.put(
