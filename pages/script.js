@@ -4942,7 +4942,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     if (!fs.readdirSync(path.join(process.cwd(), "bots")).includes(newBot.id.toString())) fs.mkdirSync(path.join(process.cwd(), "bots", newBot.id.toString()));
 
     if (process.platform === "win32") {
-      fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), "node.bat"), `@echo off\n"${path.resolve((this.isPackaged) ? path.join(process.resourcesPath, `app.asar.unpacked/tools/node/win32/${["x64", "x86", "arm64"].includes(process.arch) ? process.arch : "x64"}/node.exe`) : `./tools/node/win32/${["x64", "x86", "arm64"].includes(process.arch) ? process.arch : "x64"}/node.exe`)}" %*`);
+      fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), "node.bat"), `@echo off\n"${path.resolve((this.isPackaged) ? path.join(process.resourcesPath, `app.asar.unpacked/tools/node/win32/${["x64", "arm64"].includes(process.arch) ? process.arch : "x64"}/node.exe`) : `./tools/node/win32/${["x64", "arm64"].includes(process.arch) ? process.arch : "x64"}/node.exe`)}" %*`);
     } else {
       fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), "node"), `#!/bin/bash\n"${path.resolve((this.isPackaged) ? path.join(process.resourcesPath, `app.asar.unpacked/tools/node/${(process.platform === "linux") ? "linux" : "darwin"}/${["x64", "arm64"].includes(process.arch) ? process.arch : "x64"}/node`) : `./tools/node/${(process.platform === "linux") ? "linux" : "darwin"}/${["x64", "arm64"].includes(process.arch) ? process.arch : "x64"}/node`)}" "$@"`, { mode: 0o755 });
     };

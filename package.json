@@ -59,7 +59,6 @@
       "!**/.github/**",
       "!**/*.bak",
       "!**/.vscode/**",
-      "!**/tools/node/win32/x86/**",
       "!**/tools/node/darwin/**",
       "!**/tools/node/linux/**"
     ],
