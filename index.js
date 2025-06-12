@@ -27,8 +27,11 @@ const createWindow = () => {
     skipTaskbar: app.getLoginItemSettings().wasOpenedAtLogin || process.argv.includes("--startup"),
     webPreferences: {
       nodeIntegration: true,
-      nodeIntegrationInWorker: true,
-      contextIsolation: false
+      contextIsolation: false,
+      additionalArguments: (app.getLoginItemSettings().wasOpenedAtLogin || process.argv.includes("--startup")) ? [
+        "--startup",
+        `--cwd=${app.getAppPath()}`
+      ] : []
     }
   });
   if (!app.getLoginItemSettings().wasOpenedAtLogin && !process.argv.includes("--startup")) window.maximize();

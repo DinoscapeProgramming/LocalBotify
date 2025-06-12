@@ -50,6 +50,8 @@ const fs = {
   accessSync: (...args) => fs._safeCall(require("fs").accessSync, ...args)
 };
 
+if (process.argv.includes("--startup")) process.chdir(process.argv.find((argument) => argument.startsWith("--cwd=")).split("=").slice(1).join("="));
+
 class LocalBotify {
   constructor() {
     this.isPackaged = require("path").basename(process.execPath) !== "electron.exe";
