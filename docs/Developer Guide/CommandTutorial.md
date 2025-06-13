@@ -163,6 +163,8 @@ console.log(event.store.prefix); // --> "!"
 
 Instead of having to differentiate between messages and interactions, the event's `respond()` method is always binded to the corresponding reply function (`message.channel.send()` for messages; `interaction.reply()` for interactions).
 
+If your bot wants to respond with an error, use `reject()` by passing it an error object or a string instead.
+
 Here's the full structure again for clarity:
 
 ```js
