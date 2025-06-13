@@ -1878,11 +1878,11 @@ class LocalBotify {
                 this.confirm(`Delete ${command.dataset.category[0].toUpperCase() + command.dataset.category.substring(1, command.dataset.category.length - 1)}`, `Are you sure you want to delete ${command.textContent.trim()}?`, "dangerous").then(() => {
                   fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${command.textContent.trim()}.js`));
 
-                  if (workbenchMainView.querySelector(`.workbench-section .setting-item[data-category="${command.dataset.category}"]`).length === 1) {
+                  if (workbenchMainView.querySelectorAll(`.workbench-section .setting-item[data-category="${command.dataset.category}"]`).length === 1) {
                     const noItems = document.createElement("span");
                     noItems.style.color = "grey";
                     noItems.textContent = `No ${command.dataset.category} found`;
-                    workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.insertBefore(noItems, workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.nextElementSibling);
+                    workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.parentElement.insertBefore(noItems, workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.nextElementSibling);
                   };
 
                   workbenchEditorView.style.display = "none";
@@ -2734,11 +2734,11 @@ class LocalBotify {
                   this.confirm(`Delete ${command.dataset.category[0].toUpperCase() + command.dataset.category.substring(1, command.dataset.category.length - 1)}`, `Are you sure you want to delete ${command.textContent.trim()}?`, "dangerous").then(() => {
                     fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${command.textContent.trim()}.js`));
 
-                    if (workbenchMainView.querySelector(`.workbench-section .setting-item[data-category="${command.dataset.category}"]`).length === 1) {
+                    if (workbenchMainView.querySelectorAll(`.workbench-section .setting-item[data-category="${command.dataset.category}"]`).length === 1) {
                       const noItems = document.createElement("span");
                       noItems.style.color = "grey";
                       noItems.textContent = `No ${command.dataset.category} found`;
-                      workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.insertBefore(noItems, workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.nextElementSibling);
+                      workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.parentElement.insertBefore(noItems, workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.nextElementSibling);
                     };
 
                     workbenchEditorView.style.display = "none";
@@ -4390,11 +4390,11 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                   this.confirm(`Delete ${command.dataset.category[0].toUpperCase() + command.dataset.category.substring(1, command.dataset.category.length - 1)}`, `Are you sure you want to delete ${command.textContent.trim()}?`, "dangerous").then(() => {
                     fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), command.dataset.category, `${command.textContent.trim()}.js`));
 
-                    if (workbenchMainView.querySelector(`.workbench-section .setting-item[data-category="${command.dataset.category}"]`).length === 1) {
+                    if (workbenchMainView.querySelectorAll(`.workbench-section .setting-item[data-category="${command.dataset.category}"]`).length === 1) {
                       const noItems = document.createElement("span");
                       noItems.style.color = "grey";
                       noItems.textContent = `No ${command.dataset.category} found`;
-                      workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.insertBefore(noItems, workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.nextElementSibling);
+                      workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.parentElement.insertBefore(noItems, workbenchMainView.querySelector(`.workbench-section h3 i.fa-${command.dataset.category.replace("commands", "code").replace("events", "calendar-days")}`).parentElement.nextElementSibling);
                     };
 
                     workbenchEditorView.style.display = "none";

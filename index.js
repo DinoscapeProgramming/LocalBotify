@@ -36,7 +36,7 @@ const createWindow = () => {
       contextIsolation: false,
       additionalArguments: (app.getLoginItemSettings().wasOpenedAtLogin || process.argv.includes("--startup")) ? [
         "--startup",
-        `--cwd=${app.getAppPath()}`
+        `--cwd=${path.join(app.getAppPath(), (app.isPackaged) ? "../.." : "")}`
       ] : []
     }
   });
