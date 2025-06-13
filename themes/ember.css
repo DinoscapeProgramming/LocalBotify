@@ -1,0 +1,39 @@
+:root {
+  --discord-primary: #ff6f3c;
+  --discord-bg: #0c0b10;
+  --discord-dark: #1e1b23;
+  --discord-darker: #0a090f;
+  --discord-text: #f0e6d2;
+  --discord-muted: #7a6f64;
+  --discord-hover: #3c2f27;
+  --discord-button-hover: #ff8b57;
+  --discord-active: #e65c21;
+  --discord-green: #29a745;
+  --discord-red: #d93025;
+}
+
+.setting-item select:focus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff6f3c'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  outline: none;
+  box-shadow: 0 0 6px #ff8b57;
+}
+
+.help-tree .file-tree-item.active {
+  background-color: #e65c21 !important;
+  box-shadow: 0 0 8px #ff6f3c;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  background-color: var(--discord-darker);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--discord-primary);
+  border-radius: 4px;
+  box-shadow: 0 0 6px #ff6f3c;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--discord-button-hover);
+}

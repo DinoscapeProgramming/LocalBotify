@@ -1,0 +1,24 @@
+:root {
+  --discord-primary: #1ca7ec;
+  --discord-bg: #0a1f2c;
+  --discord-dark: #153f55;
+  --discord-darker: #0b1928;
+  --discord-text: #d1e8ff;
+  --discord-muted: #6a8ca8;
+  --discord-hover: #225c83;
+  --discord-button-hover: #3db0ff;
+  --discord-active: #1b8adb;
+  --discord-green: #23d18b;
+  --discord-red: #e04848;
+}
+
+.setting-item select:focus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231ca7ec'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  outline: none;
+  box-shadow: 0 0 8px #3db0ff;
+}
+
+.help-tree .file-tree-item.active {
+  background-color: #1b8adb !important;
+  box-shadow: 0 0 10px #3db0ff;
+}

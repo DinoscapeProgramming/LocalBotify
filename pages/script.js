@@ -665,7 +665,11 @@ class LocalBotify {
             Theme
             <select id="themeSelect">
               <option value="discord" ${((storedSettings.theme || "discord") === "discord") ? "selected" : ""}>Discord</option>
+              <option value="codewave" ${((storedSettings.theme || "discord") === "codewave") ? "selected" : ""}>Codewave</option>
               <option value="space" ${((storedSettings.theme || "discord") === "space") ? "selected" : ""}>Space</option>
+              <option value="midnight" ${((storedSettings.theme || "discord") === "midnight") ? "selected" : ""}>Midnight</option>
+              <option value="ember" ${((storedSettings.theme || "discord") === "ember") ? "selected" : ""}>Ember</option>
+              <option value="nebula" ${((storedSettings.theme || "discord") === "nebula") ? "selected" : ""}>Nebula</option>
               <option value="serenity" ${((storedSettings.theme || "discord") === "serenity") ? "selected" : ""}>Serenity</option>
               <option value="monokai" ${((storedSettings.theme || "discord") === "monokai") ? "selected" : ""}>Monokai</option>
               <option value="celestial" ${((storedSettings.theme || "discord") === "celestial") ? "selected" : ""}>Celestial</option>
@@ -1330,6 +1334,7 @@ class LocalBotify {
             transition: all 0.3s ease;
             border: 1px solid transparent;
             box-shadow: none;
+            animation-delay: 0s;
           ">
             <h3 style="flex-direction: row; margin-bottom: 1rem;">
               <i class="fas fa-code"></i>Commands
@@ -1380,7 +1385,7 @@ class LocalBotify {
             <i class="${(((this.readFileSafelySync(path.join(process.cwd(), "bots", bot.id.toString(), "channels/process.txt")) || "OFFLINE").trim() || "OFFLINE") === "OFFLINE") ? "fas fa-play" : "fas fa-stop"}"></i>
           </button>
           <div class="editor-content">
-            <textarea spellcheck="false">${(fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file)).isDirectory())) ? this.escapeHtml(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ((dir) => {
+            <textarea spellcheck="false">${(this.getFlatFileList(bot, path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file.substring(2))).isDirectory())) ? this.escapeHtml(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ((dir) => {
               const files = fs.readdirSync(dir);
               if (files.includes("index.js")) return "index.js";
               if (files.includes("package.json")) {
@@ -1400,21 +1405,19 @@ class LocalBotify {
               if (firstFile) return firstFile.substring(2);
               return null;
             })(path.join(process.cwd(), "bots", bot.id.toString()))), "utf8")) : ""}</textarea>
-            ${(!fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file)).isDirectory())) ? `
-              <div class="editor-content-missing">
-                <h2>No file found</h2>
-                <div>
-                  <button>
-                    <i class="fas fa-plus"></i>
-                    New File
-                  </button>
-                  <button>
-                    <i class="fas fa-plus"></i>
-                    New Folder
-                  </button>
-                </div>
+            <div class="editor-content-missing"${(this.getFlatFileList(bot, path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file.substring(2))).isDirectory())) ? ` style="display: none;"` : ""}>
+              <h2>No file found</h2>
+              <div>
+                <button>
+                  <i class="fas fa-plus"></i>
+                  New File
+                </button>
+                <button>
+                  <i class="fas fa-plus"></i>
+                  New Folder
+                </button>
               </div>
-            ` : ""}
+            </div>
           </div>
         </div>
 
@@ -1922,7 +1925,7 @@ class LocalBotify {
       });
     });
 
-    if (fs.readdirSync(path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file)).isDirectory())) {
+    if (this.getFlatFileList(bot, path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file.substring(2))).isDirectory())) {
       const activeFile = ((dir) => {
         const files = fs.readdirSync(dir);
         if (files.includes("index.js")) return "index.js";
@@ -2013,45 +2016,45 @@ class LocalBotify {
 
       editorView.querySelector(".file-tree").innerHTML = this.renderFileTree(this.generateFileTree(path.join(process.cwd(), "bots", bot.id.toString())));
 
-      (this.getFileTreeItem(editorView, activeItem) || this.getFileTreeItem(editorView, activeFile) || this.getFileTreeItem(editorView, newFile) || this.getFileTreeItem(editorView, ((dir) => {
-        const files = fs.readdirSync(dir);
-        if (files.includes("index.js")) return "index.js";
-        if (files.includes("package.json")) {
-          try {
-            const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
-            if (packageJson.main && fs.existsSync(path.join(dir, packageJson.main))) return packageJson.main;
-            return "package.json";
-          } catch {
-            return "package.json";
+      if (!this.getFlatFileList(bot, path.join(process.cwd(), "bots", bot.id.toString())).find((file) => !fs.statSync(path.join(process.cwd(), "bots", bot.id.toString(), file.substring(2))).isDirectory())) {
+        editorView.querySelector(".editor-content-missing").style.removeProperty("display");
+      } else {
+        (this.getFileTreeItem(editorView, activeItem) || this.getFileTreeItem(editorView, activeFile) || this.getFileTreeItem(editorView, newFile) || this.getFileTreeItem(editorView, ((dir) => {
+          const files = fs.readdirSync(dir);
+          if (files.includes("index.js")) return "index.js";
+          if (files.includes("package.json")) {
+            try {
+              const packageJson = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+              if (packageJson.main && fs.existsSync(path.join(dir, packageJson.main))) return packageJson.main;
+              return "package.json";
+            } catch {
+              return "package.json";
+            };
           };
-        };
-        const firstJsFile = files.find((file) => file.endsWith(".js"));
-        if (firstJsFile) return firstJsFile;
-        const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
-        if (firstNonFolder) return firstNonFolder;
-        const firstFile = this.getFlatFileList(bot, dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
-        if (firstFile) return firstFile.substring(2);
-        return null;
-      })(path.join(process.cwd(), "bots", bot.id.toString())))).classList.add(...[
-        ...[
-          "active"
-        ],
-        ...(activeItem !== activeFile) ? [] : [
-          "active-file"
-        ]
-      ]);
+          const firstJsFile = files.find((file) => file.endsWith(".js"));
+          if (firstJsFile) return firstJsFile;
+          const firstNonFolder = files.find((file) => !fs.statSync(path.join(dir, file)).isDirectory());
+          if (firstNonFolder) return firstNonFolder;
+          const firstFile = this.getFlatFileList(bot, dir).find((file) => !fs.statSync(path.join(dir, file.substring(2))).isDirectory());
+          if (firstFile) return firstFile.substring(2);
+          return null;
+        })(path.join(process.cwd(), "bots", bot.id.toString())))).classList.add(...[
+          ...[
+            "active"
+          ],
+          ...(activeItem !== activeFile) ? [] : [
+            "active-file"
+          ]
+        ]);
+      };
 
       this.setupFileTreeListeners(editorView, bot);
     });
 
     const addFileBtn = editorView.querySelector(`.file-explorer-btn[title="New File"]`);
     [
-      ...[
-        addFileBtn
-      ],
-      ...(editorView.querySelector(".editor-content-missing")) ? [
-        editorView.querySelectorAll(".editor-content-missing button")[1]
-      ] : []
+      addFileBtn,
+      editorView.querySelectorAll(".editor-content-missing button")[1]
     ].forEach((button) => {
       button.addEventListener("click", () => {
         let newFileTreeItem = document.createElement("div");
@@ -2064,7 +2067,7 @@ class LocalBotify {
 
         newFileTreeItem.querySelector("span").addEventListener("blur", () => {
           if (!newFileTreeItem.querySelector("span").textContent.trim()) return newFileTreeItem.remove();
-          if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+          if (editorView.querySelector(".editor-content-missing")) (editorView.querySelector(".editor-content-missing").style.display = "none");
 
           newFileTreeItem.style.removeProperty("cursor");
           newFileTreeItem.querySelector("i").className = `fas ${(newFileTreeItem.querySelector("span").textContent.endsWith(".json")) ? "fa-file" : "fa-file-code"}`;
@@ -2082,7 +2085,7 @@ class LocalBotify {
 
             this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
             this.editor.clearHistory();
-            this.fileWatcher.close();
+            this.fileWatcher?.close();
             this.fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), (eventType) => {
               if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"))) return;
 
@@ -2121,7 +2124,7 @@ class LocalBotify {
               span.focus();
               span.addEventListener("blur", () => {
                 if (!span.textContent.trim()) return newFileTreeItem.remove();
-                if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+                if (editorView.querySelector(".editor-content-missing")) (editorView.querySelector(".editor-content-missing").style.display = "none");
 
                 span.style.cursor = "pointer";
                 span.contentEditable = false;
@@ -2135,7 +2138,7 @@ class LocalBotify {
                 if (e.key !== "Enter") return;
 
                 if (!span.textContent.trim()) return newFileTreeItem.remove();
-                if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+                if (editorView.querySelector(".editor-content-missing")) (editorView.querySelector(".editor-content-missing").style.display = "none");
 
                 span.style.cursor = "pointer";
                 span.contentEditable = false;
@@ -2169,7 +2172,7 @@ class LocalBotify {
         newFileTreeItem.querySelector("span").addEventListener("keydown", (e) => {
           if (e.key !== "Enter") return;
           if (!newFileTreeItem.querySelector("span").textContent.trim()) return newFileTreeItem.remove();
-          if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+          if (editorView.querySelector(".editor-content-missing")) (editorView.querySelector(".editor-content-missing").style.display = "none");
 
           newFileTreeItem.style.removeProperty("cursor");
           newFileTreeItem.querySelector("i").className = `fas ${(newFileTreeItem.querySelector("span").textContent.endsWith(".json")) ? "fa-file" : "fa-file-code"}`;
@@ -2186,7 +2189,7 @@ class LocalBotify {
 
             this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"));
             this.editor.clearHistory();
-            this.fileWatcher.close();
+            this.fileWatcher?.close();
             this.fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), (eventType) => {
               if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8"))) return;
 
@@ -2223,7 +2226,7 @@ class LocalBotify {
               span.focus();
               span.addEventListener("blur", () => {
                 if (!span.textContent.trim()) return newFileTreeItem.remove();
-                if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+                if (editorView.querySelector(".editor-content-missing")) (editorView.querySelector(".editor-content-missing").style.display = "none");
 
                 span.style.cursor = "pointer";
                 span.contentEditable = false;
@@ -2237,7 +2240,7 @@ class LocalBotify {
                 if (e.key !== "Enter") return;
 
                 if (!span.textContent.trim()) return newFileTreeItem.remove();
-                if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+                if (editorView.querySelector(".editor-content-missing")) (editorView.querySelector(".editor-content-missing").style.display = "none");
 
                 span.style.cursor = "pointer";
                 span.contentEditable = false;
@@ -2275,12 +2278,8 @@ class LocalBotify {
 
     const addFolderBtn = editorView.querySelector(`.file-explorer-btn[title="New Folder"]`);
     [
-      ...[
-        addFolderBtn
-      ],
-      ...(editorView.querySelector(".editor-content-missing")) ? [
-        editorView.querySelectorAll(".editor-content-missing button")[0]
-      ] : []
+      addFolderBtn,
+      editorView.querySelectorAll(".editor-content-missing button")[0]
     ].forEach((button) => {
       button.addEventListener("click", () => {
         let newFolderTreeItem = document.createElement("div");
@@ -2298,7 +2297,7 @@ class LocalBotify {
 
         newFolderTreeItem.querySelector("span").addEventListener("blur", () => {
           if (!newFolderTreeItem.querySelector("span").textContent.trim()) return newFolderTreeItem.remove();
-          if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+          if (editorView.querySelector(".editor-content-missing")) (editorView.querySelector(".editor-content-missing").style.display = "none");
 
           newFolderTreeItem.style.removeProperty("cursor");
           newFolderTreeItem.querySelector("span").contentEditable = false;
@@ -2344,7 +2343,7 @@ class LocalBotify {
               span.focus();
               span.addEventListener("blur", () => {
                 if (!span.textContent.trim()) return newFolderTreeItem.remove();
-                if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+                if (editorView.querySelector(".editor-content-missing")) (editorView.querySelector(".editor-content-missing").style.display = "none");
 
                 span.style.cursor = "pointer";
                 span.contentEditable = false;
@@ -2358,7 +2357,7 @@ class LocalBotify {
                 if (e.key !== "Enter") return;
 
                 if (!span.textContent.trim()) return newFolderTreeItem.remove();
-                if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+                if (editorView.querySelector(".editor-content-missing")) (editorView.querySelector(".editor-content-missing").style.display = "none");
 
                 span.style.cursor = "pointer";
                 span.contentEditable = false;
@@ -2392,7 +2391,7 @@ class LocalBotify {
         newFolderTreeItem.querySelector("span").addEventListener("keydown", (e) => {
           if (e.key !== "Enter") return;
           if (!newFolderTreeItem.querySelector("span").textContent.trim()) return newFolderTreeItem.remove();
-          if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+          if (editorView.querySelector(".editor-content-missing")) (editorView.querySelector(".editor-content-missing").style.display = "none");
 
           newFolderTreeItem.style.removeProperty("cursor");
           newFolderTreeItem.querySelector("span").contentEditable = false;
@@ -2438,7 +2437,7 @@ class LocalBotify {
               span.focus();
               span.addEventListener("blur", () => {
                 if (!span.textContent.trim()) return newFolderTreeItem.remove();
-                if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+                if (editorView.querySelector(".editor-content-missing")) (editorView.querySelector(".editor-content-missing").style.display = "none");
 
                 span.style.cursor = "pointer";
                 span.contentEditable = false;
@@ -2452,7 +2451,7 @@ class LocalBotify {
                 if (e.key !== "Enter") return;
 
                 if (!span.textContent.trim()) return newFolderTreeItem.remove();
-                if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+                if (editorView.querySelector(".editor-content-missing")) (editorView.querySelector(".editor-content-missing").style.display = "none");
 
                 span.style.cursor = "pointer";
                 span.contentEditable = false;
@@ -4649,7 +4648,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
           this.editor.setValue(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"));
           this.editor.clearHistory();
-          this.fileWatcher.close();
+          this.fileWatcher?.close();
           this.fileWatcher = fs.watch(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), (eventType) => {
             if ((eventType !== "change") || (this.editor.getValue() === fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8"))) return;
 
@@ -4691,7 +4690,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           span.focus();
           span.addEventListener("blur", () => {
             if (!span.textContent.trim()) return item.remove();
-            if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+            if (editorView.querySelector(".editor-content-missing")) (editorView.querySelector(".editor-content-missing").style.display = "none");
 
             span.style.cursor = "pointer";
             span.contentEditable = false;
@@ -4705,7 +4704,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
             if (e.key !== "Enter") return;
 
             if (!span.textContent.trim()) return item.remove();
-            if (editorView.querySelector(".editor-content-missing")) editorView.querySelector(".editor-content-missing").remove();
+            if (editorView.querySelector(".editor-content-missing")) (editorView.querySelector(".editor-content-missing").style.display = "none");
 
             span.style.cursor = "pointer";
             span.contentEditable = false;

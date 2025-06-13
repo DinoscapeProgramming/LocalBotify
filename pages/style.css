@@ -1063,7 +1063,7 @@ body {
 }
 
 .workspace-close-btn i {
-  transform: translate(0.75px, 1px);
+  transform: translateY(1px);
 }
 
 .workbench-view {
