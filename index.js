@@ -20,7 +20,8 @@ let isQuitting = false;
 let startupWindowMaximized = false;
 
 contextMenu({
-  showSaveImageAs: true
+  showSaveImageAs: true,
+  showInspectElement: false
 });
 
 const createWindow = () => {

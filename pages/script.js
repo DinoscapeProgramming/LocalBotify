@@ -2109,6 +2109,8 @@ class LocalBotify {
           });
 
           newFileTreeItem.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+
             if (document.body.querySelector(".file-tree-context-menu")) document.body.querySelector(".file-tree-context-menu").remove();
 
             const contextMenu = document.createElement("div");
@@ -2209,6 +2211,8 @@ class LocalBotify {
           });
 
           newFileTreeItem.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+
             if (document.body.querySelector(".file-tree-context-menu")) document.body.querySelector(".file-tree-context-menu").remove();
 
             const contextMenu = document.createElement("div");
@@ -2328,6 +2332,8 @@ class LocalBotify {
           });
 
           newFolderTreeItem.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+
             if (document.body.querySelector(".file-tree-context-menu")) document.body.querySelector(".file-tree-context-menu").remove();
 
             const contextMenu = document.createElement("div");
@@ -2420,6 +2426,8 @@ class LocalBotify {
           });
 
           newFolderTreeItem.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+
             if (document.body.querySelector(".file-tree-context-menu")) document.body.querySelector(".file-tree-context-menu").remove();
 
             const contextMenu = document.createElement("div");
@@ -4671,6 +4679,8 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
       });
 
       item.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+
         if (document.body.querySelector(".file-tree-context-menu")) document.body.querySelector(".file-tree-context-menu").remove();
 
         const contextMenu = document.createElement("div");
