@@ -11,7 +11,7 @@ const path = require("path");
 const { parse } = require("markdown-wasm");
 const unzipper = require("unzipper");
 const nodeFetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
-const contextMenu = (...args) => import("electron-context-menu").then(({ default: createContextMenu }) => createContextMenu(...args));
+const createContextMenu = (...args) => import("electron-context-menu").then(({ default: contextMenu }) => contextMenu(...args));
 
 let highlighter;
 let tray;
@@ -19,7 +19,7 @@ let ptyProcesses = [];
 let isQuitting = false;
 let startupWindowMaximized = false;
 
-contextMenu({
+createContextMenu({
   showSaveImageAs: true,
   showInspectElement: false
 });
