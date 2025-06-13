@@ -11,7 +11,7 @@ const path = require("path");
 const { parse } = require("markdown-wasm");
 const unzipper = require("unzipper");
 const nodeFetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
-const contextMenu = require("electron-context-menu").default;
+const contextMenu = (...args) => import("electron-context-menu").then(({ default: createContextMenu }) => createContextMenu(...args));
 
 let highlighter;
 let tray;

@@ -7,3 +7,4 @@ NOTE: THESE ARE SOME RARE BUGS I KNOW ABOUT, BUT DON'T CARE ENOUGH TO PRIORITIZE
 - Too little animations on landing page feature section
 - Different padding on top and bottom of settings section
 - Scroll bar not selectable on app tabs when cursor is moved to the very right
+- Picmo.js offline support

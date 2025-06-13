@@ -35,14 +35,14 @@ Welcome to **LocalBotify** – the easiest way to build, customize, and host you
 
 ## ⚙️ Configure Your Bot
 
-- **Prefix & Slash Commands**  
+- **Status & Presence**  
+  Set a custom "Playing", "Watching", or "Listening" status.
+
+- **Prefix & Commands**  
   Choose how users will interact with your bot (e.g. `!help` or `/help`).
 
 - **Embed & Message Customization**  
   Add footers, colors, and your own bot personality.
-
-- **Status & Presence**  
-  Set a custom "Playing", "Watching", or "Listening" status.
 
 ---
 

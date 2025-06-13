@@ -1,4 +1,4 @@
-- Picmo Offline Support
+- Environment Encryption
 - Fix website
 - Add prebuilt economy commands
 - Add prebuilt events
