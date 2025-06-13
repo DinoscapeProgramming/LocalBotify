@@ -737,7 +737,7 @@ class LocalBotify {
             Set the default command prefix for newly created bots
           </div>
         </div>
-        <div class="setting-item">
+        ${(this.isPackaged) ? `<div class="setting-item">
           <label data-tooltip="Enable development mode">
             <span>Developer Mode</span>
             <input type="checkbox" id="devMode" ${(storedSettings.devMode) ? "checked" : ""}/>
@@ -745,7 +745,7 @@ class LocalBotify {
           <div class="setting-description">
             Show additional debugging information and developer tools
           </div>
-        </div>
+        </div>` : ""}
       </div>
 
       <div class="settings-section">
@@ -833,49 +833,51 @@ class LocalBotify {
       });
     };
 
-    settings.querySelector("#devMode").addEventListener("click", () => {
-      if (!settings.querySelector("#devMode").checked) return;
-      if (!navigator.onLine) return this.alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!").then(() => {
-        settings.querySelector("#devMode").checked = false
-      });
-
-      this.prompt("Activate Developer Mode", "Enter key...").then((key) => {
-        const blockade = document.createElement("div");
-        blockade.style.position = "absolute";
-        blockade.style.top = "0";
-        blockade.style.left = "0";
-        blockade.style.width = "100vw";
-        blockade.style.height = "100vh";
-        blockade.style.zIndex = "999";
-
-        document.body.appendChild(blockade);
-
-        fetch(process.env.SERVER + "/developerMode/verify", {
-          method: "POST",
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            key
-          })
-        })
-        .then((response) => response.json())
-        .then((keyValidity) => {
-          if (!keyValidity) {
-            settings.querySelector("#devMode").checked = false;
-          };
-
-          blockade.remove();
-        })
-        .catch(() => {
-          settings.querySelector("#devMode").checked = false;
-
-          blockade.remove();
+    if (this.isPackaged) {
+      settings.querySelector("#devMode").addEventListener("click", () => {
+        if (!settings.querySelector("#devMode").checked) return;
+        if (!navigator.onLine) return this.alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!").then(() => {
+          settings.querySelector("#devMode").checked = false
         });
-      }).catch(() => {
-        settings.querySelector("#devMode").checked = false;
+
+        this.prompt("Activate Developer Mode", "Enter key...").then((key) => {
+          const blockade = document.createElement("div");
+          blockade.style.position = "absolute";
+          blockade.style.top = "0";
+          blockade.style.left = "0";
+          blockade.style.width = "100vw";
+          blockade.style.height = "100vh";
+          blockade.style.zIndex = "999";
+
+          document.body.appendChild(blockade);
+
+          fetch(process.env.SERVER + "/developerMode/verify", {
+            method: "POST",
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              key
+            })
+          })
+          .then((response) => response.json())
+          .then((keyValidity) => {
+            if (!keyValidity) {
+              settings.querySelector("#devMode").checked = false;
+            };
+
+            blockade.remove();
+          })
+          .catch(() => {
+            settings.querySelector("#devMode").checked = false;
+
+            blockade.remove();
+          });
+        }).catch(() => {
+          settings.querySelector("#devMode").checked = false;
+        });
       });
-    });
+    };
 
     settings.querySelector("#activateProToken").addEventListener("click", () => {
       if (!navigator.onLine) return this.alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!");

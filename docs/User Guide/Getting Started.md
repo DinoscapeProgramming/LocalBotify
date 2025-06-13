@@ -25,9 +25,11 @@ Welcome to **LocalBotify** – the easiest way to build, customize, and host you
 1. Go to [Discord Developer Portal](https://discord.com/developers/applications).
 2. Create a new application and bot.
 3. Copy your **Bot Token**.
-4. Paste it into **LocalBotify** under the **Settings → Token** section.
+4. Activate all the intents
+5. Paste it into **LocalBotify** under the **Settings → Token** section.
 
 > ⚠️ Keep your token safe and never share it!
+> ⚠️ Security tip: Use the `Environment Encryption` setting to prevent hackers from stealing your bot tokens
 
 ---
 
@@ -46,16 +48,14 @@ Welcome to **LocalBotify** – the easiest way to build, customize, and host you
 
 ## 🚀 Going Live
 
-- Click **Start Bot** to run locally.
-- Or use **"Host 24/7"** to deploy your bot to the cloud (Pro plan).
+- Click **Run** to start your bot.
 
 ---
 
 ## 💬 Need Help?
 
 - Visit our [Support Server](https://discord.gg/your-server)
-- Check out the [Docs](https://yourdomain.com/docs)
 
 ---
 
-Made with ❤️ by the LocalBotify Team
+Made with ❤️ by Dinoscape
