@@ -4,5 +4,4 @@ NOTE: THESE ARE SOME RARE BUGS I KNOW ABOUT, BUT DON'T CARE ENOUGH TO PRIORITIZE
 - Missing "not found" msg when deleting all files in-editor
 - Wrong animation in pro suite (visible when user scrolls to the bottom and reopens suite view)
 - Too little animations on landing page feature section
-- Different padding on top and bottom of settings section
 - Picmo.js offline support
