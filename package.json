@@ -19,6 +19,7 @@
     "@teeny-tiny/open": "^1.1.4",
     "@xterm/xterm": "^5.5.0",
     "discord.js": "^14.18.0",
+    "electron-context-menu": "^4.1.0",
     "he": "^1.2.0",
     "localbotify": "^2.1.0",
     "localtunnel": "github:lpolish/localtunnel#feature/enhanced-functionality",

@@ -11,12 +11,17 @@ const path = require("path");
 const { parse } = require("markdown-wasm");
 const unzipper = require("unzipper");
 const nodeFetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
+const contextMenu = require("electron-context-menu").default;
 
 let highlighter;
 let tray;
 let ptyProcesses = [];
 let isQuitting = false;
 let startupWindowMaximized = false;
+
+contextMenu({
+  showSaveImageAs: true
+});
 
 const createWindow = () => {
   const window = new BrowserWindow({
