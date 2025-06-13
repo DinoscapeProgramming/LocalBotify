@@ -1,4 +1,4 @@
-# 💻 How to Write a Command (as a Developer)
+# 💻 How to Write an Event (as a Developer)
 
 Writing commands for the bot is straightforward and powerful. Just follow the steps below to create interactive and configurable commands using a simple module structure.
 
