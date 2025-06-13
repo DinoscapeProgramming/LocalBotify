@@ -24,6 +24,8 @@ createContextMenu({
   showInspectElement: false
 });
 
+if (process.argv.includes("--startup")) process.chdir(path.join(app.getAppPath(), (app.isPackaged) ? "../.." : ""));
+
 const createWindow = () => {
   const window = new BrowserWindow({
     show: false,
