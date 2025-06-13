@@ -686,7 +686,7 @@ class LocalBotify {
         </div>
       </div>
 
-      ${(window.isSecureContext && "credentials" in navigator && (typeof navigator.credentials.create === "function") && (typeof PublicKeyCredential === "function")) ? `<div class="settings-section">
+      ${(window.isSecureContext && ("credentials" in navigator) && (typeof navigator.credentials.create === "function") && (typeof PublicKeyCredential === "function")) ? `<div class="settings-section">
         <h3><i class="fas fa-shield-halved"></i>Security</h3>
         <div class="setting-item">
           <label data-tooltip="This will not protect your tokens, only the GUI">
@@ -776,7 +776,7 @@ class LocalBotify {
 
     let currentAppLockId = storedSettings.appLock || false;
 
-    if (window.isSecureContext && "credentials" in navigator && (typeof navigator.credentials.create === "function") && (typeof PublicKeyCredential === "function")) {
+    if (window.isSecureContext && ("credentials" in navigator) && (typeof navigator.credentials.create === "function") && (typeof PublicKeyCredential === "function")) {
       settings.querySelector("#appLock").addEventListener("click", () => {
         if (!settings.querySelector("#appLock").checked) return;
         if (!navigator.onLine) return this.alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!").then(() => {
@@ -953,9 +953,9 @@ class LocalBotify {
       const updatedSettings = JSON.stringify({
         theme: document.getElementById("themeSelect").value,
         showStats: document.getElementById("showStats").checked,
-        appLock: (settings.querySelector("#appLock").checked) ? (currentAppLockId || false) : false,
+        appLock: (window.isSecureContext && ("credentials" in navigator) && (typeof navigator.credentials.create === "function") && (typeof PublicKeyCredential === "function")) ? ((settings.querySelector("#appLock").checked) ? (currentAppLockId || false) : false) : false,
         defaultPrefix: document.getElementById("defaultPrefix").value,
-        devMode: document.getElementById("devMode").checked,
+        devMode: (this.isPackaged) ? document.getElementById("devMode").checked : false,
         errorNotifications: document.getElementById("errorNotifications").checked,
         statusNotifications: document.getElementById("statusNotifications").checked,
         announcementNotifications: document.getElementById("announcementNotifications").checked
