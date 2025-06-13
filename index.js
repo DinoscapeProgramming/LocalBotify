@@ -40,7 +40,7 @@ const createWindow = () => {
     window.show();
   } else {
     tray = new Tray(path.join(__dirname, "assets/favicon.png"));
-    tray.setToolTip("Remote Control");
+    tray.setToolTip("LocalBotify");
     tray.setContextMenu(Menu.buildFromTemplate([
       {
         label: "Show",
