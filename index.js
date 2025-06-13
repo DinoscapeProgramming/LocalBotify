@@ -292,6 +292,14 @@ const createWindow = () => {
   });
 
   if (app.isPackaged) {
+    window.webContents.on("devtools-opened", () => {
+      window.webContents.executeJavaScript(`localStorage.getItem("settings");`).then((settings) => {
+        if (!JSON.parse(settings || "{}").devMode) {
+          window.webContents.closeDevTools();
+        };
+      });
+    });
+
     window.webContents.once("did-finish-load", () => {
       window.webContents.on("before-input-event", (_, input) => {
         window.webContents.executeJavaScript(`localStorage.getItem("settings");`).then((settings) => {

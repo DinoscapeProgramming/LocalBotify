@@ -126,7 +126,7 @@ class LocalBotify {
             "></i>
             <p style="opacity: 0.8; margin-bottom: 0.6rem;">No Internet Connection</p>
           `;
-        } else if (this.bots.length) {
+        } else {
           content.classList.add("no-bots");
 
           content.innerHTML = `
@@ -144,24 +144,6 @@ class LocalBotify {
 
             content.appendChild(storeGrid);
           });
-        } else {
-          content.classList.add("no-bots");
-
-          content.innerHTML = `
-            <i class="fas fa-magnifying-glass" style="
-              font-size: 5rem;
-              margin-bottom: 1.5rem;
-              opacity: 0.8;
-            "></i>
-            <p style="opacity: 0.8; margin-bottom: 0.6rem;">Yikes. So quiet here...</p>
-            <button class="create-btn" style="
-              width: 19.5ch;
-              justify-content: center;
-              white-space: nowrap;
-            ">
-              <i class="fas fa-plus"></i>Create Bot Now
-            </button>
-          `;
         };
         break;
       case "settings":
