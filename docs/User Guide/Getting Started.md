@@ -7,7 +7,7 @@ Welcome to **LocalBotify** – the easiest way to build, customize, and host you
 ## ✨ What You Can Do
 - Create feature-rich bots with simple settings.
 - Customize your bot’s behavior, commands, and appearance.
-- Host your bot 24/7 – no coding or servers required.
+- Host your bot locally – no coding or servers required.
 
 ---
 

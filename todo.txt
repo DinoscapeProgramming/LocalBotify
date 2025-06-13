@@ -1,8 +1,8 @@
-- FONTAWESOME OFFLINE 😡
-- PICMO OFFLINE 😡
+- Picmo Offline Support
 - Fix website
-- Add prebuilt commands & events
+- Add prebuilt economy commands
+- Add prebuilt events
 - Write documentation
 - Figure out Stripe
 
-- LAUNCH!!! 🔥🔥🔥
+- Launch
