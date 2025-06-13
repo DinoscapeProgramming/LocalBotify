@@ -1036,11 +1036,13 @@ class LocalBotify {
 
       helpView.querySelectorAll(".markdown-body a").forEach((link) => {
         link.addEventListener("click", (e) => {
-          e.preventDefault();
+          if (this.isUrl(link.href)) {
+            e.preventDefault();
 
-          childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + e.target.href + `"`, (process.platform === "win32") ? {
-            shell: "powershell.exe"
-          } : {});
+            childProcess.exec(((process.platform === "win32") ? `start "` : ((process.platform === "darwin") ? `open "` : `xdg-open "`)) + e.target.href + `"`, (process.platform === "win32") ? {
+              shell: "powershell.exe"
+            } : {});
+          };
         });
       });
 
@@ -4736,6 +4738,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
   setupHelpTreeListeners(helpView) {
     const path = require("path");
+    const childProcess = require("child_process");
 
     const fileItems = helpView.querySelectorAll(".file-tree-item");
 
