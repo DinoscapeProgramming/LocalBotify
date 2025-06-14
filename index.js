@@ -21,7 +21,7 @@ let startupWindowMaximized = false;
 
 createContextMenu({
   showSaveImageAs: true,
-  showInspectElement: false
+  showInspectElement: !app.isPackaged
 });
 
 if (process.argv.includes("--startup")) process.chdir(path.join(app.getAppPath(), (app.isPackaged) ? "../.." : ""));

@@ -2158,7 +2158,7 @@ class LocalBotify {
                 item.remove();
 
                 try {
-                  fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
+                  fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)));
                 } catch {};
               }).catch(() => {});
             });
@@ -2260,7 +2260,7 @@ class LocalBotify {
                 item.remove();
 
                 try {
-                  fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)), "utf8");
+                  fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFileTreeItem)));
                 } catch {};
               }).catch(() => {});
             });
@@ -2377,7 +2377,7 @@ class LocalBotify {
                 item.remove();
 
                 try {
-                  fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)), "utf8");
+                  fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)));
                 } catch {};
               }).catch(() => {});
             });
@@ -2471,7 +2471,7 @@ class LocalBotify {
                 item.remove();
 
                 try {
-                  fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)), "utf8");
+                  fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(newFolderTreeItem)));
                 } catch {};
               }).catch(() => {});
             });
@@ -4724,7 +4724,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
             item.remove();
 
             try {
-              fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)), "utf8");
+              fs.unlinkSync(path.join(process.cwd(), "bots", bot.id.toString(), this.getFilePath(item)));
             } catch {};
           }).catch(() => {});
         });
@@ -5066,7 +5066,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         <div class="modal-body">
           <form id="upgradeForm">
             <div class="form-group" style="margin-bottom: 1rem;">
-              <p style="margin-bottom: 0.5rem;">Looks like you tried to access a LocalBotify Pro feature. 👀</p>
+              <p style="margin-bottom: 0.5rem;">Looks like you tried to access LocalBotify's Pro Suite. 👀</p>
               <p style="text-decoration: underline; color: #ffb100de;">Upgrading only costs 5$ / forever!</p>
             </div>
             <div class="form-actions" style="margin-top: 0;">
@@ -5485,6 +5485,8 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
 
     document.addEventListener("input", (e) => {
       if (e.target.matches(".search-container input")) {
+        if (!document.getElementById("botGrid")) return;
+
         const query = e.target.value.toLowerCase();
         const filteredBots = (this.currentView === "bots") ? this.bots.filter((bot) => 
           bot.name.toLowerCase().includes(query) ||

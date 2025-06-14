@@ -202,4 +202,4 @@ module.exports = {
 
 Once the file is in place and structured properly, the bot will automatically register it as a new command, complete with custom options and UI.
 
-Need help writing a specific type of command? Just ask in our [Discord server](https://discord.gg/gSrCtBMgeY)!
+Need help writing a specific type of event? Just ask in our [Discord server](https://discord.gg/gSrCtBMgeY)!
