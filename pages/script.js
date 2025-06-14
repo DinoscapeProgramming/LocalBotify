@@ -328,6 +328,8 @@ class LocalBotify {
       codeBtn.addEventListener("click", (e) => {
         e.stopPropagation();
 
+        if (!fs.existsSync(path.join(process.cwd(), "bots", bot.id.toString()))) return this.alert("⚠️ Missing Bot Directory", "The files of this bot have vanished. Are you sure this bot still exists?");
+
         this.showCodeEditor(bot);
       });
 
@@ -665,8 +667,8 @@ class LocalBotify {
             Theme
             <select id="themeSelect">
               <option value="discord" ${((storedSettings.theme || "discord") === "discord") ? "selected" : ""}>Discord</option>
-              <option value="codewave" ${((storedSettings.theme || "discord") === "codewave") ? "selected" : ""}>Codewave</option>
               <option value="space" ${((storedSettings.theme || "discord") === "space") ? "selected" : ""}>Space</option>
+              <option value="codewave" ${((storedSettings.theme || "discord") === "codewave") ? "selected" : ""}>Codewave</option>
               <option value="midnight" ${((storedSettings.theme || "discord") === "midnight") ? "selected" : ""}>Midnight</option>
               <option value="ember" ${((storedSettings.theme || "discord") === "ember") ? "selected" : ""}>Ember</option>
               <option value="nebula" ${((storedSettings.theme || "discord") === "nebula") ? "selected" : ""}>Nebula</option>
@@ -1993,7 +1995,7 @@ class LocalBotify {
               bot.id,
               "\x03"
             ]);
-          }, 500);
+          }, 250);
         };
 
         workspaceView.querySelectorAll("#workbench-play-btn, .editor-play-btn").forEach((changedPlayBtn) => {
@@ -4812,6 +4814,8 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
   };
 
   showBotEditor(bot = null) {
+    const path = require("path");
+
     const modal = document.createElement("div");
     modal.className = "modal";
 
@@ -4846,16 +4850,18 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                 </select>
               </div>
             </div>` : ""}
-            <div class="form-group">
-              <label for="botToken">Bot Token</label>
-              <input type="text" id="botToken" value="${(bot) ? this.escapeHtml(require("fs").readFileSync(require("path").join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8").split("\n").filter((line) => !line.startsWith("#") && (line.split("=").length > 1)).map((line) => line.trim().split(/\/\/|#/)[0].split("=")).reduce((data, accumulator) => ({
-                ...data,
-                ...{
-                  [accumulator[0]]: JSON.parse(accumulator[1].trim())
-                }
-              }), {}).TOKEN || "") : ""}">
-            </div>
-            <div class="form-actions">
+            ${(bot && !fs.existsSync(path.join(process.cwd(), "bots", bot.id.toString()))) ? "" : `
+              <div class="form-group">
+                <label for="botToken">Bot Token</label>
+                <input type="text" id="botToken" value="${(bot) ? this.escapeHtml(require("fs").readFileSync(require("path").join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8").split("\n").filter((line) => !line.startsWith("#") && (line.split("=").length > 1)).map((line) => line.trim().split(/\/\/|#/)[0].split("=")).reduce((data, accumulator) => ({
+                  ...data,
+                  ...{
+                    [accumulator[0]]: JSON.parse(accumulator[1].trim())
+                  }
+                }), {}).TOKEN || "") : ""}">
+              </div>
+            `}
+            <div class="form-actions"${(bot && !fs.existsSync(path.join(process.cwd(), "bots", bot.id.toString()))) ? `style="margin-top: 1rem;"` : ""}>
               <button type="submit" class="submit-btn">
                 ${(bot) ? "Update Bot" : "Create Bot"}
               </button>
@@ -4932,7 +4938,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     });
 
     const form = modal.querySelector("#botForm");
-    form.addEventListener("submit", (e) => {
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
       const newBot = {
@@ -4945,8 +4951,6 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         landingPages: [],
         vanityLinks: (bot) ? bot.vanityLinks :  []
       };
-
-      const path = require("path");
 
       let replacedToken = false;
 
@@ -4967,6 +4971,10 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           }).join("\n"), "utf8");
         };
       } else {
+        if ((form.querySelector("#botTemplate").tagName === "SELECT") && (form.querySelector("#botTemplate").value === "none") && (modal.classList.remove("show") || !(await new Promise((resolve, reject) => {
+          this.confirm("Create Empty Bot", "Doing this will render LocalBotify's no-code functionalities useless.").then(() => resolve(true)).catch(() => resolve(false));
+        })))) return;
+
         this.bots.push(newBot);
         this.initializeTemplate(newBot, ((form.querySelector("#botTemplate").tagName === "INPUT") ? "git:" : "") + form.querySelector("#botTemplate").value).then(() => {
           if (fs.existsSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"))) {

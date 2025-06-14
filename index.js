@@ -323,6 +323,10 @@ const createWindow = () => {
 
   app.on("second-instance", () => {
     if (tray) {
+      if ((app.getLoginItemSettings().wasOpenedAtLogin || process.argv.includes("--startup")) && !startupWindowMaximized) {
+        startupWindowMaximized = true;
+        window.maximize();
+      };
       window.show();
       window.setSkipTaskbar(false);
       tray.destroy();

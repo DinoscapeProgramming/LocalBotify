@@ -1,4 +1,4 @@
 NOTE: THESE ARE SOME RARE BUGS I KNOW ABOUT, BUT DON'T CARE ENOUGH TO PRIORITIZE
 
 - Too little animations on landing page feature section
-- Picmo.js offline support (wth picmo, gimme some emojicdn option...)
+- I should think about upgrading CodeMirror, I really like the API of v5 though, so I'm not entirely sure, meh
