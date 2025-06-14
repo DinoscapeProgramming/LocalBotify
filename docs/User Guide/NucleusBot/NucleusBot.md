@@ -9,24 +9,24 @@
 ### 📡 Channels
 
 This folder manages communication between the app process and the bot. It handles all inter-process messaging.
-*For an in-depth guide, see:* `NucleusBot/Channels`.
+*For an in-depth guide, see:* `NucleusBot/Categories/Channels`.
 
 ### 🎯 Trackers
 
 Trackers control the data and behavior within each channel, ensuring content is monitored and updated appropriately.
-*For more details, see:* `NucleusBot/Trackers`.
+*For more details, see:* `NucleusBot/Categories/Trackers`.
 
 ### 💾 Data
 
 This directory stores persistent data used by the Nucleus Bot, maintaining state and important information across sessions.
-*Learn more at:* `NucleusBot/Data`.
+*Learn more at:* `NucleusBot/Categories/Data`.
 
 ### ⚙️ Commands
 
 All commands that power the bot’s functionality reside here. This is where bot actions and interactions are defined.
-*Explore further in:* `NucleusBot/Commands`.
+*Explore further in:* `NucleusBot/Categories/Commands`.
 
 ### 🎉 Events
 
 Events manage dynamic features and workflows, such as the Ticket System, reacting to user actions or system triggers.
-*For detailed info, refer to:* `NucleusBot/Events`.
+*For detailed info, refer to:* `NucleusBot/Categories/Events`.

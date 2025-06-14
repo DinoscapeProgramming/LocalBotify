@@ -3702,7 +3702,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         });
 
         suiteMainView.querySelector("#vanityLinksSection").appendChild(shortenedUrlItem);
-      });
+      }).catch(() => {});
     });
 
     suiteMainView.querySelectorAll("#vanityLinksSection .setting-item").forEach((item) => {
@@ -4858,7 +4858,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                   ...{
                     [accumulator[0]]: JSON.parse(accumulator[1].trim())
                   }
-                }), {}).TOKEN || "") : ""}">
+                }), {}).TOKEN || "") : ""}"${(!bot) ? " required" : ""}>
               </div>
             `}
             <div class="form-actions"${(bot && !fs.existsSync(path.join(process.cwd(), "bots", bot.id.toString()))) ? `style="margin-top: 1rem;"` : ""}>
