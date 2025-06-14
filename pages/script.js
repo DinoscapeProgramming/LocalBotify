@@ -706,7 +706,7 @@ class LocalBotify {
         <div class="setting-item">
           <label data-tooltip="Keep attackers from stealing your tokens">
             <span>Environment Encryption</span>
-            <input type="checkbox" id="environmentEncryption" ${((storedSettings.encryptionPassword) ? "checked" : "")}/>
+            <input type="checkbox" id="environmentEncryption" ${((storedSettings.environmentEncryption) ? "checked" : "")}/>
           </label>
           <div class="setting-description">
             Encrypt your bots' dotenv files
@@ -781,10 +781,11 @@ class LocalBotify {
     `;
 
     let currentAppLockId = storedSettings.appLock || false;
+    let currentEnvironmentEncryptionPassword = (storedSettings.environmentEncryption || [false]);
 
     if (window.isSecureContext && ("credentials" in navigator) && (typeof navigator.credentials.create === "function") && (typeof PublicKeyCredential === "function")) {
       settings.querySelector("#appLock").addEventListener("click", () => {
-        if (!settings.querySelector("#appLock").checked) return;
+        if (!settings.querySelector("#appLock").checked) return (currentAppLockId = storedSettings.appLock || false);
         if (!navigator.onLine) return this.alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!").then(() => {
           settings.querySelector("#appLock").checked = false
         });
@@ -820,6 +821,17 @@ class LocalBotify {
         });
       });
     };
+
+    settings.querySelector("#environmentEncryption").addEventListener("click", () => {
+      if (!settings.querySelector("#environmentEncryption").checked) return (currentEnvironmentEncryptionPassword = (storedSettings.environmentEncryption || [false]));
+
+      this.prompt("Activate Environment Encryption", "Enter password...").then((password) => {
+        currentEnvironmentEncryptionPassword = [password];
+      }).catch(() => {
+        currentEnvironmentEncryptionPassword = [false];
+        settings.querySelector("#environmentEncryption").checked = false;
+      });
+    });
 
     if (this.isPackaged) {
       settings.querySelector("#devMode").addEventListener("click", () => {
@@ -959,7 +971,8 @@ class LocalBotify {
       const updatedSettings = JSON.stringify({
         theme: document.getElementById("themeSelect").value,
         showStats: document.getElementById("showStats").checked,
-        appLock: (window.isSecureContext && ("credentials" in navigator) && (typeof navigator.credentials.create === "function") && (typeof PublicKeyCredential === "function")) ? ((settings.querySelector("#appLock").checked) ? (currentAppLockId || false) : false) : false,
+        appLock: (window.isSecureContext && ("credentials" in navigator) && (typeof navigator.credentials.create === "function") && (typeof PublicKeyCredential === "function")) ? ((document.getElementById("appLock").checked) ? (currentAppLockId || false) : false) : false,
+        environmentEncryption: (document.getElementById("environmentEncryption").checked) ? (currentEnvironmentEncryptionPassword || [false]) : [false],
         defaultPrefix: document.getElementById("defaultPrefix").value,
         devMode: (this.isPackaged) ? document.getElementById("devMode").checked : false,
         errorNotifications: document.getElementById("errorNotifications").checked,
@@ -978,6 +991,21 @@ class LocalBotify {
         saveBtn.style.backgroundColor = "var(--discord-primary)";
       }, 2000);
 
+      if (settings.querySelector("#environmentEncryption").checked) {
+        this.bots.forEach((bot) => {
+          if (!fs.existsSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"))) return;
+
+          const iv = crypto.randomBytes(12);
+          const cipher = crypto.createCipheriv("aes-256-gcm", (currentEnvironmentEncryptionPassword || [false])[0], iv);
+
+          let encrypted = cipher.update(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8"), "utf8", "hex");
+          encrypted += cipher.final("hex");
+
+          const authTag = cipher.getAuthTag().toString("hex");
+
+          fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "- ENCRYPTED -\n" + iv.toString("hex") + authTag + encrypted, "utf8");
+        });
+      };
     });
 
     return settings;
