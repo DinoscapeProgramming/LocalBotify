@@ -826,7 +826,16 @@ class LocalBotify {
       if (!settings.querySelector("#environmentEncryption").checked) return (currentEnvironmentEncryptionPassword = (storedSettings.environmentEncryption || [false]));
 
       this.prompt("Activate Environment Encryption", "Enter password...").then((password) => {
-        currentEnvironmentEncryptionPassword = [password];
+        const verificationString = crypto.randomBytes(8).toString("hex");
+        const iv = crypto.randomBytes(12);
+        const cipher = crypto.createCipheriv("aes-256-gcm", password, iv);
+
+        let encrypted = cipher.update(verificationString, "utf8", "hex");
+        encrypted += cipher.final("hex");
+
+        const authTag = cipher.getAuthTag().toString("hex");
+
+        currentEnvironmentEncryptionPassword = [password, verificationString, iv.toString('hex') + authTag + encrypted];
       }).catch(() => {
         currentEnvironmentEncryptionPassword = [false];
         settings.querySelector("#environmentEncryption").checked = false;
