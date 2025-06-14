@@ -1,5 +1,4 @@
 NOTE: THESE ARE SOME RARE BUGS I KNOW ABOUT, BUT DON'T CARE ENOUGH TO PRIORITIZE
 
-- Missing "not found" msg when deleting all cmds in-editor
 - Too little animations on landing page feature section
 - Picmo.js offline support (wth picmo, gimme some emojicdn option...)
