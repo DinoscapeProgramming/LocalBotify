@@ -1,4 +1,4 @@
-# 🤖 Nucleus Bot Channels Guide
+# 📺 Channels Documentation
 
 Welcome to the **NucleusBot `channels/` directory**! You might’ve spotted a few text files in there and wondered what they're all about. This guide breaks it down for you. ✨
 

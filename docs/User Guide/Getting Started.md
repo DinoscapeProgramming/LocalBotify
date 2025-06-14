@@ -1,61 +1,75 @@
 # 🚀 Getting Started with LocalBotify
 
-Welcome to **LocalBotify** – the easiest way to build, customize, and host your very own Discord bot **without writing a single line of code**.
+Welcome to **LocalBotify** — your all-in-one tool for building, customizing, and running your own Discord bot **without writing a single line of code**.
+If you're reading this, you've already installed the app — so you're ready to roll. 🙌
 
 ---
 
 ## ✨ What You Can Do
-- Create feature-rich bots with simple settings.
-- Customize your bot’s behavior, commands, and appearance.
-- Host your bot locally – no coding or servers required.
 
----
+With LocalBotify, you can:
 
-## 🛠️ Installation
-
-1. **Download LocalBotify**
-   - [Click here to download](https://yourdomain.com/download) the latest version for Windows/Mac/Linux.
-2. **Install & Launch**
-   - Follow the installer and open the app.
+* 🎨 Create powerful, feature-rich bots with no coding
+* ⚙️ Customize commands, behavior, and appearance from a simple UI
+* 💻 Run your bot locally, without external servers or hosting fees
 
 ---
 
 ## 🔐 Connect Your Discord Bot
 
-1. Go to [Discord Developer Portal](https://discord.com/developers/applications).
-2. Create a new application and bot.
-3. Copy your **Bot Token**.
-4. Activate all the intents
-5. Paste it into **LocalBotify** under the **Settings → Token** section.
+Before your bot can go live, you’ll need to connect it to Discord:
 
-> ⚠️ Keep your token safe and never share it!
-> ⚠️ Security tip: Use the `Environment Encryption` setting to prevent hackers from stealing your bot tokens
+1. Open the [Discord Developer Portal](https://discord.com/developers/applications)
+2. Create a **new application** and add a **bot user**
+3. Enable all **Privileged Gateway Intents** (Presence, Server Members, Message Content)
+4. Copy your **Bot Token**
+5. Open LocalBotify and paste the token in:
+   `Settings → Token`
+
+> ⚠️ **Important:** Never share your bot token.
+> 🔒 Use `Environment Encryption` in LocalBotify to help protect your credentials from token stealers or malware.
 
 ---
 
 ## ⚙️ Configure Your Bot
 
-- **Status & Presence**  
-  Set a custom "Playing", "Watching", or "Listening" status.
+Now that your bot is connected, it’s time to personalize it:
 
-- **Prefix & Commands**  
-  Choose how users will interact with your bot (e.g. `!help` or `/help`).
+* **🟢 Status & Presence**
+  Set your bot’s activity (e.g. "Playing Music", "Watching Commands", etc.)
 
-- **Embed & Message Customization**  
-  Add footers, colors, and your own bot personality.
+* **⌨️ Prefix & Commands**
+  Choose how users interact with the bot (`!help`, `/help`, or custom prefixes)
+
+* **🎨 Embeds & Messages**
+  Customize embed colors, footers, welcome messages, and more
 
 ---
 
-## 🚀 Going Live
+## ▶️ Going Live
 
-- Click **Run** to start your bot.
+Once you're ready:
+
+1. Click the **Run** button inside LocalBotify
+2. Your bot will start immediately and sync with your current settings
+
+You're live! 🟢
 
 ---
 
 ## 💬 Need Help?
 
-- Visit our [Support Server](https://discord.gg/your-server)
+Stuck on something? We're here for you:
+
+* Join the official [Support Server](https://discord.gg/your-server)
+* Browse the built-in documentation:
+
+  * [Commands](Structure/Commands)
+  * [Channels](Structure/Channels)
+  * [Trackers](Structure/Trackers)
+  * [Events](Structure/Events)
+  * [Bot Updates](Structure/Updating)
 
 ---
 
-Made with ❤️ by Dinoscape
+Made with ❤️ by **Dinoscape**
