@@ -1014,96 +1014,96 @@ class LocalBotify {
         saveBtn.style.backgroundColor = "var(--discord-primary)";
       }, 2000);
 
-      if (settings.querySelector("#environmentEncryption").checked) {
-        const crypto = require("crypto");
+      const crypto = require("crypto");
 
-        let oldPassword = null;
+      let oldPassword = null;
 
-        if (this.bots.map((bot) => fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8")).some((environment) => environment.startsWith("- ENCRYPTED -\n"))) {
+      if (this.bots.map((bot) => fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8")).some((environment) => environment.startsWith("- ENCRYPTED -\n"))) {
+        try {
+          await new Promise(async (resolve, reject) => {
+            try {
+              oldPassword = await this.prompt("Re-encrypt Environment", "Enter old password...");
+
+              const encryptedData = storedSettings.environmentEncryption[1];
+
+              const ivHex = encryptedData.slice(0, 24);
+              const authTagHex = encryptedData.slice(24, 56);
+              const ciphertextHex = encryptedData.slice(56);
+
+              const iv = Buffer.from(ivHex, "hex");
+              const authTag = Buffer.from(authTagHex, "hex");
+              const ciphertext = Buffer.from(ciphertextHex, "hex");
+
+              crypto.scrypt(oldPassword, "salt", 32, (err, key) => {
+                if (err) return reject();
+
+                try {
+                  const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
+                  decipher.setAuthTag(authTag);
+
+                  let decrypted = decipher.update(ciphertext, "hex", "utf8");
+                  decrypted += decipher.final("utf8");
+
+                  if (decrypted !== storedSettings.environmentEncryption[0]) return reject();
+
+                  resolve();
+                } catch {
+                  reject();
+                };
+              });
+            } catch {
+              reject();
+            };
+          });
+        } catch {
+          updatedSettings.environmentEncryption = storedSettings.environmentEncryption;
+
+          if (!(storedSettings.environmentEncryption || [false])[0]) (settings.querySelector("#environmentEncryption").checked = false);
+
+          return this.alert("⚠️ Invalid Password", "We couldn't encrypt your bot's dotenv file since the password you just entered differs from your original one.").catch(() => {});
+        };
+      };
+
+      this.bots.forEach(async (bot) => {
+        if (!fs.existsSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"))) return;
+
+        if (fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8").startsWith("- ENCRYPTED -\n")) {
           try {
-            await new Promise(async (resolve, reject) => {
-              try {
-                oldPassword = await this.prompt("Re-encrypt Environment", "Enter old password...");
+            await new Promise((resolve, reject) => {
+              const encryptedData = fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8").replace("- ENCRYPTED -\n", "");
 
-                const encryptedData = storedSettings.environmentEncryption[1];
+              const ivHex = encryptedData.slice(0, 24);
+              const authTagHex = encryptedData.slice(24, 56);
+              const ciphertextHex = encryptedData.slice(56);
 
-                const ivHex = encryptedData.slice(0, 24);
-                const authTagHex = encryptedData.slice(24, 56);
-                const ciphertextHex = encryptedData.slice(56);
+              const iv = Buffer.from(ivHex, "hex");
+              const authTag = Buffer.from(authTagHex, "hex");
+              const ciphertext = Buffer.from(ciphertextHex, "hex");
 
-                const iv = Buffer.from(ivHex, "hex");
-                const authTag = Buffer.from(authTagHex, "hex");
-                const ciphertext = Buffer.from(ciphertextHex, "hex");
+              crypto.scrypt(oldPassword, "salt", 32, (err, key) => {
+                if (err) return reject();
 
-                crypto.scrypt(oldPassword, "salt", 32, (err, key) => {
-                  if (err) return reject();
+                try {
+                  const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
+                  decipher.setAuthTag(authTag);
 
-                  try {
-                    const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
-                    decipher.setAuthTag(authTag);
+                  let decrypted = decipher.update(ciphertext, "hex", "utf8");
+                  decrypted += decipher.final("utf8");
 
-                    let decrypted = decipher.update(ciphertext, "hex", "utf8");
-                    decrypted += decipher.final("utf8");
+                  fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), decrypted, "utf8");
 
-                    if (decrypted !== storedSettings.environmentEncryption[0]) return reject();
-
-                    resolve();
-                  } catch {
-                    reject();
-                  };
-                });
-              } catch {
-                reject();
-              };
+                  resolve();
+                } catch {
+                  reject();
+                };
+              });
             });
           } catch {
-            updatedSettings.environmentEncryption = storedSettings.environmentEncryption;
-
-            if (!(storedSettings.environmentEncryption || [false])[0]) (settings.querySelector("#environmentEncryption").checked = false);
-
-            return this.alert("⚠️ Invalid Password", "We couldn't encrypt your bot's dotenv file since the password you just entered differs from your original one.").catch(() => {});
+            return this.alert("⚠️ Invalid Password", "We couldn't decrypt your dotenv file since you entered an invalid password.");
           };
         };
 
-        this.bots.forEach(async (bot) => {
-          if (!fs.existsSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"))) return;
-
-          if (fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8").startsWith("- ENCRYPTED -\n")) {
-            try {
-              await new Promise((resolve, reject) => {
-                const encryptedData = fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8").replace("- ENCRYPTED -\n", "");
-
-                const ivHex = encryptedData.slice(0, 24);
-                const authTagHex = encryptedData.slice(24, 56);
-                const ciphertextHex = encryptedData.slice(56);
-
-                const iv = Buffer.from(ivHex, "hex");
-                const authTag = Buffer.from(authTagHex, "hex");
-                const ciphertext = Buffer.from(ciphertextHex, "hex");
-
-                crypto.scrypt(oldPassword, "salt", 32, (err, key) => {
-                  if (err) return reject();
-
-                  try {
-                    const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
-                    decipher.setAuthTag(authTag);
-
-                    let decrypted = decipher.update(ciphertext, "hex", "utf8");
-                    decrypted += decipher.final("utf8");
-
-                    fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), decrypted, "utf8");
-
-                    resolve();
-                  } catch {
-                    reject();
-                  };
-                });
-              });
-            } catch {
-              return this.alert("⚠️ Invalid Password", "We couldn't decrypt your dotenv file since you entered an invalid password.");
-            };
-          };
-
+        if (settings.querySelector("#environmentEncryption").checked) {
           const iv = crypto.randomBytes(12);
 
           crypto.scrypt(currentEnvironmentEncryptionPassword[0], "salt", 32, (err, derivedKey) => {
@@ -1118,8 +1118,8 @@ class LocalBotify {
 
             fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "- ENCRYPTED -\n" + iv.toString("hex") + authTag + encrypted, "utf8");
           });
-        });
-      };
+        };
+      });
     });
 
     return settings;
