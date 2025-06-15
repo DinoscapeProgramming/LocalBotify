@@ -55,7 +55,7 @@ if (process.argv.includes("--startup")) process.chdir(process.argv.find((argumen
 class LocalBotify {
   constructor() {
     this.isPackaged = require("path").basename(process.execPath) !== "electron.exe";
-    this.isProPlan = !this.isPackaged;
+    this.isProPlan = true;// !this.isPackaged;
 
     this.bots = JSON.parse(localStorage.getItem("bots")) || [];
     this.currentView = "bots";
@@ -684,7 +684,7 @@ class LocalBotify {
         <div class="setting-item">
           <label data-tooltip="Show or hide bot statistics">
             <span>Show Statistics</span>
-            <input type="checkbox" id="showStats" ${((storedSettings.showStats ?? true) ? "checked" : "")}/>
+            <input type="checkbox" id="showStats" ${(storedSettings.showStats ?? true) ? "checked" : ""}/>
           </label>
           <div class="setting-description">
             Display server count and user statistics on bot cards
@@ -697,7 +697,7 @@ class LocalBotify {
         <div class="setting-item">
           <label data-tooltip="This will not protect your tokens, only the GUI">
             <span>App Lock</span>
-            <input type="checkbox" id="appLock" ${((storedSettings.appLock) ? "checked" : "")}/>
+            <input type="checkbox" id="appLock" ${(storedSettings.appLock) ? "checked" : ""}/>
           </label>
           <div class="setting-description">
             Only allow access once verified
@@ -706,7 +706,7 @@ class LocalBotify {
         <div class="setting-item">
           <label data-tooltip="Keep attackers from stealing your tokens">
             <span>Environment Encryption</span>
-            <input type="checkbox" id="environmentEncryption" ${((storedSettings.environmentEncryption) ? "checked" : "")}/>
+            <input type="checkbox" id="environmentEncryption" ${(storedSettings.environmentEncryption[0]) ? "checked" : ""}/>
           </label>
           <div class="setting-description">
             Encrypt your bots' dotenv files
@@ -826,16 +826,27 @@ class LocalBotify {
       if (!settings.querySelector("#environmentEncryption").checked) return (currentEnvironmentEncryptionPassword = (storedSettings.environmentEncryption || [false]));
 
       this.prompt("Activate Environment Encryption", "Enter password...").then((password) => {
+        const crypto = require("crypto");
+
         const verificationString = crypto.randomBytes(8).toString("hex");
         const iv = crypto.randomBytes(12);
-        const cipher = crypto.createCipheriv("aes-256-gcm", password, iv);
 
-        let encrypted = cipher.update(verificationString, "utf8", "hex");
-        encrypted += cipher.final("hex");
+        crypto.scrypt(password, "salt", 32, (err, derivedKey) => {
+          if (err) return ((currentEnvironmentEncryptionPassword = [false]), (settings.querySelector("#environmentEncryption").checked = false));
 
-        const authTag = cipher.getAuthTag().toString("hex");
+          const cipher = crypto.createCipheriv("aes-256-gcm", derivedKey, iv);
 
-        currentEnvironmentEncryptionPassword = [password, verificationString, iv.toString('hex') + authTag + encrypted];
+          let encrypted = cipher.update(verificationString, "utf8", "hex");
+          encrypted += cipher.final("hex");
+
+          const authTag = cipher.getAuthTag().toString("hex");
+
+          currentEnvironmentEncryptionPassword = [
+            password,
+            verificationString,
+            iv.toString("hex") + authTag + encrypted
+          ];
+        });
       }).catch(() => {
         currentEnvironmentEncryptionPassword = [false];
         settings.querySelector("#environmentEncryption").checked = false;
@@ -981,7 +992,7 @@ class LocalBotify {
         theme: document.getElementById("themeSelect").value,
         showStats: document.getElementById("showStats").checked,
         appLock: (window.isSecureContext && ("credentials" in navigator) && (typeof navigator.credentials.create === "function") && (typeof PublicKeyCredential === "function")) ? ((document.getElementById("appLock").checked) ? (currentAppLockId || false) : false) : false,
-        environmentEncryption: (document.getElementById("environmentEncryption").checked) ? (currentEnvironmentEncryptionPassword || [false]) : [false],
+        environmentEncryption: (document.getElementById("environmentEncryption").checked) ? ((currentEnvironmentEncryptionPassword) ? currentEnvironmentEncryptionPassword.slice(1) : [false]) : [false],
         defaultPrefix: document.getElementById("defaultPrefix").value,
         devMode: (this.isPackaged) ? document.getElementById("devMode").checked : false,
         errorNotifications: document.getElementById("errorNotifications").checked,
@@ -1004,15 +1015,22 @@ class LocalBotify {
         this.bots.forEach((bot) => {
           if (!fs.existsSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"))) return;
 
+          const crypto = require("crypto");
+
           const iv = crypto.randomBytes(12);
-          const cipher = crypto.createCipheriv("aes-256-gcm", (currentEnvironmentEncryptionPassword || [false])[0], iv);
 
-          let encrypted = cipher.update(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8"), "utf8", "hex");
-          encrypted += cipher.final("hex");
+          crypto.scrypt(currentEnvironmentEncryptionPassword[0], "salt", 32, (err, derivedKey) => {
+            if (err) return;
 
-          const authTag = cipher.getAuthTag().toString("hex");
+            const cipher = crypto.createCipheriv("aes-256-gcm", derivedKey, iv);
 
-          fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "- ENCRYPTED -\n" + iv.toString("hex") + authTag + encrypted, "utf8");
+            let encrypted = cipher.update(fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8"), "utf8", "hex");
+            encrypted += cipher.final("hex");
+
+            const authTag = cipher.getAuthTag().toString("hex");
+
+            fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "- ENCRYPTED -\n" + iv.toString("hex") + authTag + encrypted, "utf8");
+          });
         });
       };
     });
@@ -5012,19 +5030,74 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           this.confirm("Create Empty Bot", "Doing this will render LocalBotify's no-code functionalities useless.").then(() => resolve(true)).catch(() => resolve(false));
         })))) return;
 
+        const environment = fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "utf8").split("\n").map((line) => {
+          if (replacedToken) return line;
+
+          if (line.split(/#|\/\//)[0].match(/^\s*TOKEN\s*=/)) {
+            replacedToken = true;
+            return line.replace(/^\s*TOKEN\s*=.*?(#|\/\/|$)/, `TOKEN="${form.querySelector("#botToken").value}" $1`).trim();
+          };
+
+          return line;
+        }).join("\n");
+
+        const settings = JSON.parse(localStorage.getItem("settings") || "{}");
+
+        if (!(settings.environmentEncryption || [false])[0]) {
+          try {
+            await new Promise((resolve, reject) => {
+              const crypto = require("crypto");
+
+              const encryptedData = settings.environmentEncryption[2];
+
+              const ivHex = encryptedData.slice(0, 24);
+              const authTagHex = encryptedData.slice(24, 56);
+              const ciphertextHex = encryptedData.slice(56);
+
+              const iv = Buffer.from(ivHex, "hex");
+              const authTag = Buffer.from(authTagHex, "hex");
+              const ciphertext = Buffer.from(ciphertextHex, "hex");
+
+              crypto.scrypt(password, "salt", 32, (err, key) => {
+                if (err) return reject();
+
+                try {
+                  const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
+                  decipher.setAuthTag(authTag);
+
+                  let decrypted = decipher.update(ciphertext, "hex", "utf8");
+                  decrypted += decipher.final("utf8");
+
+                  if (decrypted !== environmentEncryption[1]) reject();
+
+                  const encryptionIv = crypto.randomBytes(12);
+
+                  crypto.scrypt(currentEnvironmentEncryptionPassword[0], "salt", 32, (err, derivedKey) => {
+                    if (err) reject();
+
+                    const cipher = crypto.createCipheriv("aes-256-gcm", derivedKey, encryptionIv);
+
+                    let encrypted = cipher.update(environment, "utf8", "hex");
+                    encrypted += cipher.final("hex");
+
+                    const authTag = cipher.getAuthTag().toString("hex");
+
+                    environment = "- ENCRYPTED -\n" + encryptionIv.toString("hex") + authTag + encrypted;
+                  });
+                } catch {
+                  reject();
+                };
+              });
+            });
+          } catch {
+            return this.alert("⚠️ Invalid Password", "We couldn't encrypt your bot's dotenv file since the password you just entered differs from your original one.").catch(() => {});
+          };
+        };
+
         this.bots.push(newBot);
         this.initializeTemplate(newBot, ((form.querySelector("#botTemplate").tagName === "INPUT") ? "git:" : "") + form.querySelector("#botTemplate").value).then(() => {
           if (fs.existsSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"))) {
-            fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "utf8").split("\n").map((line) => {
-              if (replacedToken) return line;
-
-              if (line.split(/#|\/\//)[0].match(/^\s*TOKEN\s*=/)) {
-                replacedToken = true;
-                return line.replace(/^\s*TOKEN\s*=.*?(#|\/\/|$)/, `TOKEN="${form.querySelector("#botToken").value}" $1`).trim();
-              };
-
-              return line;
-            }).join("\n"), "utf8");
+            fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), environment, "utf8");
           };
         });
       };
