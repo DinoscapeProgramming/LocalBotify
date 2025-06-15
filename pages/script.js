@@ -55,7 +55,7 @@ if (process.argv.includes("--startup")) process.chdir(process.argv.find((argumen
 class LocalBotify {
   constructor() {
     this.isPackaged = require("path").basename(process.execPath) !== "electron.exe";
-    this.isProPlan = true;// !this.isPackaged;
+    this.isProPlan = JSON.parse(localStorage.getItem("settings") || "{}").accessToken && require("jsonwebtoken").verify(JSON.parse(localStorage.getItem("settings") || "{}").accessToken, fs.readFileSync(require("path").join(__dirname, "../public.pem")), { algorithms: ["RS256"] })?.pro;
 
     this.bots = JSON.parse(localStorage.getItem("bots")) || [];
     this.currentView = "bots";
@@ -994,7 +994,7 @@ class LocalBotify {
 
       let oldPassword = null;
 
-      if (this.bots.map((bot) => fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8")).some((environment) => environment.startsWith("- ENCRYPTED -\n"))) {
+      if (this.bots.map((bot) => (fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8") || "")).some((environment) => environment.startsWith("- ENCRYPTED -\n"))) {
         try {
           await new Promise(async (resolve, reject) => {
             try {

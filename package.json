@@ -21,6 +21,7 @@
     "discord.js": "^14.18.0",
     "electron-context-menu": "^4.1.0",
     "he": "^1.2.0",
+    "jsonwebtoken": "^9.0.2",
     "localbotify": "^2.1.0",
     "localtunnel": "github:lpolish/localtunnel#feature/enhanced-functionality",
     "luxon": "^3.6.1",
