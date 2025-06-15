@@ -5966,11 +5966,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     try {
       return fs.readFileSync(path, "utf8");
     } catch (err) {
-      if (err.code === "ENOENT") {
-        return null;
-      } else {
-        throw err;
-      };
+      return null;
     };
   };
 
