@@ -1,4 +1,5 @@
 const fs = require("fs");
+const path = require("path");
 const crypto = require("crypto");
 const { alert, prompt } = requireCore("localbotify");
 
@@ -57,6 +58,9 @@ module.exports = () => {
 ╔${horizontal}╗
 ${lines.map(center).join('\n')}
 ╚${horizontal}╝`, "\x1b[0m");
+
+          fs.writeFileSync(path.join(process.cwd(), "channels/status.txt"), "OFFLINE", "utf8");
+          fs.writeFileSync(path.join(process.cwd(), "channels/process.txt"), "OFFLINE", "utf8");
 
           process.exit(1);
         };

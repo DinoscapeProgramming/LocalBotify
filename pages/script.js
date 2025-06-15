@@ -709,7 +709,14 @@ class LocalBotify {
             <input type="checkbox" id="environmentEncryption" ${(storedSettings.environmentEncryption[0]) ? "checked" : ""}/>
           </label>
           <div class="setting-description">
-            Encrypt your bots' dotenv files
+            Encrypt your bots' dotenv files <span style="
+              background-color: var(--discord-red);
+              color: white;
+              padding: 4.5px 7.25px;
+              border-radius: 5px;
+              font-size: 10px;
+              margin-left: 2.5px;
+            ">BETA</span>
           </div>
         </div>
       </div>` : ""}
@@ -848,8 +855,11 @@ class LocalBotify {
           ];
         });
       }).catch(() => {
-        currentEnvironmentEncryptionPassword = [false];
-        settings.querySelector("#environmentEncryption").checked = false;
+        currentEnvironmentEncryptionPassword = ((storedSettings.environmentEncryption || [false])[0]) ? [
+          ...[true],
+          ...storedSettings.environmentEncryption
+        ] : [false];
+        settings.querySelector("#environmentEncryption").checked = Boolean(currentEnvironmentEncryptionPassword[0]);
       });
     });
 
@@ -987,7 +997,7 @@ class LocalBotify {
     });
 
     const saveBtn = settings.querySelector(".settings-save-btn");
-    saveBtn.addEventListener("click", () => {
+    saveBtn.addEventListener("click", async () => {
       const updatedSettings = JSON.stringify({
         theme: document.getElementById("themeSelect").value,
         showStats: document.getElementById("showStats").checked,
@@ -1012,10 +1022,94 @@ class LocalBotify {
       }, 2000);
 
       if (settings.querySelector("#environmentEncryption").checked) {
-        this.bots.forEach((bot) => {
+        const crypto = require("crypto");
+
+        let oldPassword = null;
+
+        if (this.bots.map((bot) => fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8")).some((environment) => environment.startsWith("- ENCRYPTED -\n"))) {
+          try {
+            await new Promise(async (resolve, reject) => {
+              try {
+                oldPassword = await this.prompt("Re-encrypt Environment", "Enter old password...");
+
+                const encryptedData = storedSettings.environmentEncryption[1];
+
+                const ivHex = encryptedData.slice(0, 24);
+                const authTagHex = encryptedData.slice(24, 56);
+                const ciphertextHex = encryptedData.slice(56);
+
+                const iv = Buffer.from(ivHex, "hex");
+                const authTag = Buffer.from(authTagHex, "hex");
+                const ciphertext = Buffer.from(ciphertextHex, "hex");
+
+                crypto.scrypt(oldPassword, "salt", 32, (err, key) => {
+                  if (err) return reject();
+
+                  try {
+                    const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
+                    decipher.setAuthTag(authTag);
+
+                    let decrypted = decipher.update(ciphertext, "hex", "utf8");
+                    decrypted += decipher.final("utf8");
+
+                    if (decrypted !== storedSettings.environmentEncryption[0]) return reject();
+
+                    resolve();
+                  } catch {
+                    reject();
+                  };
+                });
+              } catch {
+                reject();
+              };
+            });
+          } catch {
+            updatedSettings.environmentEncryption = storedSettings.environmentEncryption;
+
+            if (!(storedSettings.environmentEncryption || [false])[0]) (settings.querySelector("#environmentEncryption").checked = false);
+
+            return this.alert("⚠️ Invalid Password", "We couldn't encrypt your bot's dotenv file since the password you just entered differs from your original one.").catch(() => {});
+          };
+        };
+
+        this.bots.forEach(async (bot) => {
           if (!fs.existsSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"))) return;
 
-          const crypto = require("crypto");
+          if (fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8").startsWith("- ENCRYPTED -\n")) {
+            try {
+              await new Promise((resolve, reject) => {
+                const encryptedData = fs.readFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), "utf8").replace("- ENCRYPTED -\n", "");
+
+                const ivHex = encryptedData.slice(0, 24);
+                const authTagHex = encryptedData.slice(24, 56);
+                const ciphertextHex = encryptedData.slice(56);
+
+                const iv = Buffer.from(ivHex, "hex");
+                const authTag = Buffer.from(authTagHex, "hex");
+                const ciphertext = Buffer.from(ciphertextHex, "hex");
+
+                crypto.scrypt(oldPassword, "salt", 32, (err, key) => {
+                  if (err) return reject();
+
+                  try {
+                    const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
+                    decipher.setAuthTag(authTag);
+
+                    let decrypted = decipher.update(ciphertext, "hex", "utf8");
+                    decrypted += decipher.final("utf8");
+
+                    fs.writeFileSync(path.join(process.cwd(), "bots", bot.id.toString(), ".env"), decrypted, "utf8");
+
+                    resolve();
+                  } catch {
+                    reject();
+                  };
+                });
+              });
+            } catch {
+              return this.alert("⚠️ Invalid Password", "We couldn't decrypt your dotenv file since you entered an invalid password.");
+            };
+          };
 
           const iv = crypto.randomBytes(12);
 
@@ -5030,25 +5124,32 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           this.confirm("Create Empty Bot", "Doing this will render LocalBotify's no-code functionalities useless.").then(() => resolve(true)).catch(() => resolve(false));
         })))) return;
 
-        const environment = fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "utf8").split("\n").map((line) => {
-          if (replacedToken) return line;
-
-          if (line.split(/#|\/\//)[0].match(/^\s*TOKEN\s*=/)) {
-            replacedToken = true;
-            return line.replace(/^\s*TOKEN\s*=.*?(#|\/\/|$)/, `TOKEN="${form.querySelector("#botToken").value}" $1`).trim();
-          };
-
-          return line;
-        }).join("\n");
-
         const settings = JSON.parse(localStorage.getItem("settings") || "{}");
 
-        if (!(settings.environmentEncryption || [false])[0]) {
-          try {
-            await new Promise((resolve, reject) => {
-              const crypto = require("crypto");
+        if ((settings.environmentEncryption || [false])[0]) {
+          const crypto = require("crypto");
 
-              const encryptedData = settings.environmentEncryption[2];
+          closeModal();
+
+          this.bots.push(newBot);
+          await this.initializeTemplate(newBot, ((form.querySelector("#botTemplate").tagName === "INPUT") ? "git:" : "") + form.querySelector("#botTemplate").value, false);
+
+          const environment = fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "utf8").split("\n").map((line) => {
+            if (replacedToken) return line;
+
+            if (line.split(/#|\/\//)[0].match(/^\s*TOKEN\s*=/)) {
+              replacedToken = true;
+              return line.replace(/^\s*TOKEN\s*=.*?(#|\/\/|$)/, `TOKEN="${form.querySelector("#botToken").value}" $1`).trim();
+            };
+
+            return line;
+          }).join("\n");
+
+          const password = await this.prompt("Encrypt Environment", "Enter password...");
+
+          try {
+            await new Promise(async (resolve, reject) => {
+              const encryptedData = settings.environmentEncryption[1];
 
               const ivHex = encryptedData.slice(0, 24);
               const authTagHex = encryptedData.slice(24, 56);
@@ -5068,22 +5169,9 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
                   let decrypted = decipher.update(ciphertext, "hex", "utf8");
                   decrypted += decipher.final("utf8");
 
-                  if (decrypted !== environmentEncryption[1]) reject();
+                  if (decrypted !== settings.environmentEncryption[0]) return reject();
 
-                  const encryptionIv = crypto.randomBytes(12);
-
-                  crypto.scrypt(currentEnvironmentEncryptionPassword[0], "salt", 32, (err, derivedKey) => {
-                    if (err) reject();
-
-                    const cipher = crypto.createCipheriv("aes-256-gcm", derivedKey, encryptionIv);
-
-                    let encrypted = cipher.update(environment, "utf8", "hex");
-                    encrypted += cipher.final("hex");
-
-                    const authTag = cipher.getAuthTag().toString("hex");
-
-                    environment = "- ENCRYPTED -\n" + encryptionIv.toString("hex") + authTag + encrypted;
-                  });
+                  resolve();
                 } catch {
                   reject();
                 };
@@ -5092,14 +5180,47 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           } catch {
             return this.alert("⚠️ Invalid Password", "We couldn't encrypt your bot's dotenv file since the password you just entered differs from your original one.").catch(() => {});
           };
-        };
 
-        this.bots.push(newBot);
-        this.initializeTemplate(newBot, ((form.querySelector("#botTemplate").tagName === "INPUT") ? "git:" : "") + form.querySelector("#botTemplate").value).then(() => {
-          if (fs.existsSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"))) {
-            fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), environment, "utf8");
-          };
-        });
+          await new Promise((resolve, reject) => {
+            const iv = crypto.randomBytes(12);
+
+            crypto.scrypt(password, "salt", 32, (err, derivedKey) => {
+              if (err) return reject();
+
+              const cipher = crypto.createCipheriv("aes-256-gcm", derivedKey, iv);
+
+              let encrypted = cipher.update(environment, "utf8", "hex");
+              encrypted += cipher.final("hex");
+
+              const authTag = cipher.getAuthTag().toString("hex");
+
+              fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "- ENCRYPTED -\n" + iv.toString("hex") + authTag + encrypted, "utf8");
+
+              ipcRenderer.invoke("runBotCommand", [
+                newBot.id,
+                ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization) ? ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization || "") + "; ") : "") + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`
+              ]);
+
+              resolve();
+            });
+          });
+        } else {
+          this.bots.push(newBot);
+          this.initializeTemplate(newBot, ((form.querySelector("#botTemplate").tagName === "INPUT") ? "git:" : "") + form.querySelector("#botTemplate").value).then(() => {
+            if (fs.existsSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"))) {
+              fs.writeFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), fs.readFileSync(path.join(process.cwd(), "bots", newBot.id.toString(), ".env"), "utf8").split("\n").map((line) => {
+                if (replacedToken) return line;
+
+                if (line.split(/#|\/\//)[0].match(/^\s*TOKEN\s*=/)) {
+                  replacedToken = true;
+                  return line.replace(/^\s*TOKEN\s*=.*?(#|\/\/|$)/, `TOKEN="${form.querySelector("#botToken").value}" $1`).trim();
+                };
+
+                return line;
+              }).join("\n"), "utf8");
+            };
+          });
+        };
       };
 
       this.saveBots();
@@ -5109,7 +5230,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     });
   };
 
-  async initializeTemplate(newBot, template) {
+  async initializeTemplate(newBot, template, runBot = true) {
     const path = require("path");
 
     if (!fs.readdirSync(process.cwd()).includes("bots")) fs.mkdirSync(path.join(process.cwd(), "bots"));
@@ -5136,7 +5257,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
         });
       };
 
-      ipcRenderer.invoke("runBotCommand", [
+      if (runBot) ipcRenderer.invoke("runBotCommand", [
         newBot.id,
         ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization) ? ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization || "") + "; ") : "") + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`
       ]);
@@ -5155,7 +5276,7 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
           });
         };
 
-        ipcRenderer.invoke("runBotCommand", [
+        if (runBot) ipcRenderer.invoke("runBotCommand", [
           newBot.id,
           ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization) ? ((JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.initialization || "") + "; ") : "") + `${(JSON.parse(this.readFileSafelySync(path.join(process.cwd(), "bots", newBot.id.toString(), "config.json")))?.commands?.startup || "")}\r\n`
         ]);
