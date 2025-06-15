@@ -2859,7 +2859,7 @@ class LocalBotify {
         assistant.contentWindow.postMessage(`You are a skilled software engineer helping to build a Discord bot using a specific development guide. Use the following guide as a reference for best practices, structure, and implementation style:
 
 **Guide (as Markdown):**
-${fs.readFileSync((this.isPackaged) ? path.join(process.resourcesPath, "app.asar/docs/Developer Guide", `${category[0].toUpperCase() + category.substring(1, category.length - 1)}Tutorial.md`) : `./docs/Developer Guide/${category[0].toUpperCase() + category.substring(1, category.length - 1)}Tutorial.md`, "utf8")}
+${fs.readFileSync((this.isPackaged) ? path.join(process.resourcesPath, "app.asar/docs/Developer Guide", `${category[0].toUpperCase() + category.substring(1, category.length - 1)} Tutorial.md`) : `./docs/Developer Guide/${category[0].toUpperCase() + category.substring(1, category.length - 1)}Tutorial.md`, "utf8")}
 
 Based on this guide, create a complete and clean implementation of a new Discord bot ${category.substring(0, category.length - 1)}.
 

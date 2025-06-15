@@ -15,7 +15,7 @@ Adding a command is simple:
 You can click on any added command to open the **Command Editor**, where you’ll find all the editable variables. Tweak those, and your bot will respond accordingly. ⚡
 
 > 📘 **Need help writing a full custom command?**
-> Check out the 👉 **Developer Guide → CommandTutorial**
+> Check out the 👉 **Developer Guide → Command Tutorial**
 
 ---
 
