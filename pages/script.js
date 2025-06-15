@@ -5341,24 +5341,26 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     modal.className = "modal";
 
     modal.innerHTML = `
-      <div class="modal-content">
+      <div class="modal-content pro-upgrade">
         <div class="modal-header">
-          <h2>✨ Thanks for Becoming a LocalBotify Pro User! ✨</h2>
-          <button class="close-btn"><i class="fas fa-times"></i></button>
+          <h2>✨ Welcome to Pro! ✨</h2>
+          <button class="close-btn" aria-label="Close">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
         <div class="modal-body">
-          <form id="upgradeForm">
-            <div class="form-group" style="margin-bottom: 1rem;">
-              <p style="margin-bottom: 0.5rem;">As the sole developer of this app, I greatly thank you for supporting our cause.</p>
-              <p style="color: #ffb100de;"><span style="text-decoration: underline;">Love from Germany!</span> ❤️</p>
-            </div>
-            <div class="form-actions" style="margin-top: 0;">
-              <button type="submit" class="submit-btn">
-                Start Using Pro
-              </button>
-              <button type="button" class="cancel-btn">Cancel</button>
-            </div>
-          </form>
+          <div class="form-group">
+            <p class="welcome-text">
+              Hey there! I'm <strong>Dinoscape</strong>, the solo developer behind <strong>LocalBotify</strong>. 
+              <br><br>
+              Thank you so much for upgrading to the <span class="pro-tier">Pro tier</span> - your support truly means the world to me! I'm thrilled to have you with us and can't wait for you to dive into all the awesome Pro features.
+            </p>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="submit-btn">
+              🚀 Let's Go!
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -5372,17 +5374,11 @@ Make sure it is ready to be integrated into the bot codebase with minimal change
     };
 
     modal.querySelector(".close-btn").addEventListener("click", closeModal);
-    modal.querySelector(".cancel-btn").addEventListener("click", closeModal);
     modal.addEventListener("click", (e) => {
       if (e.target === modal) closeModal();
     });
 
-    const form = modal.querySelector("#upgradeForm");
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      closeModal();
-    });
+    modal.querySelector(".submit-btn").addEventListener("click", closeModal);
   };
 
   showEmojiPicker() {

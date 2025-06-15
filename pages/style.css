@@ -358,6 +358,10 @@ body {
   opacity: 1;
 }
 
+.modal.show .modal-content {
+  transform: translateY(0);
+}
+
 .modal-content {
   background-color: var(--discord-dark);
   border-radius: var(--radius-md);
@@ -369,8 +373,67 @@ body {
   transition: transform 0.3s ease;
 }
 
-.modal.show .modal-content {
-  transform: translateY(0);
+.modal-content.pro-upgrade {
+  background: #1f1f1f;
+  color: #f1f1f1;
+  border-radius: 10px;
+  padding: 10px;
+  font-family: 'Segoe UI', sans-serif;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.modal-content.pro-upgrade .modal-header h2 {
+  font-size: 1.8rem;
+  margin: 0;
+  color: #ffd700;
+}
+
+.modal-content.pro-upgrade .close-btn {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.modal-content.pro-upgrade .close-btn:hover {
+  color: #fff;
+}
+
+.modal-content.pro-upgrade .welcome-text {
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+.modal-content.pro-upgrade .pro-tier {
+  color: #00ffd5;
+  font-weight: bold;
+}
+
+.modal-content.pro-upgrade .form-actions {
+  margin-top: 20px;
+  text-align: right;
+}
+
+.modal-content.pro-upgrade .submit-btn {
+  background: linear-gradient(135deg, #00ffd5, #0077ff);
+  background-size: 200% 200%;
+  color: #000;
+  padding: 10.5px 22.5px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.6s ease, transform 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0, 255, 213, 0.3);
+}
+
+.modal-content.pro-upgrade .submit-btn:hover {
+  background: linear-gradient(315deg, #00ffd5, #0077ff);
+  transform: scale(1.04);
+  box-shadow: 0 6px 20px rgba(0, 255, 213, 0.5);
 }
 
 .modal-header {
