@@ -709,14 +709,7 @@ class LocalBotify {
             <input type="checkbox" id="environmentEncryption" ${(storedSettings.environmentEncryption[0]) ? "checked" : ""}/>
           </label>
           <div class="setting-description">
-            Encrypt your bots' dotenv files <span style="
-              background-color: var(--discord-red);
-              color: white;
-              padding: 4.25px 7.25px;
-              border-radius: 5px;
-              font-size: 10px;
-              margin-left: 2.5px;
-            ">BETA</span>
+            Encrypt your bots' dotenv files
           </div>
         </div>
       </div>` : ""}
