@@ -712,7 +712,7 @@ class LocalBotify {
             Encrypt your bots' dotenv files <span style="
               background-color: var(--discord-red);
               color: white;
-              padding: 4.5px 7.25px;
+              padding: 4.25px 7.25px;
               border-radius: 5px;
               font-size: 10px;
               margin-left: 2.5px;
