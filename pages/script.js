@@ -611,39 +611,15 @@ class LocalBotify {
 
       if (!navigator.onLine) return (closeModal(), this.alert("⚠️ No Internet Connection", "It seems like you are not connected to the internet!"));
 
-      fetch(process.env.FEEDBACK_WEBHOOK, {
+      fetch(process.env.SERVER + "/api/v1/feedback/send", {
         method: "POST",
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          embeds: [
-            {
-              title: "📝 Feedback",
-              color: 0x00b0f4,
-              fields: [
-                ...[
-                  {
-                    name: "Rating",
-                    value: `${"⭐".repeat(modal.querySelectorAll(".selected-feedback-star").length)} (${modal.querySelectorAll(".selected-feedback-star").length}/5)`,
-                    inline: true
-                  },
-                  {
-                    name: "User",
-                    value: modal.querySelector("#feedbackUser").value || "Anonymous",
-                    inline: true
-                  }
-                ],
-                ...(modal.querySelector("#feedbackComment").value) ? [
-                  {
-                    name: "Comment",
-                    value: modal.querySelector("#feedbackComment").value
-                  }
-                ] : []
-              ],
-              timestamp: new Date().toISOString()
-            }
-          ]
+          rating: modal.querySelectorAll(".selected-feedback-star").length,
+          user: modal.querySelector("#feedbackUser").value,
+          comment: modal.querySelector("#feedbackComment").value || null
         })
       }).catch(() => {});
 
