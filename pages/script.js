@@ -706,7 +706,7 @@ class LocalBotify {
         <div class="setting-item">
           <label data-tooltip="Keep attackers from stealing your tokens">
             <span>Environment Encryption</span>
-            <input type="checkbox" id="environmentEncryption" ${(storedSettings.environmentEncryption[0]) ? "checked" : ""}/>
+            <input type="checkbox" id="environmentEncryption" ${((storedSettings.environmentEncryption || [false])[0]) ? "checked" : ""}/>
           </label>
           <div class="setting-description">
             Encrypt your bots' dotenv files

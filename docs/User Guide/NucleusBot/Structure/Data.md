@@ -17,7 +17,7 @@ Why? So your **help command** can display things cleanly and logically.
 
 #### 🧾 Example contents:
 
-```json
+```js
 {
   "🛠️ Moderation": ["ban", "kick", "mute", "..."],
   "🎉 Fun": ["8ball", "meme", "roll", "..."],
@@ -39,7 +39,7 @@ Why? So your bot can **calculate permission links** and validate access — with
 
 #### 🔐 Example snippet:
 
-```json
+```js
 {
   "KICK_MEMBERS": 2,
   "BAN_MEMBERS": 4,

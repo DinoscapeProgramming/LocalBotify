@@ -230,7 +230,7 @@ const createWindow = () => {
     }));
 
     const highlightedHtml = await Promise.all(
-      [...html.matchAll(/<pre><code class="language-js">([\s\S]*?)<\/code><\/pre>/gs)].map(async (match) => {
+      [...html.matchAll(/<pre><code class="(language-[^"]+)">([\s\S]*?)<\/code><\/pre>/gs)].map(async (match) => {
         const lang = match[1].replace("language-js", "javascript");
         const code = match[2]
           .replace(/&quot;/g, '"')
@@ -238,6 +238,8 @@ const createWindow = () => {
           .replace(/&lt;/g, '<')
           .replace(/&gt;/g, '>')
           .replace(/&apos;/g, "'");
+
+        if (!["javascript"].includes(lang)) return `<pre><code>${code}</code></pre>`;
 
         try {
           const highlightedCode = await highlighter.codeToHtml(code, { lang, theme: "material-theme-ocean" });
